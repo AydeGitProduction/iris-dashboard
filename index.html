@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRIS OS — CEO Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --text:#e8e8f0;--text2:#8888aa;--text3:#44445a;
+  --accent:#1D9E75;--accent2:#0f6e56;
+  --warn:#f0a030;--danger:#e24b4a;--info:#4a9eff;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:20px 16px 14px;border-bottom:1px solid var(--border)}
+.logo-text{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text);letter-spacing:1px}
+.logo-ver{font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
+.conn-status{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;cursor:pointer}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+.conn-dot.live{background:var(--accent)}
+.conn-dot.sim{background:var(--warn)}
+.conn-dot.connecting{background:var(--text3);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.conn-text{font-size:11px;color:var(--text2);font-family:var(--mono)}
+.nav-section{padding:16px 0 4px}
+.nav-label{font-size:9px;font-weight:500;letter-spacing:1.5px;color:var(--text3);padding:0 16px 6px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 16px;cursor:pointer;color:var(--text2);font-size:12px;border-left:2px solid transparent;transition:all .15s}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.03)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(29,158,117,0.06)}
+.nav-icon{width:14px;height:14px;opacity:.6;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.sidebar-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid var(--border)}
+.sync-text{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px}
+.refresh-btn{width:100%;padding:6px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.page-title{font-size:14px;font-weight:500;color:var(--text)}
+.topbar-actions{display:flex;gap:8px}
+.btn{padding:5px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent2);border:1px solid var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent)}
+.content{flex:1;overflow-y:auto;padding:20px 24px;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* SIM BANNER */
+.sim-banner{display:none;background:rgba(240,160,48,0.1);border:1px solid rgba(240,160,48,0.25);border-radius:4px;padding:7px 12px;margin-bottom:16px;font-size:11px;color:var(--warn);font-family:var(--mono)}
+
+/* METRICS */
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.metric-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
+.metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.metric-val{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--text);line-height:1}
+.metric-val.green{color:var(--accent)}
+.metric-val.amber{color:var(--warn)}
+.metric-val.red{color:var(--danger)}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px}
+.card-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,0.02);cursor:pointer}
+
+/* BADGES */
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;font-family:var(--mono)}
+.badge-green{background:rgba(29,158,117,0.15);color:var(--accent)}
+.badge-blue{background:rgba(74,158,255,0.12);color:var(--info)}
+.badge-amber{background:rgba(240,160,48,0.12);color:var(--warn)}
+.badge-red{background:rgba(226,75,74,0.12);color:var(--danger)}
+.badge-gray{background:rgba(255,255,255,0.06);color:var(--text2)}
+
+/* FEED */
+.feed-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.feed-item:last-child{border-bottom:none}
+.feed-dot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.fd-crit{background:var(--danger)}
+.fd-alert{background:var(--warn)}
+.fd-warn{background:var(--info)}
+.fd-info{background:var(--text3)}
+.feed-title{font-size:12px;color:var(--text);margin-bottom:2px}
+.feed-meta{font-size:11px;color:var(--text3)}
+
+/* AUTO BAR */
+.auto-bar-wrap{margin-bottom:12px}
+.auto-bar-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px;font-family:var(--mono)}
+.auto-bar{height:4px;border-radius:2px;background:var(--bg3);overflow:hidden}
+.auto-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .8s ease}
+
+/* RANK DOTS */
+.rank-dot{display:inline-block;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:500;text-align:center;line-height:20px;font-family:var(--mono)}
+.r5{background:rgba(29,158,117,0.2);color:var(--accent)}
+.r4{background:rgba(74,158,255,0.15);color:var(--info)}
+.r3{background:rgba(255,255,255,0.08);color:var(--text2)}
+.r2,.r1{background:rgba(255,255,255,0.04);color:var(--text3)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:24px;min-width:400px;max-width:520px;width:90%}
+.modal-title{font-size:14px;font-weight:500;margin-bottom:16px}
+.modal input,.modal select,.modal textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;margin-bottom:10px}
+.modal textarea{height:80px;resize:vertical}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+
+/* PROGRESS */
+.progress-wrap{margin-bottom:16px}
+.progress-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .6s}
+
+/* CHANNEL GRID */
+.channel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.channel-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px}
+.ch-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ch-name{font-size:13px;font-weight:500}
+.ch-stats{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+/* ERA TABLE */
+.era-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.era-row:last-child{border-bottom:none}
+.era-num{font-family:var(--mono);font-size:11px;color:var(--text3);width:24px}
+.era-name{font-size:12px;font-weight:500;flex:1}
+.era-focus{font-size:11px;color:var(--text3);flex:1}
+
+/* SETTINGS */
+.setting-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.setting-label{font-size:12px;color:var(--text2);width:140px;flex-shrink:0}
+.setting-val{font-family:var(--mono);font-size:12px;color:var(--text);flex:1}
+.setting-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:12px}
+
+/* PIPELINE */
+.pipeline{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
+.pipeline-col{min-width:160px;flex-shrink:0}
+.pipeline-head{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between}
+.deal-card{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:6px}
+.deal-title{font-size:12px;color:var(--text);margin-bottom:4px}
+.deal-meta{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.deal-card.stalled{border-color:rgba(240,160,48,0.3)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-icon{font-size:24px;margin-bottom:8px;opacity:.3}
+.empty-text{font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">IRIS OS</div>
+    <div class="logo-ver">v1.0 — CEO Dashboard</div>
+  </div>
+  <div class="conn-status" onclick="toggleSettings()">
+    <div class="conn-dot connecting" id="cdot"></div>
+    <div class="conn-text" id="conn-txt">iris-api-production-bd20.up.railway.app</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="nav('dashboard',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="nav('holding',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1L15 5V11L8 15L1 11V5L8 1Z" stroke="currentColor" stroke-width="1.2"/></svg>
+      Holding
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Operations</div>
+    <div class="nav-item" onclick="nav('feed',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="3" cy="4" r="1.5" fill="currentColor"/><line x1="6" y1="4" x2="15" y2="4" stroke="currentColor" stroke-width="1.2"/><circle cx="3" cy="8" r="1.5" fill="currentColor"/><line x1="6" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.2"/><circle cx="3" cy="12" r="1.5" fill="currentColor"/><line x1="6" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="1.2"/></svg>
+      Feed
+    </div>
+    <div class="nav-item" onclick="nav('contacts',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M2 14C2 11.2 4.7 9 8 9S14 11.2 14 14" stroke="currentColor" stroke-width="1.2"/></svg>
+      Contacts
+    </div>
+    <div class="nav-item" onclick="nav('deals',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 12L5 9L8 11L14 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Deals
+    </div>
+    <div class="nav-item" onclick="nav('tasks',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M4 8L7 11L12 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Tasks
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Intelligence</div>
+    <div class="nav-item" onclick="nav('patterns',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M1 8C1 8 3 3 8 3S15 8 15 8S13 13 8 13S1 8 1 8Z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.2"/></svg>
+      Patterns
+    </div>
+    <div class="nav-item" onclick="nav('autopilot',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M8 5V8L10 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Autopilot
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Content</div>
+    <div class="nav-item" onclick="nav('content',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 2H10L14 6V14H2V2Z" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="7" x2="11" y2="7" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="10" x2="9" y2="10" stroke="currentColor" stroke-width="1.2"/></svg>
+      Content
+    </div>
+    <div class="nav-item" onclick="nav('production',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M6 6L11 8L6 10V6Z" fill="currentColor"/></svg>
+      Production
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">System</div>
+    <div class="nav-item" onclick="nav('registry',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="7" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="12" width="7" height="3" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+      Registry
+    </div>
+    <div class="nav-item" onclick="nav('channels',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M1 8H4M12 8H15M4 8C4 6.3 5.3 5 7 5H9C10.7 5 12 6.3 12 8S10.7 11 9 11H7C5.3 11 4 9.7 4 8Z" stroke="currentColor" stroke-width="1.2"/></svg>
+      Channels
+    </div>
+    <div class="nav-item" onclick="nav('saas',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 5V3.5C5 2.7 6.3 2 8 2S11 2.7 11 3.5V5" stroke="currentColor" stroke-width="1.2"/></svg>
+      SaaS
+    </div>
+    <div class="nav-item" onclick="nav('settings',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M8 1V3M8 13V15M1 8H3M13 8H15M3 3L4.4 4.4M11.6 11.6L13 13M3 13L4.4 11.6M11.6 4.4L13 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Settings
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="sync-text" id="sync-txt">Never synced</div>
+    <button class="refresh-btn" onclick="loadCurrent()">Refresh data</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+  <div class="content" id="content">
+    <div class="sim-banner" id="sim-banner">Simulation mode — iris-api nije dostupan na <span id="api-url-display">iris-api-production-bd20.up.railway.app</span></div>
+    <div id="main-content"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Modal</div>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Odustani</button>
+      <button class="btn btn-primary" onclick="modalSubmit()">Potvrdi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let BASE='https://iris-api-production-bd20.up.railway.app'
+const WS='00000000-0000-0000-0001-000000000001'
+let isLive=false
+let currentSection='dashboard'
+let modalCallback=null
+
+const SIM={
+  health:{status:'ok',services_loaded:0,mode:'simulation'},
+  holding:{companies:[
+    {name:'MonetizeAd',slug:'monetizead',primary_kpi_formatted:'€8.2M',status:'exceeding',ownership_pct:50,health_score:88,active_tasks:7,open_deals:2},
+    {name:'PrimeShop360',slug:'primeshop360',primary_kpi_formatted:'€1.18M',status:'warning',ownership_pct:50,health_score:62,active_tasks:4,open_deals:1},
+    {name:'Medius360',slug:'medius360',primary_kpi_formatted:'€285k MRR',status:'warning',ownership_pct:60,health_score:58,active_tasks:9,open_deals:3},
+    {name:'Shape9',slug:'shape9',primary_kpi_formatted:'€188k MRR',status:'exceeding',ownership_pct:50,health_score:91,active_tasks:3,open_deals:2},
+    {name:'Adfinity',slug:'adfinity',primary_kpi_formatted:'€402k',status:'on_track',ownership_pct:40,health_score:75,active_tasks:5,open_deals:1},
+  ],holding_totals:{combined_monthly_revenue:10300000,ajdin_monthly_share:5190000,companies_on_track:2,companies_needs_attention:2}},
+  feed:[
+    {type:'pattern',priority:1,title:'Enterprise kontakt neaktivan 14 dana',description:'Rank 5 kontakt nije stupio u kontakt.'},
+    {type:'approval',priority:1,title:'2 approvals čekaju odluku',description:'AXIS draft + COPY caption pending >48h.'},
+    {type:'kpi',priority:2,title:'Medius360 -14% ispod targeta',description:'MRR: €285k vs target €333k.'},
+    {type:'content',priority:3,title:'6 dana bez objave na socijalnim',description:'3 drafta čekaju odobrenje u kalendaru.'},
+    {type:'signal',priority:3,title:'Shape9 exceeding +12.6%',description:'MRR €188k, target €167k. Razmisli o reinvesticiji.'},
+    {type:'entity',priority:4,title:'Novi kontakt rangiran Rank 3',description:'Automatski dodan u Academy funnel.'},
+  ],
+  contacts:[
+    {display_name:'Mersad Halilović',metadata:{company:'MonetizeAd'},rank:5,sentiment_score:0.92,last_seen_at:'2026-04-06',channel:'gmail'},
+    {display_name:'Džejlana Kovač',metadata:{company:'Medius360'},rank:4,sentiment_score:0.78,last_seen_at:'2026-04-05',channel:'slack'},
+    {display_name:'Enterprise Partner',metadata:{company:'BigCorp'},rank:5,sentiment_score:0.85,last_seen_at:'2026-04-06',channel:'gmail'},
+    {display_name:'Mume Hadžić',metadata:{company:'Medius360'},rank:4,sentiment_score:0.81,last_seen_at:'2026-04-04',channel:'slack'},
+    {display_name:'Alen Softić',metadata:{company:'Adfinity'},rank:3,sentiment_score:0.70,last_seen_at:'2026-04-03',channel:'telegram'},
+  ],
+  deals:[
+    {deal_id:'d1',title:'BigCorp Enterprise AI Integration',deal_type:'saas_client',stage:'negotiation',estimated_value:150000,assigned_to:'ajdin',days_in_current_stage:3},
+    {deal_id:'d2',title:'Medius360 — novi klijent SEO',deal_type:'partnership',stage:'proposal',estimated_value:28800,assigned_to:'sales_medius',days_in_current_stage:8},
+    {deal_id:'d3',title:'TechStartup Shape9 SaaS',deal_type:'saas_client',stage:'qualified',estimated_value:12000,assigned_to:'sales_shape9',days_in_current_stage:2},
+  ],
+  tasks:[
+    {task_id:'t1',title:'AXIS: Blog post o AI agentima',task_type:'blog_post',team:'content',status:'in_progress',priority:'high',due_date:'2026-04-07'},
+    {task_id:'t2',title:'iOS end-to-end command test',task_type:'ios_feature',team:'macmini',status:'todo',priority:'urgent',due_date:'2026-04-06'},
+    {task_id:'t3',title:'Review BigCorp enterprise kontakt',task_type:'review',team:'ajdin',status:'todo',priority:'urgent',due_date:'2026-04-06'},
+    {task_id:'t4',title:'COPY: Instagram caption — Q2 results',task_type:'ad_copy',team:'content',status:'done',priority:'medium',due_date:'2026-04-05'},
+    {task_id:'t5',title:'Soniox API key rotacija',task_type:'backend_fix',team:'macmini',status:'done',priority:'high',due_date:'2026-04-06'},
+  ],
+  patterns:[
+    {pattern_id:'p1',type:'high_value_inactive',severity:'alert',title:'Enterprise kontakt neaktivan 14 dana',description:'Kontakt ranka 5 nije stupio u kontakt 14 dana. Historijski aktivan svake sedmice.',recommended_action:'Pošalji personalizovani follow-up email danas.'},
+    {pattern_id:'p2',type:'sentiment_drop',severity:'warning',title:'Pad sentimenta — 3 uzastopne negativne interakcije',description:'Sentiment pao sa 0.82 na 0.51 u posljednje 3 poruke.',recommended_action:'Provjeri šta je pokrenulo nezadovoljstvo.'},
+    {pattern_id:'p3',type:'content_gap',severity:'info',title:'Nema objavljenog sadržaja 6 dana',description:'Posljednja objava bila prije 6 dana. Content calendar ima 3 odobrene stavke.',recommended_action:'Trigeriraj content autopilot ili odobri pending stavke.'},
+  ],
+  autopilot:{autonomy_level:20,autonomy_label:'Learning',actions_today:7,autonomous_today:4,approval_requested_today:3,learning_phase:true,decisions_made:47},
+  confidence:{contact_routing:87,email_draft:81,content_approval:88,task_creation:79,escalation:95},
+  registry:{total_planned:170,total_complete:25,latest_block:170,cumulative_tests:2531,completion_pct:14.7,velocity:{blocks_per_day:23,tests_per_block:101}},
+  channels:{gmail:{mode:'simulation',total_today:3,connected:false},slack:{mode:'simulation',total_today:3,connected:false},telegram:{mode:'live via n8n',total_today:12,connected:true},instagram:{mode:'simulation',total_today:0,connected:false},linkedin:{mode:'simulation',total_today:0,connected:false}},
+  tenants:{total_tenants:4,active_tenants:2,trial_tenants:1,mrr_total_eur:1397,arr_total_eur:16764,list:[
+    {company_name:'Ajdin Brković',plan:'ajdin',status:'active',days_active:365,mrr:0},
+    {company_name:'TechStartup d.o.o.',plan:'professional',status:'active',days_active:23,mrr:299},
+    {company_name:'Marketing Agency AG',plan:'starter',status:'trial',days_active:7,mrr:99},
+    {company_name:'Enterprise Corp',plan:'enterprise',status:'active',days_active:45,mrr:999},
+  ]},
+  content:[
+    {entry_id:'c1',topic:'Blog: AI agenti u poslovanju',content_type:'blog_post',agent_id:'axis',status:'in_progress',planned_date:'2026-04-07'},
+    {entry_id:'c2',topic:'Instagram: Q2 MonetizeAd rezultati',content_type:'social_caption',agent_id:'copy',status:'approved',planned_date:'2026-04-06'},
+    {entry_id:'c3',topic:'LinkedIn: IRIS OS — šta smo izgradili',content_type:'social_caption',agent_id:'copy',status:'planned',planned_date:'2026-04-08'},
+  ],
+  production:[
+    {project_id:'pr1',title:'MonetizeAd Q2 — Priča o rastu',project_type:'milestone_film',status:'in_production',estimated_completion_date:'2026-04-13'},
+    {project_id:'pr2',title:'IRIS OS Demo — za investitore',project_type:'product_demo',status:'queued',estimated_completion_date:'2026-04-20'},
+  ]
+}
+
+async function api(path,opts){
+  try{
+    const r=await fetch(BASE+path,{...opts,signal:AbortSignal.timeout(3000)})
+    if(!r.ok) throw new Error(r.status)
+    return await r.json()
+  }catch{return null}
+}
+
+function fmtEur(n){if(!n)return'—';if(n>=1e6)return'€'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'€'+Math.round(n/1e3)+'k';return'€'+n}
+function statusBadge(s){const m={exceeding:'green',on_track:'blue',warning:'amber',critical:'red',pending:'amber',approved:'green',rejected:'red',todo:'gray',in_progress:'blue',done:'green',cancelled:'red',active:'green',trial:'amber',onboarding:'blue',suspended:'red',alert:'amber',info:'gray',live:'green',simulation:'amber'};const c=m[s]||'gray';return`<span class="badge badge-${c}">${s}</span>`}
+function rankDot(r){return`<span class="rank-dot r${r}">${r}</span>`}
+function timeAgo(d){if(!d)return'—';const diff=Date.now()-new Date(d);const h=Math.floor(diff/36e5);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago'}
+
+function setConn(mode){
+  const dot=document.getElementById('cdot')
+  const txt=document.getElementById('conn-txt')
+  dot.className='conn-dot '+(mode==='live'?'live':mode==='sim'?'sim':'connecting')
+  txt.textContent=mode==='live'?'Live · '+BASE.replace('http://',''):mode==='sim'?'Simulation mode':'Connecting...'
+  document.getElementById('api-url-display').textContent=BASE
+  const banner=document.getElementById('sim-banner')
+  banner.style.display=mode==='sim'?'block':'none'
+}
+
+async function checkConn(){
+  setConn('connecting')
+  const h=await api('/health')
+  isLive=!!(h&&h.status==='ok')
+  setConn(isLive?'live':'sim')
+  document.getElementById('sync-txt').textContent='Synced '+new Date().toLocaleTimeString('bs')
+}
+
+function nav(section,el){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'))
+  if(el)el.classList.add('active')
+  currentSection=section
+  const titles={dashboard:'Dashboard',holding:'Holding View',feed:'Intelligence Feed',contacts:'Contacts',deals:'Deals',tasks:'Tasks',patterns:'Pattern Recognition',autopilot:'Autopilot',content:'Content Calendar',production:'Production',registry:'Block Registry',channels:'Channels',saas:'SaaS Tenants',settings:'Settings'}
+  document.getElementById('page-title').textContent=titles[section]||section
+  loadSection(section)
+}
+
+function loadCurrent(){checkConn().then(()=>loadSection(currentSection))}
+function loadSection(s){
+  const fns={dashboard:renderDashboard,holding:renderHolding,feed:renderFeed,contacts:renderContacts,deals:renderDeals,tasks:renderTasks,patterns:renderPatterns,autopilot:renderAutopilot,content:renderContent,production:renderProduction,registry:renderRegistry,channels:renderChannels,saas:renderSaaS,settings:renderSettings}
+  document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam...</div>'
+  if(fns[s])fns[s]()
+}
+
+async function renderDashboard(){
+  const holding=await api('/api/holding/dashboard')||SIM.holding
+  const feed=await api('/api/feed/'+WS+'?limit=6')||{feed:SIM.feed}
+  const t=holding.holding_totals||SIM.holding.holding_totals
+  const on=t.companies_on_track||0
+  document.getElementById('topbar-actions').innerHTML=''
+  document.getElementById('main-content').innerHTML=`
+    <div class="metric-row">
+      <div class="metric-card"><div class="metric-label">Ukupni prihod</div><div class="metric-val mono">${fmtEur(t.combined_monthly_revenue)}</div><div class="metric-sub">ovaj mjesec</div></div>
+      <div class="metric-card"><div class="metric-label">Ajdinov udio</div><div class="metric-val green mono">${fmtEur(t.ajdin_monthly_share)}</div><div class="metric-sub">ponderisano</div></div>
+      <div class="metric-card"><div class="metric-label">Kompanije OK</div><div class="metric-val ${on>=3?'green':on>=2?'':'amber'} mono">${on}/5</div><div class="metric-sub">${t.companies_needs_attention||0} treba pažnje</div></div>
+      <div class="metric-card"><div class="metric-label">IRIS testovi</div><div class="metric-val green mono">${(SIM.registry.cumulative_tests).toLocaleString()}</div><div class="metric-sub">blok ${SIM.registry.latest_block} · 100%</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Kompanije</div>
+        <table class="tbl">
+          <thead><tr><th>Kompanija</th><th>KPI</th><th>Status</th><th>%</th></tr></thead>
+          <tbody>${(holding.companies||SIM.holding.companies).map(c=>`<tr>
+            <td style="font-weight:500">${c.name}</td>
+            <td style="font-family:var(--mono)">${c.primary_kpi_formatted||'—'}</td>
+            <td>${statusBadge(c.status||'on_track')}</td>
+            <td style="color:var(--text3);font-family:var(--mono)">${c.ownership_pct}%</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Intelligence feed</div>
+        ${(feed.feed||SIM.feed).slice(0,6).map(i=>{
+          const c={1:'fd-crit',2:'fd-alert',3:'fd-warn',4:'fd-info'}[i.priority]||'fd-info'
+          return`<div class="feed-item"><div class="feed-dot ${c}"></div><div><div class="feed-title">${i.title}</div><div class="feed-meta">${i.description||''}</div></div></div>`
+        }).join('')}
+      </div>
+    </div>`
+}
+
+async function renderHolding(){
+  const holding=await api('/api/holding/dashboard')||SIM.holding
+  const companies=holding.companies||SIM.holding.companies
+  const t=holding.holding_totals||SIM.holding.holding_totals
+  document.getElementById('topbar-actions').innerHTML=''
+  document.getElementById('main-content').innerHTML=`
+    <div class="metric-row">
+      <div class="metric-card"><div class="metric-label">Kombinirani MRR</div><div class="metric-val mono">${fmtEur(t.combined_monthly_revenue)}</div></div>
+      <div class="metric-card"><div class="metric-label">Ajdinov udio</div><div class="metric-val green mono">${fmtEur(t.ajdin_monthly_share)}</div></div>
+      <div class="metric-card"><div class="metric-label">Exceeding target</div><div class="metric-val green mono">${companies.filter(c=>c.status==='exceeding').length}</div></div>
+      <div class="metric-card"><div class="metric-label">Warning/Critical</div><div class="metric-val amber mono">${companies.filter(c=>c.status==='warning'||c.status==='critical').length}</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Pregled po kompanijama</div>
+      <table class="tbl">
+        <thead><tr><th>Kompanija</th><th>Primarni KPI</th><th>Status</th><th>Health</th><th>Vlasništvo</th><th>Taskovi</th><th>Deali</th></tr></thead>
+        <tbody>${companies.map(c=>`<tr>
+          <td style="font-weight:500">${c.name}</td>
+          <td style="font-family:var(--mono)">${c.primary_kpi_formatted||'—'}</td>
+          <td>${statusBadge(c.status||'on_track')}</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div style="width:50px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="height:100%;width:${c.health_score||70}%;background:${(c.health_score||70)>=80?'var(--accent)':(c.health_score||70)>=60?'var(--warn)':'var(--danger)'};border-radius:2px"></div></div><span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${c.health_score||'—'}</span></div></td>
+          <td style="font-family:var(--mono);color:var(--text3)">${c.ownership_pct}%</td>
+          <td style="font-family:var(--mono)">${c.active_tasks||'—'}</td>
+          <td style="font-family:var(--mono)">${c.open_deals||'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`
+}
+
+async function renderFeed(){
+  const data=await api('/api/feed/'+WS+'?limit=20')||{feed:SIM.feed}
+  document.getElementById('topbar-actions').innerHTML='<button class="btn btn-ghost" onclick="api(\'/api/feed/'+WS+'/mark-all-read\',{method:\'POST\'})">Mark all read</button>'
+  const items=data.feed||SIM.feed
+  document.getElementById('main-content').innerHTML=`
+    <div class="card">
+      <div class="card-title">Feed · ${data.unactioned_count||items.length} unactioned</div>
+      ${items.length?items.map(i=>{
+        const c={0:'fd-crit',1:'fd-crit',2:'fd-alert',3:'fd-warn',4:'fd-info'}[i.priority]||'fd-info'
+        const tc={pattern:'gray',approval:'amber',kpi:'amber',content:'blue',signal:'green',entity:'blue'}[i.type]||'gray'
+        return`<div class="feed-item">
+          <div class="feed-dot ${c}"></div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+              <span class="feed-title">${i.title}</span>
+              <span class="badge badge-${tc}" style="font-size:9px">${i.type}</span>
+            </div>
+            <div class="feed-meta">${i.description||''}</div>
+          </div>
+          ${i.action_label?`<button class="btn btn-ghost" style="font-size:10px;padding:3px 8px">${i.action_label}</button>`:''}
+        </div>`}).join(''):`<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Feed je prazan</div></div>`}
+    </div>`
+}
+
+async function renderContacts(){
+  const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:SIM.contacts}
+  document.getElementById('topbar-actions').innerHTML=''
+  const contacts=data.contacts||SIM.contacts
+  document.getElementById('main-content').innerHTML=`
+    <div class="card">
+      <div class="card-title">Contacts · ${contacts.length} ukupno</div>
+      <table class="tbl">
+        <thead><tr><th>Ime</th><th>Kompanija</th><th>Rank</th><th>Sentiment</th><th>Zadnji kontakt</th><th>Kanal</th></tr></thead>
+        <tbody>${contacts.map(c=>`<tr>
+          <td style="font-weight:500">${c.display_name||c.name||'—'}</td>
+          <td style="color:var(--text2)">${c.metadata?.company||c.company||'—'}</td>
+          <td>${rankDot(c.rank||3)}</td>
+          <td><span style="font-family:var(--mono);font-size:11px;color:${(c.sentiment_score||0.5)>=0.7?'var(--accent)':(c.sentiment_score||0.5)>=0.4?'var(--warn)':'var(--danger)'}">${Math.round((c.sentiment_score||0.5)*100)}%</span></td>
+          <td style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
+          <td style="color:var(--text3)">${c.channel||'telegram'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`
+}
+
+async function renderDeals(){
+  const data=await api('/api/deals?workspace_id='+WS)||{deals:SIM.deals}
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('deal')">+ Novi deal</button>`
+  const deals=data.deals||SIM.deals
+  const stages=['lead','qualified','proposal','negotiation','closed_won','closed_lost']
+  const stageLabels={lead:'Lead',qualified:'Qualified',proposal:'Proposal',negotiation:'Negotiation',closed_won:'Won',closed_lost:'Lost'}
+  document.getElementById('main-content').innerHTML=`
+    <div class="pipeline">
+      ${stages.map(stage=>{
+        const stageDeal=deals.filter(d=>d.stage===stage)
+        return`<div class="pipeline-col">
+          <div class="pipeline-head"><span>${stageLabels[stage]}</span><span style="color:var(--text3)">${stageDeal.length}</span></div>
+          ${stageDeal.map(d=>`<div class="deal-card ${d.days_in_current_stage>7?'stalled':''}">
+            <div class="deal-title">${d.title}</div>
+            <div class="deal-meta">${d.deal_type||'—'} · ${fmtEur(d.estimated_value)}</div>
+            ${d.days_in_current_stage>7?`<div style="font-size:10px;color:var(--warn);margin-top:4px">${d.days_in_current_stage}d stalled</div>`:''}
+          </div>`).join('')||`<div style="font-size:11px;color:var(--text3);padding:8px 0">Empty</div>`}
+        </div>`}).join('')}
+    </div>`
+}
+
+async function renderTasks(){
+  const data=await api('/api/tasks?workspace_id='+WS)||{tasks:SIM.tasks}
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('task')">+ Novi task</button>`
+  const tasks=data.tasks||SIM.tasks
+  const teams={content:'CONTENT',production:'PROD',macmini:'MAC',sales:'SALES',ajdin:'AJDIN'}
+  document.getElementById('main-content').innerHTML=`
+    <div class="card">
+      <div class="card-title">Tasks · ${tasks.filter(t=>t.status!=='done'&&t.status!=='cancelled').length} aktivnih</div>
+      <table class="tbl">
+        <thead><tr><th>Task</th><th>Tim</th><th>Status</th><th>Prioritet</th><th>Rok</th></tr></thead>
+        <tbody>${tasks.map(t=>`<tr>
+          <td style="font-weight:500;max-width:280px">${t.title}</td>
+          <td><span class="badge badge-gray">${teams[t.team]||t.team}</span></td>
+          <td>${statusBadge(t.status||'todo')}</td>
+          <td>${statusBadge(t.priority||'medium')}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:${new Date(t.due_date)<new Date()?'var(--danger)':'var(--text3)'}">${t.due_date||'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`
+}
+
+async function renderPatterns(){
+  const data=await api('/api/patterns/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS})})||{patterns:SIM.patterns}
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-ghost" onclick="loadSection('patterns')">Refresh scan</button>`
+  const patterns=data.patterns||SIM.patterns
+  const sevColor={critical:'red',alert:'amber',warning:'blue',info:'gray'}
+  document.getElementById('main-content').innerHTML=`
+    <div class="card">
+      <div class="card-title">Patterns · ${patterns.length} detected</div>
+      ${patterns.length?patterns.map(p=>`<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span class="badge badge-${sevColor[p.severity]||'gray'}">${p.severity}</span>
+          <span style="font-size:13px;font-weight:500">${p.title}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${p.description||''}</div>
+        ${p.recommended_action?`<div style="font-size:11px;color:var(--accent)">→ ${p.recommended_action}</div>`:''}
+      </div>`).join(''):
+      `<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Nema detektovanih obrazaca</div></div>`}
+    </div>`
+}
+
+async function renderAutopilot(){
+  const status=await api('/api/autopilot/status?workspace_id='+WS)||SIM.autopilot
+  const insights=await api('/api/autopilot/insights?workspace_id='+WS)||null
+  const lvl=status.autonomy_level||20
+  document.getElementById('topbar-actions').innerHTML=`
+    <button class="btn btn-ghost" onclick="api('/api/autopilot/config/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:'${WS}',reason:'Manual reset'})}).then(loadCurrent)">Reset autonomy</button>
+    <button class="btn btn-primary" onclick="api('/api/autopilot/config/apply-recommendation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:'${WS}'})}).then(loadCurrent)">Apply recommendation</button>`
+  document.getElementById('main-content').innerHTML=`
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Autonomy level</div>
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:22px;font-weight:500;font-family:var(--mono);color:var(--accent)">${lvl}%</span>
+            <span class="badge badge-${lvl>=75?'green':lvl>=50?'blue':lvl>=25?'gray':'gray'}">${status.autonomy_label||'Learning'}</span>
+          </div>
+          <div class="auto-bar"><div class="auto-fill" style="width:${lvl}%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--mono)"><span>Learning</span><span>Assisted</span><span>Autonomous</span><span>Full COO</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div class="metric-card"><div class="metric-label">Danas</div><div class="metric-val mono">${status.actions_today||0}</div></div>
+          <div class="metric-card"><div class="metric-label">Autonomno</div><div class="metric-val green mono">${status.autonomous_today||0}</div></div>
+          <div class="metric-card"><div class="metric-label">Approval</div><div class="metric-val amber mono">${status.approval_requested_today||0}</div></div>
+        </div>
+        ${status.learning_phase?`<div style="font-size:11px;color:var(--text3);margin-top:12px">Learning faza aktivna — IRIS uči tvoje obrasce</div>`:''}
+      </div>
+      <div class="card">
+        <div class="card-title">Confidence po kategoriji</div>
+        ${Object.entries(SIM.confidence).map(([k,v])=>`
+          <div class="auto-bar-wrap">
+            <div class="auto-bar-labels"><span>${k.replace(/_/g,' ')}</span><span>${v}%</span></div>
+            <div class="auto-bar"><div class="auto-fill" style="width:${v}%;background:${v>=85?'var(--accent)':v>=70?'var(--info)':'var(--warn)'}"></div></div>
+          </div>`).join('')}
+      </div>
+    </div>`
+}
+
+async function renderContent(){
+  const data=await api('/api/content/calendar?workspace_id='+WS)||{entries:SIM.content}
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('content')">Brief ContentOS</button>`
+  const entries=data.entries||SIM.content
+  const agentColor={axis:'green',copy:'blue',reel:'amber'}
+  document.getElementById('main-content').innerHTML=`
+    <div class="card">
+      <div class="card-title">Content calendar</div>
+      <table class="tbl">
+        <thead><tr><th>Topic</th><th>Agent</th><th>Tip</th><th>Status</th><th>Datum</th></tr></thead>
+        <tbody>${entries.map(e=>`<tr>
+          <td style="font-weight:500">${e.topic||e.title||'—'}</td>
+          <td><span class="badge badge-${agentColor[e.agent_id]||'gray'}">${(e.agent_id||'axis').toUpperCase()}</span></td>
+          <td style="color:var(--text2)">${e.content_type||'—'}</td>
+          <td>${statusBadge(e.status||'planned')}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${e.planned_date||'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`
+}
+
+async function renderProduction(){
+  const data=await api('/api/productionfos/projects?workspace_id='+WS)||{projects:SIM.production}
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('production')">Novi projekt</button>`
+  const projects=data.projects||SIM.production
+  document.getElementById('main-content').innerHTML=`
+    <div class="card">
+      <div class="card-title">Production projects</div>
+      <table class="tbl">
+        <thead><tr><th>Naslov</th><th>Tip</th><th>Status</th><th>Tim</th><th>Rok</th></tr></thead>
+        <tbody>${projects.map(p=>`<tr>
+          <td style="font-weight:500">${p.title}</td>
+          <td><span class="badge badge-gray">${p.project_type||'—'}</span></td>
+          <td>${statusBadge(p.status||'queued')}</td>
+          <td style="color:var(--text3);font-size:11px">${(p.assigned_team||['sim-director','sim-dop']).join(', ')}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.estimated_completion_date||'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`
+}
+
+async function renderRegistry(){
+  const data=await api('/api/registry/summary')||SIM.registry
+  document.getElementById('topbar-actions').innerHTML=''
+  const eras=[
+    {n:1,name:'Foundation',blocks:'145–152',done:8,total:8,focus:'Claude API + Voice + Mobile'},
+    {n:2,name:'Intelligence',blocks:'153–157',done:5,total:5,focus:'Memory + Entities + Patterns'},
+    {n:3,name:'Autonomy',blocks:'158–162',done:5,total:5,focus:'Routing + Email + Tasks'},
+    {n:4,name:'Business',blocks:'163–167',done:5,total:5,focus:'Calendar + Revenue + Holding'},
+    {n:5,name:'Ecosystem',blocks:'168–170',done:3,total:3,focus:'Sai + SaaS + ProductionOS'},
+  ]
+  const pct=Math.round((data.total_complete||25)/170*100*10)/10
+  document.getElementById('main-content').innerHTML=`
+    <div class="metric-row">
+      <div class="metric-card"><div class="metric-label">Blokovi complete</div><div class="metric-val mono">${data.total_complete||25}</div><div class="metric-sub">od 170 planiranih</div></div>
+      <div class="metric-card"><div class="metric-label">Kumulativni testovi</div><div class="metric-val green mono">${(data.cumulative_tests||2531).toLocaleString()}</div><div class="metric-sub">100% GREEN</div></div>
+      <div class="metric-card"><div class="metric-label">Posljednji blok</div><div class="metric-val mono">${data.latest_block||170}</div><div class="metric-sub">ProductionOS API</div></div>
+      <div class="metric-card"><div class="metric-label">Completion</div><div class="metric-val mono">${pct}%</div><div class="metric-sub">${data.velocity?.blocks_per_day||23} blokova u sesiji</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">ERA overview</div>
+      <div class="progress-wrap" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px"><span>Ukupni napredak</span><span style="font-family:var(--mono)">${pct}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      ${eras.map(e=>`<div class="era-row">
+        <div class="era-num">${e.n}</div>
+        <div class="era-name">${e.name} <span style="color:var(--text3);font-weight:400">(${e.blocks})</span></div>
+        <div class="era-focus">${e.focus}</div>
+        <span class="badge ${e.done>=e.total?'badge-green':'badge-blue'}">${e.done}/${e.total}</span>
+      </div>`).join('')}
+    </div>`
+}
+
+async function renderChannels(){
+  const data=await api('/api/channels/status?workspace_id='+WS)||{channels:SIM.channels}
+  document.getElementById('topbar-actions').innerHTML=''
+  const channels=data.channels||SIM.channels
+  const chNames={gmail:'Gmail',slack:'Slack',telegram:'Telegram',instagram:'Instagram',linkedin:'LinkedIn'}
+  document.getElementById('main-content').innerHTML=`
+    <div class="channel-grid">
+      ${Object.entries(channels).map(([k,ch])=>`<div class="channel-card">
+        <div class="ch-header">
+          <div class="conn-dot ${ch.connected||k==='telegram'?'live':'sim'}"></div>
+          <div class="ch-name">${chNames[k]||k}</div>
+        </div>
+        <div class="ch-stats">${ch.total_today||0} poruka danas</div>
+        <div style="margin-top:6px">${statusBadge(ch.mode?.includes('live')?'live':'simulation')}</div>
+      </div>`).join('')}
+    </div>`
+}
+
+async function renderSaaS(){
+  const data=await api('/api/saas/admin/overview')||SIM.tenants
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('tenant')">+ Registruj tenanta</button>`
+  document.getElementById('main-content').innerHTML=`
+    <div class="metric-row">
+      <div class="metric-card"><div class="metric-label">Ukupno tenanta</div><div class="metric-val mono">${data.total_tenants||4}</div></div>
+      <div class="metric-card"><div class="metric-label">MRR</div><div class="metric-val green mono">€${(data.mrr_total_eur||1397).toLocaleString()}</div></div>
+      <div class="metric-card"><div class="metric-label">ARR</div><div class="metric-val mono">€${(data.arr_total_eur||16764).toLocaleString()}</div></div>
+      <div class="metric-card"><div class="metric-label">Trial tenanti</div><div class="metric-val amber mono">${data.trial_tenants||1}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tenanti</div>
+      <table class="tbl">
+        <thead><tr><th>Kompanija</th><th>Plan</th><th>Status</th><th>Dana aktivno</th><th>MRR</th></tr></thead>
+        <tbody>${(data.list||SIM.tenants.list).map(t=>`<tr>
+          <td style="font-weight:500">${t.company_name}</td>
+          <td><span class="badge badge-${t.plan==='enterprise'?'green':t.plan==='professional'?'blue':t.plan==='ajdin'?'green':'gray'}">${t.plan}</span></td>
+          <td>${statusBadge(t.status||'active')}</td>
+          <td style="font-family:var(--mono);color:var(--text3)">${t.days_active||'—'}</td>
+          <td style="font-family:var(--mono)">${t.mrr?'€'+t.mrr:t.plan==='ajdin'?'Free':'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`
+}
+
+function renderSettings(){
+  document.getElementById('topbar-actions').innerHTML=''
+  document.getElementById('main-content').innerHTML=`
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Konekcija</div>
+        <div class="setting-row"><div class="setting-label">API URL</div><input class="setting-input" id="url-input" value="${BASE}"></div>
+        <div class="setting-row"><div class="setting-label">Workspace ID</div><input class="setting-input" value="${WS}" readonly></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-ghost" onclick="BASE=document.getElementById('url-input').value;loadCurrent()">Test & Spoji</button>
+          <button class="btn btn-ghost" onclick="BASE='https://iris-api-production-bd20.up.railway.app';document.getElementById('url-input').value=BASE;loadCurrent()">Reset default</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">IRIS konfiguracija</div>
+        <div class="setting-row"><div class="setting-label">Mod</div><div class="setting-val">${isLive?'Live':'Simulation'}</div></div>
+        <div class="setting-row"><div class="setting-label">Soniox</div><div class="setting-val">Live (169724ff...)</div></div>
+        <div class="setting-row"><div class="setting-label">ContentOS</div><div class="setting-val">Nije konfigurisan</div></div>
+        <div class="setting-row"><div class="setting-label">Sai webhook</div><div class="setting-val">Nije konfigurisan</div></div>
+        <div class="setting-row"><div class="setting-label">Autopilot level</div><div class="setting-val">20% — Learning</div></div>
+        <div class="setting-row"><div class="setting-label">Tenanti</div><div class="setting-val">4 (1 owner + 3 sim)</div></div>
+      </div>
+    </div>`
+}
+
+function toggleSettings(){nav('settings',document.querySelector('.nav-item:last-child'))}
+
+function openModal(type){
+  const m={
+    deal:{title:'Novi deal',body:`<input placeholder="Deal naziv *" required><select><option>saas_client</option><option>partnership</option><option>investment</option></select><input placeholder="Estimated value (EUR)"><input placeholder="Contact ID"><button class="btn btn-ghost" style="width:100%;margin-top:4px" onclick="api('/api/deals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:'${WS}',title:document.querySelector('.modal input').value,deal_type:'saas_client'})}).then(()=>{closeModal();loadSection('deals')})">Kreiraj →</button>`},
+    task:{title:'Novi task',body:`<input placeholder="Task naziv *"><select><option value="content">content</option><option value="macmini">macmini</option><option value="sales">sales</option><option value="ajdin">ajdin</option></select><select><option>high</option><option>urgent</option><option>medium</option><option>low</option></select><input type="date" placeholder="Due date">`},
+    content:{title:'Brief ContentOS',body:`<select><option value="axis">AXIS — Blog/Long-form</option><option value="copy">COPY — Ad/Short-form</option><option value="reel">REEL — Video script</option></select><input placeholder="Topic *" id="brief-topic"><select><option>blog_post</option><option>social_caption</option><option>ad_copy</option><option>video_script</option></select><textarea placeholder="Dodatni kontekst / direction..."></textarea>`},
+    production:{title:'Novi produkcijski projekt',body:`<input placeholder="Naslov projekta *"><select><option>documentary</option><option>short_film</option><option>milestone_film</option><option>product_demo</option><option>brand_film</option></select><select><option>youtube</option><option>instagram</option><option>linkedin</option><option>internal</option></select><input placeholder="Trajanje (sekunde, npr. 180)"><textarea placeholder="Story arc / kontekst..."></textarea>`},
+    tenant:{title:'Registruj novog tenanta',body:`<input placeholder="Naziv kompanije *"><input placeholder="Email vlasnika *"><select><option>starter</option><option>professional</option><option>enterprise</option><option>trial</option></select><input placeholder="Industrija">`},
+  }[type]||{title:'Action',body:''}
+  document.getElementById('modal-title').textContent=m.title
+  document.getElementById('modal-body').innerHTML=m.body
+  document.getElementById('modal').classList.add('open')
+}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+function modalSubmit(){closeModal()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()})
+
+checkConn().then(()=>renderDashboard())
+setInterval(()=>{if(currentSection==='dashboard'||currentSection==='feed')loadSection(currentSection)},30000)
+</script>
+</body>
+</html>
