@@ -282,6 +282,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 <script>
 let BASE='https://iris-api-production-bd20.up.railway.app'
 const WS='00000000-0000-0000-0001-000000000001'
+const SB_URL='https://pxcuuxtbxnwbkpdxoulb.supabase.co'
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4Y3V1eHRieG53YmtwZHhvdWxiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDE5NDQ4NCwiZXhwIjoyMDg5NzcwNDg0fQ.GoidBdeNehHjgEBrt3tuYFvoPsUKoSh4eA-1uzgYlSI'
+async function sbGet(table,qs=''){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?workspace_id=eq.${WS}&${qs}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'count=exact'}});if(!r.ok)return null;return await r.json()}catch{return null}}
 let isLive=false
 let currentSection='dashboard'
 let modalCallback=null
@@ -485,9 +488,22 @@ async function renderFeed(){
 }
 
 async function renderContacts(){
-  const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:SIM.contacts}
+  const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:[]}
   document.getElementById('topbar-actions').innerHTML=''
-  const contacts=data.contacts||SIM.contacts
+  let contacts=data.contacts||[]
+  if(!contacts.length){
+    const sb=await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=100')
+    if(sb&&sb.length){contacts=sb.map(c=>({
+      display_name:c.display_name||c.first_name||c.username||'Unknown',
+      name:c.display_name||c.first_name||c.username||'Unknown',
+      metadata:{company:c.company||null},
+      rank:c.trust_level==='partner'?5:c.trust_level==='verified'?4:c.trust_level==='known'?3:c.trust_level==='stranger'?2:1,
+      sentiment_score:0.5,
+      last_seen_at:c.last_seen_at,
+      channel:c.channel_primary||c.channel||'telegram'
+    }))}
+  }
+  if(!contacts.length)contacts=SIM.contacts
   document.getElementById('main-content').innerHTML=`
     <div class="card">
       <div class="card-title">Contacts · ${contacts.length} ukupno</div>
@@ -527,9 +543,22 @@ async function renderDeals(){
 }
 
 async function renderTasks(){
-  const data=await api('/api/tasks?workspace_id='+WS)||{tasks:SIM.tasks}
+  const data=await api('/api/tasks?workspace_id='+WS)||{tasks:[]}
   document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('task')">+ Novi task</button>`
-  const tasks=data.tasks||SIM.tasks
+  let tasks=data.tasks||[]
+  if(!tasks.length){
+    const sb=await sbGet('iris_tasks','order=created_at.desc&limit=100')
+    if(sb&&sb.length){tasks=sb.map(t=>({
+      task_id:t.id,
+      title:t.title,
+      task_type:t.task_type||'task',
+      team:t.created_by||'iris',
+      status:t.status==='open'?'todo':t.status==='done'?'done':t.status==='in_progress'?'in_progress':t.status||'todo',
+      priority:t.priority||'medium',
+      due_date:t.due_date||null
+    }))}
+  }
+  if(!tasks.length)tasks=SIM.tasks
   const teams={content:'CONTENT',production:'PROD',macmini:'MAC',sales:'SALES',ajdin:'AJDIN'}
   document.getElementById('main-content').innerHTML=`
     <div class="card">
