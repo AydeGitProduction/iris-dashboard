@@ -522,19 +522,20 @@ async function renderContacts(){
   const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:[]}
   document.getElementById('topbar-actions').innerHTML=''
   // Always try Supabase first (to get contact IDs for detail view)
-  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,sentiment_score,telegram_id') || []
+  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,telegram_id,notes') || []
   let contacts = data.contacts || []
 
   // Name resolver: display_name → name → first+last → telegram_id → null
   const resolveName = c => c.display_name || c.name || [c.first_name,c.last_name].filter(Boolean).join(' ') || null
 
-  // Filter: keep only contacts with a name, exclude test users
-  const TEST_NAMES = ['TestUser','Block1User','NewUser','FreshUser','TestA','Test','T4Test User','T5Memory Test','TestUser T3Final','CtxTest','TestUser One','TestUser2']
+  // Filter: keep only real contacts, exclude all test/dev accounts
   const cleaned = sbContacts.filter(c => {
     const nm = resolveName(c)
     if(!nm) return false
-    if(TEST_NAMES.includes(nm)) return false
-    if(/^Test[A-Z0-9]/.test(nm)) return false
+    // Remove any name that starts with "Test" (case-insensitive), is a known test slug, or is a generic placeholder
+    if(/^test\b/i.test(nm)) return false
+    if(/^(Block1|FreshUser|NewUser|CtxTest|T[0-9]Test|T[0-9]Memory|TestUser)/i.test(nm)) return false
+    if(['test','ctxtest'].includes(nm.toLowerCase())) return false
     return true
   })
 
@@ -577,7 +578,7 @@ async function renderContacts(){
             <td style="font-weight:500">${nm}${ownerTag}</td>
             <td style="color:var(--text2)">${c.company||'—'}</td>
             <td>${statusBadge(c.trust_level||'stranger')}</td>
-            <td><span style="font-family:var(--mono);font-size:11px;color:${sentimentColor(c.sentiment_score)}">${Math.round((c.sentiment_score||0.5)*100)}%</span></td>
+            <td><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">—</span></td>
             <td style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
             <td style="color:var(--text3)">${c.channel_primary||c.channel||'telegram'}</td>
             <td style="color:var(--accent);font-size:11px">${c.id?'→':''}</td>
