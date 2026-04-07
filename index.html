@@ -315,6 +315,7 @@ const WS='00000000-0000-0000-0001-000000000001'
 const SB_URL='https://pxcuuxtbxnwbkpdxoulb.supabase.co'
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4Y3V1eHRieG53YmtwZHhvdWxiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDE5NDQ4NCwiZXhwIjoyMDg5NzcwNDg0fQ.GoidBdeNehHjgEBrt3tuYFvoPsUKoSh4eA-1uzgYlSI'
 async function sbGet(table,qs=''){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?workspace_id=eq.${WS}&${qs}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'count=exact'}});if(!r.ok)return null;return await r.json()}catch{return null}}
+async function sbGetRaw(table,qs=''){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?${qs}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});if(!r.ok)return null;return await r.json()}catch{return null}}
 let isLive=false
 let currentSection='dashboard'
 let modalCallback=null
@@ -521,11 +522,24 @@ async function renderContacts(){
   const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:[]}
   document.getElementById('topbar-actions').innerHTML=''
   // Always try Supabase first (to get contact IDs for detail view)
-  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=100') || []
+  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,sentiment_score,telegram_id') || []
   let contacts = data.contacts || []
 
+  // Name resolver: display_name → name → first+last → telegram_id → null
+  const resolveName = c => c.display_name || c.name || [c.first_name,c.last_name].filter(Boolean).join(' ') || null
+
+  // Filter: keep only contacts with a name, exclude test users
+  const TEST_NAMES = ['TestUser','Block1User','NewUser','FreshUser','TestA','Test','T4Test User','T5Memory Test','TestUser T3Final','CtxTest','TestUser One','TestUser2']
+  const cleaned = sbContacts.filter(c => {
+    const nm = resolveName(c)
+    if(!nm) return false
+    if(TEST_NAMES.includes(nm)) return false
+    if(/^Test[A-Z0-9]/.test(nm)) return false
+    return true
+  })
+
   // Prefer Supabase rows (they have the `id` needed for detail view)
-  const rows = sbContacts.length ? sbContacts : contacts.map(c=>({
+  const rows = cleaned.length ? cleaned : contacts.map(c=>({
     id: null,
     display_name: c.display_name||c.name||'Unknown',
     company: c.metadata?.company||c.company||null,
@@ -555,15 +569,20 @@ async function renderContacts(){
       <div class="card-title">Contacts · ${finalRows.length} ukupno</div>
       <table class="tbl">
         <thead><tr><th>Ime</th><th>Kompanija</th><th>Trust</th><th>Sentiment</th><th>Zadnji kontakt</th><th>Kanal</th><th></th></tr></thead>
-        <tbody>${finalRows.map(c=>`<tr style="cursor:${c.id?'pointer':'default'}" onclick="${c.id?`renderContactDetail('${c.id}','${(c.display_name||'').replace(/'/g,'')}')`:''}">
-          <td style="font-weight:500">${c.display_name||'—'}</td>
-          <td style="color:var(--text2)">${c.company||'—'}</td>
-          <td>${statusBadge(c.trust_level||'stranger')}</td>
-          <td><span style="font-family:var(--mono);font-size:11px;color:${sentimentColor(c.sentiment_score)}">${Math.round((c.sentiment_score||0.5)*100)}%</span></td>
-          <td style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
-          <td style="color:var(--text3)">${c.channel_primary||'telegram'}</td>
-          <td style="color:var(--accent);font-size:11px">${c.id?'→':''}</td>
-        </tr>`).join('')}</tbody>
+        <tbody>${finalRows.map(c=>{
+          const nm = resolveName(c)||'—'
+          const ownerTag = c.trust_level==='owner' ? ' <span style="font-size:9px;color:var(--text3)">(you)</span>' : ''
+          const onclick = c.id ? `renderContactDetail('${c.id}','${nm.replace(/'/g,'')}')` : ''
+          return `<tr style="cursor:${c.id?'pointer':'default'}" onclick="${onclick}">
+            <td style="font-weight:500">${nm}${ownerTag}</td>
+            <td style="color:var(--text2)">${c.company||'—'}</td>
+            <td>${statusBadge(c.trust_level||'stranger')}</td>
+            <td><span style="font-family:var(--mono);font-size:11px;color:${sentimentColor(c.sentiment_score)}">${Math.round((c.sentiment_score||0.5)*100)}%</span></td>
+            <td style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
+            <td style="color:var(--text3)">${c.channel_primary||c.channel||'telegram'}</td>
+            <td style="color:var(--accent);font-size:11px">${c.id?'→':''}</td>
+          </tr>`
+        }).join('')}</tbody>
       </table>
     </div>`
 }
@@ -830,7 +849,7 @@ async function renderCalendar(){
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje…</div></div>'
 
   const events = await sbGet('iris_calendar_events',
-    'order=start_time.asc&limit=200&select=id,title,description,start_time,end_time,status,attendees,source_contact_id')
+    'order=start_time.asc&limit=200&select=id,title,description,start_time,end_time,status,contact_id,metadata')
   || []
 
   if(!events.length){
@@ -907,45 +926,80 @@ async function renderContactDetail(contactId, contactName){
   document.getElementById('topbar-actions').innerHTML=''
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje…</div></div>'
 
-  const [contactArr, memories, calEvents] = await Promise.all([
-    sbGet('iris_contacts', `id=eq.${contactId}&limit=1`).then(r=>(r||[])),
-    sbGet('iris_memories', `entity_id=eq.${contactId}&status=eq.active&order=created_at.desc&limit=10`).then(r=>(r||[])),
-    sbGet('iris_calendar_events', `source_contact_id=eq.${contactId}&order=start_time.asc&limit=20`).then(r=>(r||[]))
-  ])
-
-  const c = contactArr[0] || {}
-  const initials = (c.display_name||c.first_name||contactName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
-
   function fmtISO(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('bs',{day:'numeric',month:'short',year:'numeric'})}
   function fmtTimeShort(iso){if(!iso)return'—';return new Date(iso).toLocaleTimeString('bs',{hour:'2-digit',minute:'2-digit'})}
+  function fmtDateTime(iso){if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('bs',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('bs',{hour:'2-digit',minute:'2-digit'})}
+
+  const [contactArr, memories, calEvents, convArr] = await Promise.all([
+    sbGet('iris_contacts', `id=eq.${contactId}&limit=1&select=*`).then(r=>(r||[])),
+    sbGet('iris_memories', `entity_id=eq.${contactId}&status=eq.active&order=created_at.desc&limit=15`).then(r=>(r||[])),
+    sbGet('iris_calendar_events', `contact_id=eq.${contactId}&order=start_time.asc&limit=20`).then(r=>(r||[])),
+    sbGet('conversations', `contact_id=eq.${contactId}&select=id&limit=20`).then(r=>(r||[]))
+  ])
+
+  // Fetch messages for this contact's conversations
+  let chatMessages = []
+  if(convArr.length > 0){
+    const ids = convArr.map(c=>c.id).join(',')
+    chatMessages = await sbGetRaw('messages',
+      `workspace_id=eq.${WS}&conversation_id=in.(${ids})&order=created_at.desc&limit=40&select=role,content_text,created_at,direction`
+    ).then(r=>Array.isArray(r)?r.reverse():[])
+  }
+
+  const c = contactArr[0] || {}
+  const fullName = c.display_name || c.name || [c.first_name,c.last_name].filter(Boolean).join(' ') || contactName || '?'
+  const initials = fullName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
 
   document.getElementById('main-content').innerHTML=`
     <button class="back-btn" onclick="nav('contacts',document.querySelector('[onclick*=contacts]'))">← Nazad na Contacts</button>
     <div class="contact-detail">
 
       <!-- LEFT: Profile card -->
-      <div>
+      <div style="display:flex;flex-direction:column;gap:14px">
         <div class="card">
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
             <div class="contact-avatar">${initials}</div>
             <div>
-              <div style="font-size:15px;font-weight:500">${c.display_name||c.first_name||contactName||'—'}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px">@${c.username||'—'}</div>
+              <div style="font-size:15px;font-weight:500">${fullName}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">${c.username ? '@'+c.username : c.telegram_id ? 'tg: '+c.telegram_id : c.email || '—'}</div>
             </div>
           </div>
           <div class="contact-field"><div class="contact-field-label">Kompanija</div><div class="contact-field-value">${c.company||'—'}</div></div>
+          ${c.occupation?`<div class="contact-field"><div class="contact-field-label">Pozicija</div><div class="contact-field-value">${c.occupation}</div></div>`:''}
           <div class="contact-field"><div class="contact-field-label">Trust level</div><div class="contact-field-value">${statusBadge(c.trust_level||'stranger')}</div></div>
           <div class="contact-field"><div class="contact-field-label">Kanal</div><div class="contact-field-value">${c.channel_primary||c.channel||'—'}</div></div>
           <div class="contact-field"><div class="contact-field-label">Zadnji kontakt</div><div class="contact-field-value">${fmtISO(c.last_seen_at)}</div></div>
-          <div class="contact-field"><div class="contact-field-label">Kontakt ID</div><div class="contact-field-value" style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.id||contactId}</div></div>
+          ${c.notes?`<div class="contact-field" style="flex-direction:column;align-items:flex-start;gap:4px"><div class="contact-field-label">Napomene</div><div style="color:var(--text2);font-size:11px;line-height:1.5">${c.notes}</div></div>`:''}
+          <div class="contact-field"><div class="contact-field-label">ID</div><div class="contact-field-value" style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.id||contactId}</div></div>
+        </div>
+
+        <!-- Calendar events for this contact -->
+        <div class="card">
+          <div class="card-title">📅 Zakazani događaji · ${calEvents.length}</div>
+          ${calEvents.length ? calEvents.map(ev=>`
+            <div class="cal-event" style="margin-bottom:6px">
+              <div>
+                <div class="cal-date-day">${ev.start_time?new Date(ev.start_time).getDate():'?'}</div>
+                <div class="cal-date">${ev.start_time?new Date(ev.start_time).toLocaleString('default',{month:'short'}):''}</div>
+              </div>
+              <div>
+                <div class="cal-title">${ev.title||'Bez naslova'}</div>
+                <div class="cal-meta">${ev.description||ev.metadata?.raw_text||''}</div>
+              </div>
+              <div>
+                <div class="cal-time">${fmtTimeShort(ev.start_time)}</div>
+                <div style="margin-top:4px">${statusBadge(ev.status||'confirmed')}</div>
+              </div>
+            </div>`).join('') :
+            '<div class="empty" style="padding:12px 0"><div class="empty-text">Nema zakazanih događaja</div></div>'}
         </div>
       </div>
 
-      <!-- RIGHT: Memories + Events -->
+      <!-- RIGHT: Memories + Chat History -->
       <div style="display:flex;flex-direction:column;gap:14px">
 
         <div class="card">
-          <div class="card-title">IRIS Memories · ${memories.length} zapisa</div>
+          <div class="card-title">🧠 IRIS Memories · ${memories.length} zapisa</div>
           ${memories.length ? memories.map(m=>`
             <div class="memory-item">
               <div class="memory-date">${fmtISO(m.created_at)} · ${m.memory_type||'conversation'}</div>
@@ -955,23 +1009,20 @@ async function renderContactDetail(contactId, contactName){
         </div>
 
         <div class="card">
-          <div class="card-title">Zakazani događaji · ${calEvents.length}</div>
-          ${calEvents.length ? calEvents.map(ev=>`
-            <div class="cal-event" style="margin-bottom:6px">
-              <div>
-                <div class="cal-date-day">${ev.start_time?new Date(ev.start_time).getDate():'?'}</div>
-                <div class="cal-date">${ev.start_time?new Date(ev.start_time).toLocaleString('default',{month:'short'}):''}</div>
-              </div>
-              <div>
-                <div class="cal-title">${ev.title||'Bez naslova'}</div>
-                <div class="cal-meta">${ev.description||''}</div>
-              </div>
-              <div>
-                <div class="cal-time">${fmtTimeShort(ev.start_time)}</div>
-                <div style="margin-top:4px">${statusBadge(ev.status||'confirmed')}</div>
-              </div>
-            </div>`).join('') :
-            '<div class="empty" style="padding:16px 0"><div class="empty-text">Nema zakazanih događaja</div></div>'}
+          <div class="card-title">💬 Chat historija · ${chatMessages.length} poruka</div>
+          ${chatMessages.length ? `
+            <div style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;padding-right:4px">
+              ${chatMessages.map(m=>{
+                const isUser = m.role==='user'||m.direction==='inbound'
+                const txt = m.content_text||''
+                if(!txt.trim()) return ''
+                return `<div style="display:flex;flex-direction:column;align-items:${isUser?'flex-start':'flex-end'};gap:2px">
+                  <div style="max-width:85%;background:${isUser?'var(--bg3)':'rgba(29,158,117,0.12)'};border:1px solid ${isUser?'var(--border)':'rgba(29,158,117,0.2)'};border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.5;color:var(--text)">${txt.length>400?txt.slice(0,400)+'…':txt}</div>
+                  <div style="font-size:10px;color:var(--text3);padding:0 4px">${isUser?fullName+' · ':'IRIS · '}${fmtDateTime(m.created_at)}</div>
+                </div>`
+              }).filter(Boolean).join('')}
+            </div>` :
+            '<div class="empty" style="padding:16px 0"><div class="empty-text">Nema poruka za ovaj kontakt</div></div>'}
         </div>
 
       </div>
