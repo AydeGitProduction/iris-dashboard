@@ -928,11 +928,13 @@ function _renderCalView(){
   if(popup) popup.remove()
 
   const now = new Date()
-  const todayStr = now.toISOString().slice(0,10)
+  // Use local date (not UTC) to avoid timezone shift bugs
+  function _localDs(d){ const dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0') }
+  const todayStr = _localDs(now)
 
   function evClass(ev){
     if(!ev.start_time) return 'upcoming'
-    const d = ev.start_time.slice(0,10)
+    const d = _localDs(ev.start_time)
     if(d===todayStr) return 'today'
     if(d < todayStr) return 'overdue'
     return 'upcoming'
@@ -1021,7 +1023,7 @@ function _renderCalView(){
     const byDate = {}
     for(const ev of _calEvents){
       if(!ev.start_time) continue
-      const k = new Date(ev.start_time).toISOString().slice(0,10)
+      const k = _localDs(ev.start_time)
       if(!byDate[k]) byDate[k]=[]
       byDate[k].push(ev)
     }
@@ -1032,7 +1034,7 @@ function _renderCalView(){
     const dowHtml = DOW_FULL.map(d=>`<div class="cal-dow">${d}</div>`).join('')
     const weeksHtml = weeks.map(week=>`
       <div class="cal-week">${week.map(({date,cur})=>{
-        const ds = date.toISOString().slice(0,10)
+        const ds = _localDs(date)
         const isToday = ds===todayStr
         const evs = byDate[ds]||[]
         const chips = evs.slice(0,3).map(ev=>{
@@ -1063,9 +1065,9 @@ function _renderCalView(){
     for(let i=0;i<7;i++){
       const d = new Date(weekStart)
       d.setDate(weekStart.getDate()+i)
-      const ds = d.toISOString().slice(0,10)
+      const ds = _localDs(d)
       const isToday = ds===todayStr
-      const evs = _calEvents.filter(ev=>ev.start_time && new Date(ev.start_time).toISOString().slice(0,10)===ds)
+      const evs = _calEvents.filter(ev=>ev.start_time && _localDs(ev.start_time)===ds)
       const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
       const wkDay = dayNames[d.getDay()]
       const evHtml = evs.length ? evs.map(ev=>{
@@ -1091,8 +1093,8 @@ function _renderCalView(){
 
   // ── LIST VIEW ────────────────────────────────────────────────────────────────
   } else {
-    const upcoming = _calEvents.filter(ev=>ev.start_time && new Date(ev.start_time).toISOString().slice(0,10)>=todayStr)
-    const past = _calEvents.filter(ev=>ev.start_time && new Date(ev.start_time).toISOString().slice(0,10)<todayStr).reverse().slice(0,8)
+    const upcoming = _calEvents.filter(ev=>ev.start_time && _localDs(ev.start_time)>=todayStr)
+    const past = _calEvents.filter(ev=>ev.start_time && _localDs(ev.start_time)<todayStr).reverse().slice(0,8)
     function listItem(ev){
       const cls=evClass(ev)
       const col=evColor(cls)
