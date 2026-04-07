@@ -156,11 +156,73 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .deal-meta{font-size:10px;color:var(--text3);font-family:var(--mono)}
 .deal-card.stalled{border-color:rgba(240,160,48,0.3)}
 
-/* CALENDAR */
-.cal-month{margin-bottom:24px}
-.cal-month-label{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.cal-event{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:start;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;margin-bottom:6px;transition:border-color .15s}
-.cal-event:hover{border-color:var(--border2)}
+/* CALENDAR — Google/Apple style */
+.cal-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.cal-header-left{display:flex;align-items:center;gap:10px}
+.cal-month-title{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-.3px}
+.cal-year{font-size:20px;font-weight:300;color:var(--text2);margin-left:4px}
+.cal-nav-btn{background:transparent;border:1px solid var(--border);color:var(--text2);font-size:16px;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1}
+.cal-nav-btn:hover{background:var(--bg3);border-color:var(--border2)}
+.cal-today-btn{padding:5px 14px;border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s}
+.cal-today-btn:hover{background:var(--bg3);border-color:var(--border2)}
+.cal-view-btns{display:flex;background:var(--bg3);border-radius:6px;padding:2px;gap:1px}
+.cal-view-btn{padding:4px 12px;border:none;border-radius:4px;font-size:11px;cursor:pointer;background:transparent;color:var(--text3);transition:all .15s}
+.cal-view-btn.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+/* Month grid */
+.cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border)}
+.cal-dow{text-align:center;font-size:11px;font-weight:500;letter-spacing:.5px;color:var(--text3);padding:8px 0;text-transform:uppercase}
+.cal-weeks{display:flex;flex-direction:column}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day{min-height:110px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 8px;cursor:pointer;transition:background .1s;position:relative;overflow:hidden}
+.cal-day:nth-child(7n){border-right:none}
+.cal-week:last-child .cal-day{border-bottom:none}
+.cal-day:hover{background:rgba(255,255,255,.03)}
+.cal-day.other-month .cal-day-num{color:var(--text3);opacity:.4}
+.cal-day-num{font-size:13px;color:var(--text2);width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:3px;font-weight:400}
+.cal-day.today .cal-day-num{background:var(--accent);color:#fff;font-weight:600}
+.cal-chip{font-size:11px;padding:2px 7px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.5;display:block}
+.cal-chip.upcoming{background:rgba(66,133,244,.25);color:#7eb4ff}
+.cal-chip.today{background:rgba(29,158,117,.25);color:var(--accent)}
+.cal-chip.overdue{background:rgba(234,67,53,.2);color:#ff8a80}
+.cal-chip:hover{opacity:.8}
+/* Event detail popup */
+.cal-popup{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:16px 18px;z-index:1000;min-width:260px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none}
+.cal-popup.open{display:block}
+.cal-popup-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;padding-right:24px;line-height:1.3}
+.cal-popup-row{font-size:12px;color:var(--text2);margin-bottom:5px;display:flex;gap:8px;align-items:flex-start}
+.cal-popup-label{color:var(--text3);min-width:56px;font-family:var(--mono);font-size:11px;padding-top:1px}
+.cal-popup-close{position:absolute;top:10px;right:12px;cursor:pointer;color:var(--text3);font-size:18px;line-height:1;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .1s}
+.cal-popup-close:hover{background:var(--bg3);color:var(--text)}
+/* Week view */
+.cal-week-view{display:flex;flex-direction:column}
+.cal-week-day-row{display:grid;grid-template-columns:72px 1fr;min-height:52px;border-bottom:1px solid var(--border)}
+.cal-week-day-row:last-child{border-bottom:none}
+.cal-week-label{font-size:11px;color:var(--text3);padding:12px 12px 0;text-align:right;line-height:1.4}
+.cal-week-label .wk-num{font-size:22px;font-weight:300;color:var(--text2);display:block;line-height:1.1}
+.cal-week-label .wk-num.today-num{color:var(--accent);font-weight:600}
+.cal-week-label .wk-day{font-size:10px;letter-spacing:.5px;text-transform:uppercase}
+.cal-week-label .wk-day.today-day{color:var(--accent)}
+.cal-week-events{padding:8px 12px;display:flex;flex-direction:column;gap:4px}
+.cal-week-event{padding:5px 10px;border-radius:4px;font-size:12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:opacity .15s}
+.cal-week-event:hover{opacity:.8}
+.cal-week-event .ev-time{font-family:var(--mono);font-size:10px;color:inherit;opacity:.75;min-width:40px;flex-shrink:0}
+/* List view */
+.cal-list-section{padding:0 18px 12px}
+.cal-list-section-title{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);padding:14px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.cal-list-item{display:flex;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all .1s}
+.cal-list-item:last-child{border-bottom:none}
+.cal-list-item:hover .cal-list-title{color:var(--accent)}
+.cal-list-date-block{text-align:right;min-width:58px;flex-shrink:0}
+.cal-list-month{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+.cal-list-day{font-size:22px;font-weight:300;color:var(--text2);line-height:1.1}
+.cal-list-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.cal-list-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.cal-list-meta{font-size:11px;color:var(--text3)}
+.cal-list-date{font-family:var(--mono);font-size:11px;color:var(--text2);min-width:90px}
+.cal-list-dot-old{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* Legacy list items kept for contact detail */
+.cal-event{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:start;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;margin-bottom:6px}
 .cal-event.today{border-left:2px solid var(--accent)}
 .cal-event.overdue{border-left:2px solid var(--danger)}
 .cal-event.upcoming{border-left:2px solid var(--info)}
@@ -845,81 +907,222 @@ function renderSettings(){
 function toggleSettings(){nav('settings',document.querySelector('.nav-item:last-child'))}
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
+// ── CALENDAR STATE ────────────────────────────────────────────────────────────
+let _calEvents = []
+let _calViewMonth = new Date()
+let _calView = 'month' // month | week | list
+
 async function renderCalendar(){
   document.getElementById('topbar-actions').innerHTML=''
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje…</div></div>'
+  _calEvents = await sbGet('iris_calendar_events',
+    'order=start_time.asc&limit=500&select=id,title,description,start_time,end_time,status,contact_id,metadata') || []
+  _calViewMonth = new Date()
+  _calView = 'month'
+  _renderCalView()
+}
 
-  const events = await sbGet('iris_calendar_events',
-    'order=start_time.asc&limit=200&select=id,title,description,start_time,end_time,status,contact_id,metadata')
-  || []
-
-  if(!events.length){
-    document.getElementById('main-content').innerHTML=`
-      <div class="card">
-        <div class="card-title">Ajdin's Calendar</div>
-        <div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Nema zakazanih događaja</div></div>
-      </div>`
-    return
-  }
+function _renderCalView(){
+  const mc = document.getElementById('main-content')
+  const popup = document.getElementById('cal-popup')
+  if(popup) popup.remove()
 
   const now = new Date()
-  const today = now.toISOString().slice(0,10)
-
-  // Group by month
-  const byMonth = {}
-  for(const ev of events){
-    const d = ev.start_time ? new Date(ev.start_time) : null
-    const key = d ? d.toLocaleString('default',{month:'long',year:'numeric'}) : 'Neodređen datum'
-    if(!byMonth[key]) byMonth[key]=[]
-    byMonth[key].push(ev)
-  }
+  const todayStr = now.toISOString().slice(0,10)
 
   function evClass(ev){
-    if(!ev.start_time) return ''
+    if(!ev.start_time) return 'upcoming'
     const d = ev.start_time.slice(0,10)
-    if(d===today) return 'today'
-    if(d < today) return 'overdue'
+    if(d===todayStr) return 'today'
+    if(d < todayStr) return 'overdue'
     return 'upcoming'
   }
-
-  function fmtTime(iso){
+  function fmtT(iso){
+    if(!iso) return ''
+    const d = new Date(iso)
+    return d.toLocaleTimeString('default',{hour:'2-digit',minute:'2-digit'})
+  }
+  function fmtDateShort(iso){
     if(!iso) return '—'
-    const d=new Date(iso)
-    return d.toLocaleTimeString('bs',{hour:'2-digit',minute:'2-digit'})
+    const d = new Date(iso)
+    return d.toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+  }
+  function evColor(cls){ return cls==='today'?'#1d9e75':cls==='overdue'?'#ea4335':'#4285f4' }
+
+  function showPopup(ev, x, y){
+    const old = document.getElementById('cal-popup')
+    if(old) old.remove()
+    const cls = evClass(ev)
+    const col = evColor(cls)
+    const p = document.createElement('div')
+    p.id = 'cal-popup'
+    p.className = 'cal-popup open'
+    const px = Math.min(x+10, window.innerWidth-360)
+    const py = Math.min(y, window.innerHeight-220)
+    p.style.left = Math.max(10, px)+'px'
+    p.style.top = Math.max(10, py)+'px'
+    p.innerHTML = `
+      <span class="cal-popup-close" onclick="document.getElementById('cal-popup').remove()">✕</span>
+      <div style="width:4px;height:36px;background:${col};border-radius:2px;float:left;margin-right:12px;margin-bottom:8px"></div>
+      <div class="cal-popup-title">${ev.title||'Bez naslova'}</div>
+      <div style="clear:both"></div>
+      <div class="cal-popup-row"><span class="cal-popup-label">Datum</span><span>${fmtDateShort(ev.start_time)}</span></div>
+      <div class="cal-popup-row"><span class="cal-popup-label">Vrijeme</span><span>${fmtT(ev.start_time)||'Cijeli dan'}</span></div>
+      ${ev.description?`<div class="cal-popup-row"><span class="cal-popup-label">Opis</span><span>${ev.description}</span></div>`:''}
+      <div class="cal-popup-row"><span class="cal-popup-label">Status</span><span>${statusBadge(ev.status||'confirmed')}</span></div>`
+    document.body.appendChild(p)
+    setTimeout(()=>document.addEventListener('click', function h(e){
+      if(!p.contains(e.target)){p.remove();document.removeEventListener('click',h)}
+    }),10)
   }
 
-  function fmtDay(iso){
-    if(!iso) return {day:'?',wd:''}
-    const d=new Date(iso)
-    return {day:d.getDate(), wd:d.toLocaleString('default',{weekday:'short'})}
+  window._calShowEv = (id, e) => {
+    e && e.stopPropagation()
+    const ev = _calEvents.find(x=>x.id===id)
+    if(ev) showPopup(ev, e?.clientX||400, e?.clientY||200)
   }
 
-  const html = Object.entries(byMonth).map(([month, evs])=>`
-    <div class="cal-month">
-      <div class="cal-month-label">${month}</div>
-      ${evs.map(ev=>{
-        const {day,wd}=fmtDay(ev.start_time)
-        const cls=evClass(ev)
-        const attendees = Array.isArray(ev.attendees) ? ev.attendees.join(', ') : (ev.attendees||'')
-        return `<div class="cal-event ${cls}">
-          <div>
-            <div class="cal-date-day">${day}</div>
-            <div class="cal-date">${wd}</div>
-          </div>
-          <div>
-            <div class="cal-title">${ev.title||'Bez naslova'}</div>
-            <div class="cal-meta">${ev.description||''}${attendees?` · 👤 ${attendees}`:''}</div>
-          </div>
-          <div>
-            <div class="cal-time">${fmtTime(ev.start_time)}</div>
-            <div style="margin-top:4px">${statusBadge(ev.status||'confirmed')}</div>
-          </div>
+  const y = _calViewMonth.getFullYear()
+  const m = _calViewMonth.getMonth()
+  const monthNames = ['Januar','Februar','Mart','April','Maj','Juni','Juli','August','Septembar','Oktobar','Novembar','Decembar']
+  const DOW_FULL = ['Pon','Uto','Sri','Čet','Pet','Sub','Ned']
+
+  // ── HEADER ──────────────────────────────────────────────────────────────────
+  const header = `
+    <div class="cal-header">
+      <div class="cal-header-left">
+        <button class="cal-today-btn" onclick="_calViewMonth=new Date();_renderCalView()">Danas</button>
+        <button class="cal-nav-btn" onclick="_calViewMonth=new Date(_calViewMonth.getFullYear(),_calViewMonth.getMonth()-1,1);_renderCalView()">‹</button>
+        <button class="cal-nav-btn" onclick="_calViewMonth=new Date(_calViewMonth.getFullYear(),_calViewMonth.getMonth()+1,1);_renderCalView()">›</button>
+        <span class="cal-month-title">${monthNames[m]}</span><span class="cal-year">${y}</span>
+      </div>
+      <div class="cal-view-btns">
+        <button class="cal-view-btn ${_calView==='month'?'active':''}" onclick="_calView='month';_renderCalView()">Mjesec</button>
+        <button class="cal-view-btn ${_calView==='week'?'active':''}" onclick="_calView='week';_renderCalView()">Sedmica</button>
+        <button class="cal-view-btn ${_calView==='list'?'active':''}" onclick="_calView='list';_renderCalView()">Lista</button>
+      </div>
+    </div>`
+
+  // ── MONTH VIEW ──────────────────────────────────────────────────────────────
+  if(_calView === 'month'){
+    const firstDay = new Date(y, m, 1)
+    const lastDay = new Date(y, m+1, 0)
+    let startDow = firstDay.getDay()
+    startDow = (startDow===0)?6:startDow-1
+
+    const days = []
+    for(let i=0;i<startDow;i++){
+      days.push({date:new Date(y,m,1-startDow+i),cur:false})
+    }
+    for(let i=1;i<=lastDay.getDate();i++) days.push({date:new Date(y,m,i),cur:true})
+    const rem = (7 - days.length%7)%7
+    for(let i=1;i<=rem;i++) days.push({date:new Date(y,m+1,i),cur:false})
+
+    const byDate = {}
+    for(const ev of _calEvents){
+      if(!ev.start_time) continue
+      const k = new Date(ev.start_time).toISOString().slice(0,10)
+      if(!byDate[k]) byDate[k]=[]
+      byDate[k].push(ev)
+    }
+
+    const weeks = []
+    for(let i=0;i<days.length;i+=7) weeks.push(days.slice(i,i+7))
+
+    const dowHtml = DOW_FULL.map(d=>`<div class="cal-dow">${d}</div>`).join('')
+    const weeksHtml = weeks.map(week=>`
+      <div class="cal-week">${week.map(({date,cur})=>{
+        const ds = date.toISOString().slice(0,10)
+        const isToday = ds===todayStr
+        const evs = byDate[ds]||[]
+        const chips = evs.slice(0,3).map(ev=>{
+          const cls=evClass(ev)
+          const t = fmtT(ev.start_time)
+          return `<div class="cal-chip ${cls}" onclick="event.stopPropagation();window._calShowEv('${ev.id}',event)">${t?t+' ':''}<b style="font-weight:500">${(ev.title||'Event').slice(0,24)}</b></div>`
+        }).join('')
+        const more = evs.length>3?`<div style="font-size:10px;color:var(--text3);padding:0 2px">+${evs.length-3} više</div>`:''
+        return `<div class="cal-day${!cur?' other-month':''}${isToday?' today':''}">
+          <div class="cal-day-num">${date.getDate()}</div>
+          ${chips}${more}
         </div>`
-      }).join('')}
-    </div>`).join('')
+      }).join('')}</div>`).join('')
 
-  document.getElementById('main-content').innerHTML=`<div class="card"><div class="card-title">Ajdin's Calendar · ${events.length} događaj${events.length===1?'':'a'}</div>${html}</div>`
+    mc.innerHTML = `<div class="cal-wrap">
+      ${header}
+      <div class="cal-dow-row">${dowHtml}</div>
+      <div class="cal-weeks">${weeksHtml}</div>
+    </div>`
+
+  // ── WEEK VIEW ───────────────────────────────────────────────────────────────
+  } else if(_calView === 'week'){
+    const dow = now.getDay()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - (dow===0?6:dow-1))
+
+    const rows = []
+    for(let i=0;i<7;i++){
+      const d = new Date(weekStart)
+      d.setDate(weekStart.getDate()+i)
+      const ds = d.toISOString().slice(0,10)
+      const isToday = ds===todayStr
+      const evs = _calEvents.filter(ev=>ev.start_time && new Date(ev.start_time).toISOString().slice(0,10)===ds)
+      const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
+      const wkDay = dayNames[d.getDay()]
+      const evHtml = evs.length ? evs.map(ev=>{
+        const cls=evClass(ev)
+        const col=evColor(cls)
+        return `<div class="cal-week-event" style="background:${col}20;border-left:3px solid ${col};color:${cls==='overdue'?'#ff8a80':cls==='today'?'var(--accent)':'#7eb4ff'}" onclick="window._calShowEv('${ev.id}',event)">
+          <span class="ev-time">${fmtT(ev.start_time)||'Cijeli dan'}</span>
+          <span style="font-weight:500">${ev.title||'Bez naslova'}</span>
+        </div>`
+      }).join('') : `<div style="font-size:11px;color:var(--text3);padding:14px 0;opacity:.4">—</div>`
+      rows.push(`<div class="cal-week-day-row">
+        <div class="cal-week-label">
+          <span class="wk-day${isToday?' today-day':''}">${wkDay}</span>
+          <span class="wk-num${isToday?' today-num':''}">${d.getDate()}</span>
+        </div>
+        <div class="cal-week-events">${evHtml}</div>
+      </div>`)
+    }
+    mc.innerHTML = `<div class="cal-wrap">
+      ${header}
+      <div class="cal-week-view">${rows.join('')}</div>
+    </div>`
+
+  // ── LIST VIEW ────────────────────────────────────────────────────────────────
+  } else {
+    const upcoming = _calEvents.filter(ev=>ev.start_time && new Date(ev.start_time).toISOString().slice(0,10)>=todayStr)
+    const past = _calEvents.filter(ev=>ev.start_time && new Date(ev.start_time).toISOString().slice(0,10)<todayStr).reverse().slice(0,8)
+    function listItem(ev){
+      const cls=evClass(ev)
+      const col=evColor(cls)
+      const d=new Date(ev.start_time)
+      const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
+      const monNames=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec']
+      return `<div class="cal-list-item" onclick="window._calShowEv('${ev.id}',event)">
+        <div class="cal-list-date-block">
+          <div class="cal-list-month">${monNames[d.getMonth()]}</div>
+          <div class="cal-list-day" style="color:${col}">${d.getDate()}</div>
+        </div>
+        <div class="cal-list-dot" style="background:${col}"></div>
+        <div style="flex:1;min-width:0">
+          <div class="cal-list-title">${ev.title||'Bez naslova'}</div>
+          <div class="cal-list-meta">${dayNames[d.getDay()]}, ${fmtT(ev.start_time)||'Cijeli dan'}${ev.description?' · '+ev.description.slice(0,60):''}</div>
+        </div>
+        ${statusBadge(ev.status||'confirmed')}
+      </div>`
+    }
+    const upHtml = upcoming.length ? upcoming.map(listItem).join('') : '<div class="empty" style="padding:24px 0"><div class="empty-text">Nema nadolazećih događaja</div></div>'
+    const pastHtml = past.length ? `<div class="cal-list-section"><div class="cal-list-section-title">Prošli</div>${past.map(listItem).join('')}</div>` : ''
+    mc.innerHTML = `<div class="cal-wrap">
+      ${header}
+      <div class="cal-list-section"><div class="cal-list-section-title">Nadolazeći</div>${upHtml}</div>
+      ${pastHtml}
+    </div>`
+  }
+
 }
+
 
 // ── CONTACT DETAIL ────────────────────────────────────────────────────────────
 async function renderContactDetail(contactId, contactName){
