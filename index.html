@@ -584,7 +584,7 @@ async function renderContacts(){
   const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:[]}
   document.getElementById('topbar-actions').innerHTML=''
   // Always try Supabase first (to get contact IDs for detail view)
-  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,role,trust_level,last_seen_at,channel_primary,channel,telegram_id,email,phone,notes') || []
+  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,telegram_id,email,phone,notes') || []
   let contacts = data.contacts || []
 
   // Name resolver: display_name → name → first+last → telegram_id → null
