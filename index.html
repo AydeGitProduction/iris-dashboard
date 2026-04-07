@@ -584,7 +584,7 @@ async function renderContacts(){
   const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:[]}
   document.getElementById('topbar-actions').innerHTML=''
   // Always try Supabase first (to get contact IDs for detail view)
-  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,telegram_id,notes') || []
+  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,role,trust_level,last_seen_at,channel_primary,channel,telegram_id,email,phone,notes') || []
   let contacts = data.contacts || []
 
   // Name resolver: display_name → name → first+last → telegram_id → null
@@ -631,16 +631,20 @@ async function renderContacts(){
     <div class="card">
       <div class="card-title">Contacts · ${finalRows.length} ukupno</div>
       <table class="tbl">
-        <thead><tr><th>Ime</th><th>Kompanija</th><th>Trust</th><th>Sentiment</th><th>Zadnji kontakt</th><th>Kanal</th><th></th></tr></thead>
+        <thead><tr><th>Ime</th><th>Kompanija / Pozicija</th><th>Kontakt info</th><th>Trust</th><th>Zadnji kontakt</th><th>Kanal</th><th></th></tr></thead>
         <tbody>${finalRows.map(c=>{
           const nm = resolveName(c)||'—'
           const ownerTag = c.trust_level==='owner' ? ' <span style="font-size:9px;color:var(--text3)">(you)</span>' : ''
           const onclick = c.id ? `renderContactDetail('${c.id}','${nm.replace(/'/g,'')}')` : ''
+          const emailLink = c.email ? `<a href="mailto:${c.email}" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;font-size:11px">${c.email}</a>` : ''
+          const phoneLink = c.phone ? `<span style="color:var(--text2);font-size:11px">${c.phone}</span>` : ''
+          const contactInfo = [emailLink, phoneLink].filter(Boolean).join('<br>')
+          const roleText = c.role ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${c.role}</div>` : ''
           return `<tr style="cursor:${c.id?'pointer':'default'}" onclick="${onclick}">
             <td style="font-weight:500">${nm}${ownerTag}</td>
-            <td style="color:var(--text2)">${c.company||'—'}</td>
+            <td style="color:var(--text2)">${c.company||'—'}${roleText}</td>
+            <td>${contactInfo||'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
             <td>${statusBadge(c.trust_level||'stranger')}</td>
-            <td><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">—</span></td>
             <td style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
             <td style="color:var(--text3)">${c.channel_primary||c.channel||'telegram'}</td>
             <td style="color:var(--accent);font-size:11px">${c.id?'→':''}</td>
@@ -1167,11 +1171,13 @@ async function renderContactDetail(contactId, contactName){
             <div class="contact-avatar">${initials}</div>
             <div>
               <div style="font-size:15px;font-weight:500">${fullName}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px">${c.username ? '@'+c.username : c.telegram_id ? 'tg: '+c.telegram_id : c.email || '—'}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">${c.username ? '@'+c.username : c.telegram_id ? 'tg: '+c.telegram_id : '—'}</div>
             </div>
           </div>
           <div class="contact-field"><div class="contact-field-label">Kompanija</div><div class="contact-field-value">${c.company||'—'}</div></div>
-          ${c.occupation?`<div class="contact-field"><div class="contact-field-label">Pozicija</div><div class="contact-field-value">${c.occupation}</div></div>`:''}
+          ${(c.role||c.occupation)?`<div class="contact-field"><div class="contact-field-label">Pozicija</div><div class="contact-field-value">${c.role||c.occupation}</div></div>`:''}
+          ${c.email?`<div class="contact-field"><div class="contact-field-label">E-mail</div><div class="contact-field-value"><a href="mailto:${c.email}" style="color:var(--accent);text-decoration:none">${c.email}</a></div></div>`:''}
+          ${c.phone?`<div class="contact-field"><div class="contact-field-label">Telefon</div><div class="contact-field-value"><a href="tel:${c.phone}" style="color:var(--accent);text-decoration:none">${c.phone}</a></div></div>`:''}
           <div class="contact-field"><div class="contact-field-label">Trust level</div><div class="contact-field-value">${statusBadge(c.trust_level||'stranger')}</div></div>
           <div class="contact-field"><div class="contact-field-label">Kanal</div><div class="contact-field-value">${c.channel_primary||c.channel||'—'}</div></div>
           <div class="contact-field"><div class="contact-field-label">Zadnji kontakt</div><div class="contact-field-value">${fmtISO(c.last_seen_at)}</div></div>
