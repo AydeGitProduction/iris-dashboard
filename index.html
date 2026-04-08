@@ -122,6 +122,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .modal textarea{height:80px;resize:vertical}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 
+/* TASK DETAIL PANEL */
+.task-detail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;justify-content:flex-end}
+.task-detail-overlay.open{display:flex}
+.task-detail-panel{background:var(--bg2);border-left:1px solid var(--border2);width:500px;max-width:96vw;height:100%;overflow-y:auto;padding:28px 24px;animation:slideInRight .22s ease}
+@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.td-section{margin-bottom:16px}
+.td-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin-bottom:4px}
+.td-value{font-size:13px;color:var(--text);line-height:1.5}
+.td-body{font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6;background:var(--bg3);padding:10px 12px;border-radius:6px;border:1px solid var(--border);margin-top:4px}
+.td-proposed{padding:12px 14px;background:rgba(29,158,117,0.08);border:1px solid rgba(29,158,117,0.25);border-radius:6px;margin-bottom:16px}
+.td-proposed .td-label{color:var(--accent)}
+.td-proposed .td-value{font-size:15px;font-weight:600;color:var(--accent);font-family:var(--mono)}
+
 /* PROGRESS */
 .progress-wrap{margin-bottom:16px}
 .progress-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px}
@@ -375,6 +388,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
   </div>
 </div>
 
+<!-- TASK DETAIL PANEL -->
+<div class="task-detail-overlay" id="task-detail-overlay" onclick="if(event.target===this)closeTaskDetail()">
+  <div class="task-detail-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <span style="font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;font-family:var(--mono)">Task detalji</span>
+      <button onclick="closeTaskDetail()" style="background:transparent;border:1px solid var(--border);color:var(--text2);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'">×</button>
+    </div>
+    <div id="task-detail-body"></div>
+  </div>
+</div>
+
 <script>
 let BASE='https://iris-api-production-bd20.up.railway.app'
 const WS='00000000-0000-0000-0001-000000000001'
@@ -382,9 +406,11 @@ const SB_URL='https://pxcuuxtbxnwbkpdxoulb.supabase.co'
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4Y3V1eHRieG53YmtwZHhvdWxiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDE5NDQ4NCwiZXhwIjoyMDg5NzcwNDg0fQ.GoidBdeNehHjgEBrt3tuYFvoPsUKoSh4eA-1uzgYlSI'
 async function sbGet(table,qs=''){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?workspace_id=eq.${WS}&${qs}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'count=exact'}});if(!r.ok)return null;return await r.json()}catch{return null}}
 async function sbGetRaw(table,qs=''){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?${qs}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});if(!r.ok)return null;return await r.json()}catch{return null}}
+async function sbPatch(table,filter,body){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});return r.ok}catch{return false}}
 let isLive=false
 let currentSection='dashboard'
 let modalCallback=null
+let taskDetailData={}
 
 const SIM={
   health:{status:'ok',services_loaded:0,mode:'simulation'},
@@ -693,37 +719,49 @@ async function renderTasks(){
   const regular=rawTasks.filter(t=>!['meeting_proposal','pending_notification'].includes(t.task_type))
   const active=rawTasks.filter(t=>t.status!=='done'&&t.status!=='cancelled')
 
+  // Store all tasks globally for detail view
+  taskDetailData={}
+  rawTasks.forEach(t=>{taskDetailData[t.id]=t})
+
   const pBadge=(p)=>p==='urgent'?'<span class="badge badge-red">URGENT</span>':p==='high'?'<span class="badge badge-amber">HIGH</span>':p==='medium'?'<span class="badge badge-blue">MED</span>':'<span class="badge badge-gray">LOW</span>'
+  const clickStyle='cursor:pointer;transition:background .15s'
+  const hoverRow='onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'"'
 
   const proposalHtml = proposals.length ? `
-    <div class="card" style="border-left:3px solid var(--amber)">
-      <div class="card-title" style="color:var(--amber)">⏳ Meeting Proposals — čekaju odluku (${proposals.length})</div>
+    <div class="card" style="border-left:3px solid var(--warn)">
+      <div class="card-title" style="color:var(--warn)">⏳ Meeting Proposals — čekaju odluku (${proposals.length})</div>
       ${proposals.map(t=>{
         const note=t.notes||t.body||''
         const proposed=note.match(/Proposed time:\s*([^\n]+)/i)?.[1]||note.match(/proposed[_\s]?time[:\s]+([^\n|]+)/i)?.[1]||''
         const current=note.match(/Current meeting:\s*([^\n]+)/i)?.[1]||''
-        return `<div style="padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px">
+        return `<div style="padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;${clickStyle}" ${hoverRow} onclick="openTaskDetail('${t.id}')">
           <div style="flex:1">
             <div style="font-weight:600;font-size:13px;margin-bottom:4px">${t.title}</div>
             ${t.contact_name?`<div style="font-size:11px;color:var(--text3);margin-bottom:3px">Od: <b>${t.contact_name}</b></div>`:''}
             ${proposed?`<div style="font-size:12px;color:var(--accent)">Prijedlog: <b>${proposed}</b></div>`:''}
             ${current?`<div style="font-size:11px;color:var(--text3)">Sastanak: ${current}</div>`:''}
           </div>
-          <div style="display:flex;gap:6px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
             ${pBadge(t.priority||'medium')}
             <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${(t.created_at||'').slice(0,10)}</span>
+            <span style="font-size:11px;color:var(--text3)">›</span>
           </div>
         </div>`
       }).join('')}
     </div>` : ''
 
   const notifHtml = notifications.length ? `
-    <div class="card" style="border-left:3px solid var(--blue)">
-      <div class="card-title" style="color:var(--blue)">📬 Čekaju obavijest (${notifications.length})</div>
-      ${notifications.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="font-weight:500;font-size:13px">${t.title}</div>
-        ${t.contact_name?`<div style="font-size:11px;color:var(--text3)">Kontakt: <b>${t.contact_name}</b></div>`:''}
-        ${t.notes?`<div style="font-size:12px;color:var(--text2);margin-top:4px;font-style:italic">"${t.notes.slice(0,200)}"</div>`:''}
+    <div class="card" style="border-left:3px solid var(--info)">
+      <div class="card-title" style="color:var(--info)">📬 Čekaju obavijest (${notifications.length})</div>
+      ${notifications.map(t=>`<div style="padding:10px 12px;border-bottom:1px solid var(--border);${clickStyle}" ${hoverRow} onclick="openTaskDetail('${t.id}')">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div>
+            <div style="font-weight:500;font-size:13px">${t.title}</div>
+            ${t.contact_name?`<div style="font-size:11px;color:var(--text3)">Kontakt: <b>${t.contact_name}</b></div>`:''}
+            ${t.notes?`<div style="font-size:12px;color:var(--text2);margin-top:4px;font-style:italic">"${t.notes.slice(0,120)}${t.notes.length>120?'…':''}"</div>`:''}
+          </div>
+          <span style="font-size:11px;color:var(--text3);flex-shrink:0">›</span>
+        </div>
       </div>`).join('')}
     </div>` : ''
 
@@ -731,12 +769,13 @@ async function renderTasks(){
     <div class="card">
       <div class="card-title">📋 Open Tasks (${regular.length})</div>
       <table class="tbl">
-        <thead><tr><th>Task</th><th>Kontakt</th><th>Prioritet</th><th>Rok</th></tr></thead>
-        <tbody>${regular.map(t=>`<tr>
-          <td style="font-weight:500;max-width:260px">${t.title}</td>
+        <thead><tr><th>Task</th><th>Kontakt</th><th>Prioritet</th><th>Rok</th><th></th></tr></thead>
+        <tbody>${regular.map(t=>`<tr onclick="openTaskDetail('${t.id}')" style="${clickStyle}">
+          <td style="font-weight:500;max-width:240px">${t.title}</td>
           <td style="font-size:11px;color:var(--text3)">${t.contact_name||'—'}</td>
           <td>${pBadge(t.priority||'medium')}</td>
           <td style="font-family:var(--mono);font-size:11px;color:${t.due_date&&new Date(t.due_date)<new Date()?'var(--danger)':'var(--text3)'}">${t.due_date||'—'}</td>
+          <td style="font-size:11px;color:var(--text3)">›</td>
         </tr>`).join('')}</tbody>
       </table>
     </div>` : ''
@@ -1282,6 +1321,88 @@ async function renderContactDetail(contactId, contactName){
 
       </div>
     </div>`
+}
+
+// ── TASK DETAIL PANEL ────────────────────────────────────────────────────────
+function openTaskDetail(id){
+  const t=taskDetailData[id]
+  if(!t)return
+  const typeLabel={'meeting_proposal':'⏳ Meeting Proposal','pending_notification':'📬 Pending Notification','open_loop':'🔄 Open Loop','task':'📋 Task'}
+  const pColor=t.priority==='urgent'?'red':t.priority==='high'?'amber':t.priority==='medium'?'blue':'gray'
+  const note=t.notes||t.body||''
+  const bodyText=t.body||''
+  const proposed=note.match(/Proposed time:\s*([^\n]+)/i)?.[1]||note.match(/proposed[_\s]?time[:\s]+([^\n|]+)/i)?.[1]||''
+  const current=note.match(/Current meeting:\s*([^\n]+)/i)?.[1]||note.match(/current[_\s]?meeting[:\s]+([^\n|]+)/i)?.[1]||''
+
+  let actionsHtml=`
+    <button class="btn btn-ghost" onclick="closeTaskDetail()">Zatvori</button>
+    <button class="btn btn-primary" style="background:rgba(226,75,74,0.15);border-color:var(--danger);color:var(--danger)" onclick="markTaskDone('${t.id}')">✓ Zatvori task</button>`
+
+  if(t.task_type==='meeting_proposal'){
+    actionsHtml=`
+      <button class="btn btn-ghost" onclick="closeTaskDetail()">Zatvori</button>
+      <button class="btn btn-ghost" style="border-color:var(--danger);color:var(--danger)" onclick="rejectProposal('${t.id}')">✗ Odbij prijedlog</button>
+      <button class="btn btn-primary" onclick="approveProposal('${t.id}')">✓ Approve termin</button>`
+  } else if(t.task_type==='pending_notification'){
+    actionsHtml=`
+      <button class="btn btn-ghost" onclick="closeTaskDetail()">Zatvori</button>
+      <button class="btn btn-primary" onclick="markTaskDone('${t.id}')">✓ Obavijest dostavljena</button>`
+  }
+
+  document.getElementById('task-detail-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <span class="badge badge-gray">${typeLabel[t.task_type]||t.task_type||'task'}</span>
+      <span class="badge badge-${pColor}">${(t.priority||'medium').toUpperCase()}</span>
+      <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${(t.created_at||'').slice(0,16).replace('T',' ')}</span>
+    </div>
+    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:18px;line-height:1.3">${t.title}</div>
+    ${t.contact_name?`<div class="td-section"><div class="td-label">Kontakt</div><div class="td-value">${t.contact_name}</div></div>`:''}
+    ${proposed?`<div class="td-proposed"><div class="td-label">Prijedlog novog termina</div><div class="td-value">${proposed}</div></div>`:''}
+    ${current?`<div class="td-section"><div class="td-label">Trenutni sastanak</div><div class="td-value" style="color:var(--text2)">${current}</div></div>`:''}
+    ${bodyText&&bodyText!==t.notes?`<div class="td-section"><div class="td-label">Poruka / Kontekst</div><div class="td-body">${bodyText}</div></div>`:''}
+    ${t.notes&&t.notes!==bodyText?`<div class="td-section"><div class="td-label">Napomene</div><div class="td-body">${t.notes}</div></div>`:''}
+    ${t.notes&&t.notes===bodyText&&t.notes?`<div class="td-section"><div class="td-label">Poruka / Napomene</div><div class="td-body">${t.notes}</div></div>`:''}
+    ${t.due_date?`<div class="td-section"><div class="td-label">Rok</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:${new Date(t.due_date)<new Date()?'var(--danger)':'var(--text2)'}">${t.due_date}</div></div>`:''}
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">${actionsHtml}</div>
+  `
+  document.getElementById('task-detail-overlay').classList.add('open')
+}
+
+function closeTaskDetail(){document.getElementById('task-detail-overlay').classList.remove('open')}
+
+async function markTaskDone(id){
+  const ok=await sbPatch('iris_tasks',`id=eq.${id}`,{status:'done'})
+  if(ok){closeTaskDetail();renderTasks()}
+  else alert('Greška pri ažuriranju taska')
+}
+
+async function rejectProposal(id){
+  const ok=await sbPatch('iris_tasks',`id=eq.${id}`,{status:'done',notes:(taskDetailData[id]?.notes||'')+'\n[Odbijeno od Ajdina]'})
+  if(ok){closeTaskDetail();renderTasks()}
+  else alert('Greška pri odbijanju prijedloga')
+}
+
+async function approveProposal(id){
+  const t=taskDetailData[id]
+  if(!t){return}
+  const note=t.notes||t.body||''
+  const proposed=note.match(/Proposed time:\s*([^\n]+)/i)?.[1]||note.match(/proposed[_\s]?time[:\s]+([^\n|]+)/i)?.[1]||''
+  const confirmed=proposed||prompt('Unesi potvrđeni termin (npr. 2026-04-15 10:00):','')
+  if(!confirmed)return
+  // Patch task done
+  await sbPatch('iris_tasks',`id=eq.${id}`,{status:'done',notes:(note)+`\n[Odobrio Ajdin: ${confirmed}]`})
+  // Try to find and update calendar event based on contact_id
+  if(t.contact_id){
+    const evts=await sbGetRaw('iris_calendar_events',`contact_id=eq.${t.contact_id}&status=neq.cancelled&order=start_time.desc&limit=5`)
+    if(evts&&evts.length){
+      // Update the most recent upcoming/scheduled event
+      const ev=evts[0]
+      await sbPatch('iris_calendar_events',`id=eq.${ev.id}`,{notes:(ev.notes||'')+`\nAjdin approved new time: ${confirmed}`})
+    }
+  }
+  alert(`✓ Prijedlog odobren: ${confirmed}\n\nIRIS će obavijestiti kontakt putem Telegram/poruke.`)
+  closeTaskDetail()
+  renderTasks()
 }
 
 function openModal(type){
