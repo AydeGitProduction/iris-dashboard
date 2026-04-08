@@ -709,7 +709,7 @@ async function renderTasks(){
   const data=await api('/api/tasks?workspace_id='+WS)||{tasks:[]}
   document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('task')">+ Novi task</button>`
   let rawTasks=[]
-  const sb=await sbGet('iris_tasks','status=neq.done&order=created_at.desc&limit=100&select=id,title,task_type,priority,status,contact_name,notes,body,due_date,created_at,contact_id')
+  const sb=await sbGet('iris_tasks','status=neq.done&created_by=neq.iris_signals_main&order=created_at.desc&limit=100&select=id,title,task_type,priority,status,contact_name,notes,body,due_date,created_at,contact_id')
   if(sb&&sb.length) rawTasks=sb
   else if(data.tasks&&data.tasks.length) rawTasks=data.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
   else rawTasks=SIM.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
