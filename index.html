@@ -226,6 +226,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .cal-event.today{border-left:2px solid var(--accent)}
 .cal-event.overdue{border-left:2px solid var(--danger)}
 .cal-event.upcoming{border-left:2px solid var(--info)}
+.cal-event.cancelled{border-left:2px solid #e53935;opacity:.6}
+.cal-chip.cancelled{opacity:.55;text-decoration:line-through}
+.cal-list-item.cancelled .cal-list-title{text-decoration:line-through;opacity:.6}
+.cal-list-item.cancelled{opacity:.7;border-left:2px solid #e53935}
 .cal-date{font-family:var(--mono);font-size:11px;color:var(--text2)}
 .cal-date-day{font-size:18px;font-weight:500;color:var(--text);line-height:1;font-family:var(--mono)}
 .cal-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
@@ -953,13 +957,13 @@ function _renderCalView(){
     const d = new Date(iso)
     return d.toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
   }
-  function evColor(cls){ return cls==='today'?'#1d9e75':cls==='overdue'?'#ea4335':'#4285f4' }
+  function evColor(cls, ev){ if(ev && ev.status==='cancelled') return '#e53935'; return cls==='today'?'#1d9e75':cls==='overdue'?'#ea4335':'#4285f4' }
 
   function showPopup(ev, x, y){
     const old = document.getElementById('cal-popup')
     if(old) old.remove()
     const cls = evClass(ev)
-    const col = evColor(cls)
+    const col = evColor(cls, ev)
     const p = document.createElement('div')
     p.id = 'cal-popup'
     p.className = 'cal-popup open'
@@ -1043,8 +1047,9 @@ function _renderCalView(){
         const evs = byDate[ds]||[]
         const chips = evs.slice(0,3).map(ev=>{
           const cls=evClass(ev)
+          const isCancelled = ev.status==='cancelled'
           const t = fmtT(ev.start_time)
-          return `<div class="cal-chip ${cls}" onclick="event.stopPropagation();window._calShowEv('${ev.id}',event)">${t?t+' ':''}<b style="font-weight:500">${(ev.title||'Event').slice(0,24)}</b></div>`
+          return `<div class="cal-chip ${cls}${isCancelled?' cancelled':''}" onclick="event.stopPropagation();window._calShowEv('${ev.id}',event)">${t?t+' ':''}<b style="font-weight:500">${(ev.title||'Event').slice(0,24)}</b></div>`
         }).join('')
         const more = evs.length>3?`<div style="font-size:10px;color:var(--text3);padding:0 2px">+${evs.length-3} više</div>`:''
         return `<div class="cal-day${!cur?' other-month':''}${isToday?' today':''}">
@@ -1076,10 +1081,13 @@ function _renderCalView(){
       const wkDay = dayNames[d.getDay()]
       const evHtml = evs.length ? evs.map(ev=>{
         const cls=evClass(ev)
-        const col=evColor(cls)
-        return `<div class="cal-week-event" style="background:${col}20;border-left:3px solid ${col};color:${cls==='overdue'?'#ff8a80':cls==='today'?'var(--accent)':'#7eb4ff'}" onclick="window._calShowEv('${ev.id}',event)">
+        const isCancelled = ev.status==='cancelled'
+        const col=evColor(cls,ev)
+        const textColor = isCancelled?'#e57373':cls==='overdue'?'#ff8a80':cls==='today'?'var(--accent)':'#7eb4ff'
+        const titleStyle = isCancelled?'font-weight:500;text-decoration:line-through;opacity:.6':'font-weight:500'
+        return `<div class="cal-week-event" style="background:${col}20;border-left:3px solid ${col};color:${textColor};${isCancelled?'opacity:.65':''}" onclick="window._calShowEv('${ev.id}',event)">
           <span class="ev-time">${fmtT(ev.start_time)||'Cijeli dan'}</span>
-          <span style="font-weight:500">${ev.title||'Bez naslova'}</span>
+          <span style="${titleStyle}">${ev.title||'Bez naslova'}</span>
         </div>`
       }).join('') : `<div style="font-size:11px;color:var(--text3);padding:14px 0;opacity:.4">—</div>`
       rows.push(`<div class="cal-week-day-row">
@@ -1101,11 +1109,12 @@ function _renderCalView(){
     const past = _calEvents.filter(ev=>ev.start_time && _localDs(ev.start_time)<todayStr).reverse().slice(0,8)
     function listItem(ev){
       const cls=evClass(ev)
-      const col=evColor(cls)
+      const isCancelled = ev.status==='cancelled'
+      const col=evColor(cls,ev)
       const d=new Date(ev.start_time)
       const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
       const monNames=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec']
-      return `<div class="cal-list-item" onclick="window._calShowEv('${ev.id}',event)">
+      return `<div class="cal-list-item${isCancelled?' cancelled':''}" onclick="window._calShowEv('${ev.id}',event)">
         <div class="cal-list-date-block">
           <div class="cal-list-month">${monNames[d.getMonth()]}</div>
           <div class="cal-list-day" style="color:${col}">${d.getDate()}</div>
