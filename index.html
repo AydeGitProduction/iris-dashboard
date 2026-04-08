@@ -682,35 +682,69 @@ async function renderDeals(){
 async function renderTasks(){
   const data=await api('/api/tasks?workspace_id='+WS)||{tasks:[]}
   document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('task')">+ Novi task</button>`
-  let tasks=data.tasks||[]
-  if(!tasks.length){
-    const sb=await sbGet('iris_tasks','order=created_at.desc&limit=100')
-    if(sb&&sb.length){tasks=sb.map(t=>({
-      task_id:t.id,
-      title:t.title,
-      task_type:t.task_type||'task',
-      team:t.created_by||'iris',
-      status:t.status==='open'?'todo':t.status==='done'?'done':t.status==='in_progress'?'in_progress':t.status||'todo',
-      priority:t.priority||'medium',
-      due_date:t.due_date||null
-    }))}
-  }
-  if(!tasks.length)tasks=SIM.tasks
-  const teams={content:'CONTENT',production:'PROD',macmini:'MAC',sales:'SALES',ajdin:'AJDIN'}
-  document.getElementById('main-content').innerHTML=`
+  let rawTasks=[]
+  const sb=await sbGet('iris_tasks','status=neq.done&order=created_at.desc&limit=100&select=id,title,task_type,priority,status,contact_name,notes,body,due_date,created_at,contact_id')
+  if(sb&&sb.length) rawTasks=sb
+  else if(data.tasks&&data.tasks.length) rawTasks=data.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
+  else rawTasks=SIM.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
+
+  const proposals=rawTasks.filter(t=>t.task_type==='meeting_proposal')
+  const notifications=rawTasks.filter(t=>t.task_type==='pending_notification')
+  const regular=rawTasks.filter(t=>!['meeting_proposal','pending_notification'].includes(t.task_type))
+  const active=rawTasks.filter(t=>t.status!=='done'&&t.status!=='cancelled')
+
+  const pBadge=(p)=>p==='urgent'?'<span class="badge badge-red">URGENT</span>':p==='high'?'<span class="badge badge-amber">HIGH</span>':p==='medium'?'<span class="badge badge-blue">MED</span>':'<span class="badge badge-gray">LOW</span>'
+
+  const proposalHtml = proposals.length ? `
+    <div class="card" style="border-left:3px solid var(--amber)">
+      <div class="card-title" style="color:var(--amber)">⏳ Meeting Proposals — čekaju odluku (${proposals.length})</div>
+      ${proposals.map(t=>{
+        const note=t.notes||t.body||''
+        const proposed=note.match(/Proposed time:\s*([^\n]+)/i)?.[1]||note.match(/proposed[_\s]?time[:\s]+([^\n|]+)/i)?.[1]||''
+        const current=note.match(/Current meeting:\s*([^\n]+)/i)?.[1]||''
+        return `<div style="padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px">${t.title}</div>
+            ${t.contact_name?`<div style="font-size:11px;color:var(--text3);margin-bottom:3px">Od: <b>${t.contact_name}</b></div>`:''}
+            ${proposed?`<div style="font-size:12px;color:var(--accent)">Prijedlog: <b>${proposed}</b></div>`:''}
+            ${current?`<div style="font-size:11px;color:var(--text3)">Sastanak: ${current}</div>`:''}
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            ${pBadge(t.priority||'medium')}
+            <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${(t.created_at||'').slice(0,10)}</span>
+          </div>
+        </div>`
+      }).join('')}
+    </div>` : ''
+
+  const notifHtml = notifications.length ? `
+    <div class="card" style="border-left:3px solid var(--blue)">
+      <div class="card-title" style="color:var(--blue)">📬 Čekaju obavijest (${notifications.length})</div>
+      ${notifications.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:500;font-size:13px">${t.title}</div>
+        ${t.contact_name?`<div style="font-size:11px;color:var(--text3)">Kontakt: <b>${t.contact_name}</b></div>`:''}
+        ${t.notes?`<div style="font-size:12px;color:var(--text2);margin-top:4px;font-style:italic">"${t.notes.slice(0,200)}"</div>`:''}
+      </div>`).join('')}
+    </div>` : ''
+
+  const regularHtml = regular.length ? `
     <div class="card">
-      <div class="card-title">Tasks · ${tasks.filter(t=>t.status!=='done'&&t.status!=='cancelled').length} aktivnih</div>
+      <div class="card-title">📋 Open Tasks (${regular.length})</div>
       <table class="tbl">
-        <thead><tr><th>Task</th><th>Tim</th><th>Status</th><th>Prioritet</th><th>Rok</th></tr></thead>
-        <tbody>${tasks.map(t=>`<tr>
-          <td style="font-weight:500;max-width:280px">${t.title}</td>
-          <td><span class="badge badge-gray">${teams[t.team]||t.team}</span></td>
-          <td>${statusBadge(t.status||'todo')}</td>
-          <td>${statusBadge(t.priority||'medium')}</td>
-          <td style="font-family:var(--mono);font-size:11px;color:${new Date(t.due_date)<new Date()?'var(--danger)':'var(--text3)'}">${t.due_date||'—'}</td>
+        <thead><tr><th>Task</th><th>Kontakt</th><th>Prioritet</th><th>Rok</th></tr></thead>
+        <tbody>${regular.map(t=>`<tr>
+          <td style="font-weight:500;max-width:260px">${t.title}</td>
+          <td style="font-size:11px;color:var(--text3)">${t.contact_name||'—'}</td>
+          <td>${pBadge(t.priority||'medium')}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:${t.due_date&&new Date(t.due_date)<new Date()?'var(--danger)':'var(--text3)'}">${t.due_date||'—'}</td>
         </tr>`).join('')}</tbody>
       </table>
-    </div>`
+    </div>` : ''
+
+  document.getElementById('main-content').innerHTML=`
+    <div style="margin-bottom:8px;font-size:12px;color:var(--text3)">${active.length} aktivnih taskova · ${proposals.length} prijedloga čekaju odluku</div>
+    ${proposalHtml}${notifHtml}${regularHtml}
+    ${!active.length?'<div class="card"><div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Nema otvorenih taskova</div></div></div>':''}`
 }
 
 async function renderPatterns(){
