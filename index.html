@@ -1052,7 +1052,8 @@ function _renderCalView(){
       <div class="cal-popup-row"><span class="cal-popup-label">Datum</span><span>${fmtDateShort(ev.start_time)}</span></div>
       <div class="cal-popup-row"><span class="cal-popup-label">Vrijeme</span><span>${fmtT(ev.start_time)||'Cijeli dan'}</span></div>
       ${ev.description?`<div class="cal-popup-row"><span class="cal-popup-label">Opis</span><span>${ev.description}</span></div>`:''}
-      <div class="cal-popup-row"><span class="cal-popup-label">Status</span><span>${statusBadge(ev.status||'confirmed')}</span></div>`
+      <div class="cal-popup-row"><span class="cal-popup-label">Status</span><span>${statusBadge(ev.status||'confirmed')}</span></div>
+      ${(()=>{const att=(ev.metadata?.attendees||[]);if(!att.length)return '';return `<div class="cal-popup-row"><span class="cal-popup-label">Učesnici</span><div style="display:flex;flex-wrap:wrap;gap:4px">${att.map(a=>`<span style="background:rgba(29,158,117,0.15);border:1px solid rgba(29,158,117,0.35);color:#1D9E75;font-size:11px;padding:2px 7px;border-radius:10px">${a.name}${a.role==='added'?' <span style="font-size:9px;opacity:.7">(dodan)</span>':''}</span>`).join('')}</div></div>`;})()}`
     document.body.appendChild(p)
     setTimeout(()=>document.addEventListener('click', function h(e){
       if(!p.contains(e.target)){p.remove();document.removeEventListener('click',h)}
@@ -1195,7 +1196,7 @@ function _renderCalView(){
         <div class="cal-list-dot" style="background:${col}"></div>
         <div style="flex:1;min-width:0">
           <div class="cal-list-title">${ev.title||'Bez naslova'}</div>
-          <div class="cal-list-meta">${dayNames[d.getDay()]}, ${fmtT(ev.start_time)||'Cijeli dan'}${ev.description?' · '+ev.description.slice(0,60):''}</div>
+          <div class="cal-list-meta">${dayNames[d.getDay()]}, ${fmtT(ev.start_time)||'Cijeli dan'}${ev.description?' · '+ev.description.slice(0,50):''}${(ev.metadata?.attendees?.length>0)?' · 👥 '+ev.metadata.attendees.map(a=>a.name).join(', '):''}</div>
         </div>
         ${statusBadge(ev.status||'confirmed')}
       </div>`
