@@ -1588,7 +1588,7 @@ function openTaskDetail(id){
     ${t.notes&&t.notes!==bodyText?`<div class="td-section"><div class="td-label">Napomene</div><div class="td-body">${t.notes}</div></div>`:''}
     ${t.notes&&t.notes===bodyText&&t.notes?`<div class="td-section"><div class="td-label">Poruka / Napomene</div><div class="td-body">${t.notes}</div></div>`:''}
     ${t.due_date?`<div class="td-section"><div class="td-label">Rok</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:${new Date(t.due_date)<new Date()?'var(--danger)':'var(--text2)'}">${t.due_date}</div></div>`:''}
-    ${(()=>{const r=getRemindAt(t);if(!r)return'';const rf=fmtRemind(r);return`<div class="td-section"><div class="td-label" style="color:var(--accent)">🔔 Podsjetnik</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:var(--accent)">${r} <span style="color:var(--text3)">(${rf||''})</span></div></div>`})()
+    ${(()=>{const r=getRemindAt(t);if(!r)return'';const rf=fmtRemind(r);return`<div class="td-section"><div class="td-label" style="color:var(--accent)">🔔 Podsjetnik</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:var(--accent)">${r} <span style="color:var(--text3)">(${rf||''})</span></div></div>`})()}
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">${actionsHtml}</div>
   `
   document.getElementById('task-detail-overlay').classList.add('open')
