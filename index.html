@@ -775,7 +775,7 @@ async function renderHubSpotContacts(){
           const p = c.properties || {}
           const nm = [p.firstname,p.lastname].filter(Boolean).join(' ') || '—'
           return `<tr>
-            <td style="font-weight:500"><a href="https://app.hubspot.com/contacts/view/contact/${c.id}" target="_blank" style="color:var(--accent);text-decoration:none">${nm}</a></td>
+            <td style="font-weight:500"><a href="https://app-eu1.hubspot.com/contacts/148227401/contact/${c.id}" target="_blank" style="color:var(--accent);text-decoration:none">${nm}</a></td>
             <td style="color:var(--text2)">${p.company||'—'}</td>
             <td style="font-size:11px">${p.email||'—'}</td>
             <td style="font-size:11px">${p.phone||'—'}</td>
@@ -853,7 +853,7 @@ async function renderContacts(){
           const contactInfo = [emailLink, phoneLink].filter(Boolean).join('<br>')
           const roleText = c.role ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${c.role}</div>` : ''
           const hsId = c.metadata?.hs_contact_id
-          const hsPill = hsId ? `<a href="https://app.hubspot.com/contacts/view/contact/${hsId}" target="_blank" onclick="event.stopPropagation()" class="saas-pill">H</a>` : ''
+          const hsPill = hsId ? `<a href="https://app-eu1.hubspot.com/contacts/148227401/contact/${hsId}" target="_blank" onclick="event.stopPropagation()" class="saas-pill">H</a>` : ''
           return `<tr style="cursor:${c.id?'pointer':'default'}" onclick="${onclick}">
             <td style="font-weight:500">${nm}${ownerTag}${hsPill}</td>
             <td style="color:var(--text2)">${c.company||'—'}${roleText}</td>
