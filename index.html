@@ -980,9 +980,32 @@ function renderListRow(t){
 
 async function renderTasks(){
   let rawTasks=[]
-  const sb=await sbGet('iris_tasks','status=neq.done&status=neq.cancelled&or=(created_by.neq.iris_signals_main,created_by.is.null)&order=priority.asc,created_at.desc&limit=100&select=id,title,task_type,priority,status,contact_name,notes,body,due_date,created_at,contact_id,created_by,metadata')
-  if(sb&&sb.length) rawTasks=sb
-  else rawTasks=SIM.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
+  const saasResp=await fetch(BASE+'/api/saas/tasks?limit=100').then(r=>r.ok?r.json():null).catch(()=>null)
+  if(saasResp&&saasResp.tasks&&saasResp.tasks.length){
+    const statusMap={'Open':'open','In Progress':'in_progress','Done':'done','Cancelled':'cancelled'}
+    const priMap={'Urgent':'urgent','High':'high','Medium':'medium','Low':'low'}
+    const typeMap={'Task':'task','Meeting Proposal':'meeting_proposal','Pending Notification':'pending_notification','Open Loop':'open_loop'}
+    rawTasks=saasResp.tasks
+      .filter(t=>t.status!=='Done'&&t.status!=='Cancelled')
+      .map(t=>({
+        id: t.notion_id,
+        notion_id: t.notion_id,
+        title: t.title,
+        task_type: typeMap[t.type]||'task',
+        priority: priMap[t.priority]||'medium',
+        status: statusMap[t.status]||'open',
+        contact_name: t.contact||null,
+        notes: t.notes||null,
+        body: null,
+        due_date: t.due_date||null,
+        created_at: t.created_at,
+        contact_id: null,
+        created_by: (t.type==='Meeting Proposal'||t.type==='Pending Notification')?'iris_ai':null,
+        metadata: {notion_id:t.notion_id,iris_id:t.iris_id}
+      }))
+  } else {
+    rawTasks=SIM.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
+  }
 
   // Split: IRIS-created tasks vs user tasks
   allIrisTasks = rawTasks.filter(t => t.created_by === 'iris_ai')
@@ -1135,16 +1158,17 @@ async function submitNewTask(){
   const remind=document.getElementById('ntask-remind').value||null
   const notes=document.getElementById('ntask-notes').value.trim()
 
-  let body=title
-  if(remind) body+=`\nREMIND_AT:${remind.replace('T',' ').slice(0,16)}`
+  // Build notes string (include reminder marker if set)
+  let fullNotes=notes||''
+  if(remind) fullNotes=(fullNotes?fullNotes+'\n':'')+`REMIND_AT:${remind.replace('T',' ').slice(0,16)}`
 
-  const uuid=crypto.randomUUID?crypto.randomUUID():('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)}))
-  const ok=await sbPostRaw('iris_tasks',{
-    id:uuid,workspace_id:WS,title,task_type:taskType,status:'open',
-    priority,source:'dashboard',created_by:'ajdin',
-    contact_name:contact||null,notes:notes||null,body,due_date:due||null
-  })
-  if(ok!==null){
+  // Create task in Notion via Railway proxy
+  const r=await fetch(BASE+'/api/saas/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    title,task_type:taskType,status:'open',priority,
+    contact:contact||null,notes:fullNotes||null,due_date:due||null
+  })})
+  const result=r.ok?await r.json():null
+  if(result&&result.ok){
     closeModal()
     renderTasks()
     if(remind) showToast('🔔 Podsjetnik postavljen',`${title}\n${remind.replace('T',' ')}`)
@@ -1538,8 +1562,24 @@ let _calView = 'month' // month | week | list
 async function renderCalendar(){
   document.getElementById('topbar-actions').innerHTML=''
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje…</div></div>'
-  _calEvents = await sbGet('iris_calendar_events',
-    'order=start_time.asc&limit=500&select=id,title,description,start_time,end_time,status,contact_id,metadata') || []
+  // Fetch from Google Calendar via Railway proxy (from start of year, 400 days ahead)
+  const yearStart=new Date(new Date().getFullYear(),0,1).toISOString()
+  const saasResp=await fetch(BASE+'/api/saas/events?timeMin='+encodeURIComponent(yearStart)+'&days=400&maxResults=500').then(r=>r.ok?r.json():null).catch(()=>null)
+  if(saasResp&&saasResp.events){
+    _calEvents=saasResp.events.map(e=>({
+      id: e.gcal_id,
+      gcal_id: e.gcal_id,
+      title: e.title,
+      description: e.description||'',
+      start_time: e.start_time,
+      end_time: e.end_time,
+      status: e.status||'confirmed',
+      contact_id: null,
+      metadata: {gcal_id:e.gcal_id,link:e.link}
+    }))
+  } else {
+    _calEvents=[]
+  }
   _calViewMonth = new Date()
   _calView = 'month'
   _renderCalView()
@@ -1969,14 +2009,15 @@ function openTaskDetail(id){
 function closeTaskDetail(){document.getElementById('task-detail-overlay').classList.remove('open')}
 
 async function markTaskDone(id){
-  const ok=await sbPatch('iris_tasks',`id=eq.${id}`,{status:'done'})
-  if(ok){closeTaskDetail();renderTasks()}
+  const r=await fetch(BASE+'/api/saas/tasks/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'done'})})
+  if(r.ok){closeTaskDetail();renderTasks()}
   else alert('Greška pri ažuriranju taska')
 }
 
 async function rejectProposal(id){
-  const ok=await sbPatch('iris_tasks',`id=eq.${id}`,{status:'done',notes:(taskDetailData[id]?.notes||'')+'\n[Odbijeno od Ajdina]'})
-  if(ok){closeTaskDetail();renderTasks()}
+  const existing=taskDetailData[id]?.notes||''
+  const r=await fetch(BASE+'/api/saas/tasks/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'done',notes:existing+'\n[Odbijeno od Ajdina]'})})
+  if(r.ok){closeTaskDetail();renderTasks()}
   else alert('Greška pri odbijanju prijedloga')
 }
 
@@ -1987,17 +2028,9 @@ async function approveProposal(id){
   const proposed=note.match(/Proposed time:\s*([^\n]+)/i)?.[1]||note.match(/proposed[_\s]?time[:\s]+([^\n|]+)/i)?.[1]||''
   const confirmed=proposed||prompt('Unesi potvrđeni termin (npr. 2026-04-15 10:00):','')
   if(!confirmed)return
-  // Patch task done
-  await sbPatch('iris_tasks',`id=eq.${id}`,{status:'done',notes:(note)+`\n[Odobrio Ajdin: ${confirmed}]`})
-  // Try to find and update calendar event based on contact_id
-  if(t.contact_id){
-    const evts=await sbGetRaw('iris_calendar_events',`contact_id=eq.${t.contact_id}&status=neq.cancelled&order=start_time.desc&limit=5`)
-    if(evts&&evts.length){
-      // Update the most recent upcoming/scheduled event
-      const ev=evts[0]
-      await sbPatch('iris_calendar_events',`id=eq.${ev.id}`,{notes:(ev.notes||'')+`\nAjdin approved new time: ${confirmed}`})
-    }
-  }
+  // Mark task done in Notion
+  await fetch(BASE+'/api/saas/tasks/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'done',notes:note+`\n[Odobrio Ajdin: ${confirmed}]`})})
+  // IRIS will handle creating/updating the GCal event via side effects when notified
   alert(`✓ Prijedlog odobren: ${confirmed}\n\nIRIS će obavijestiti kontakt putem Telegram/poruke.`)
   closeTaskDetail()
   renderTasks()
