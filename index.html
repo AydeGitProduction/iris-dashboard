@@ -378,6 +378,209 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .empty{text-align:center;padding:40px 20px;color:var(--text3)}
 .empty-icon{font-size:24px;margin-bottom:8px;opacity:.3}
 .empty-text{font-size:12px}
+
+/* ══════════════════════════════════════════════
+   HUBSPOT-STYLE CONTACTS
+══════════════════════════════════════════════ */
+.hs-wrap{display:flex;flex-direction:column;gap:0;height:100%}
+.hs-toolbar{display:flex;align-items:center;gap:8px;padding:0 0 14px;flex-wrap:wrap}
+.hs-search{flex:1;min-width:200px;max-width:340px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:6px 10px 6px 30px;color:var(--text);font-family:var(--sans);font-size:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.099zm-5.44 1.887a5 5 0 1 1 0-10 5 5 0 0 1 0 10'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:9px center;outline:none}
+.hs-search:focus{border-color:rgba(29,158,117,.5)}
+.hs-filter-btn{padding:5px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.hs-filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+.hs-create-btn{margin-left:auto;padding:6px 14px;background:#e8643c;border:1px solid #e8643c;border-radius:4px;color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.hs-create-btn:hover{background:#d4562e;border-color:#d4562e}
+.hs-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.hs-table{width:100%;border-collapse:collapse}
+.hs-table thead tr{background:var(--bg3);border-bottom:1px solid var(--border)}
+.hs-table th{padding:8px 12px;font-size:11px;color:var(--text3);font-weight:500;text-align:left;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;user-select:none;cursor:pointer}
+.hs-table th:hover{color:var(--text2)}
+.hs-table th .sort-arrow{display:inline-block;margin-left:4px;opacity:.4;font-size:9px}
+.hs-table th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+.hs-table td{padding:0}
+.hs-table tbody tr{border-bottom:1px solid var(--border);transition:background .1s;cursor:pointer}
+.hs-table tbody tr:last-child{border-bottom:none}
+.hs-table tbody tr:hover{background:rgba(255,255,255,.025)}
+.hs-table tbody tr:hover .hs-cb-cell{opacity:1}
+.hs-td{padding:9px 12px;font-size:12px;color:var(--text);display:table-cell;vertical-align:middle}
+.hs-cb-cell{opacity:0;transition:opacity .15s;padding:9px 8px 9px 14px;width:32px}
+.hs-table tbody tr:hover .hs-cb-cell{opacity:1}
+input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:var(--accent)}
+.hs-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#e8643c,#c0392b);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono)}
+.hs-name-cell{display:flex;align-items:center;gap:9px}
+.hs-name-text{font-weight:500;color:var(--text)}
+.hs-name-text:hover{color:var(--accent);text-decoration:underline}
+.hs-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.hs-pill-hs{display:inline-flex;align-items:center;gap:3px;background:rgba(232,100,60,.15);border:1px solid rgba(232,100,60,.3);color:#e8643c;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;text-decoration:none;margin-left:6px;cursor:pointer}
+.hs-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);background:var(--bg3)}
+.hs-page-btns{display:flex;align-items:center;gap:4px}
+.hs-page-btn{padding:3px 8px;background:transparent;border:1px solid var(--border2);border-radius:3px;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans)}
+.hs-page-btn:hover{border-color:var(--accent);color:var(--accent)}
+.hs-page-btn.active{background:var(--accent2);border-color:var(--accent);color:#fff}
+
+/* ══════════════════════════════════════════════
+   NOTION-STYLE TASKS
+══════════════════════════════════════════════ */
+.notion-wrap{display:flex;flex-direction:column;gap:0}
+.notion-toolbar{display:flex;align-items:center;gap:0;padding:0 0 0;border-bottom:1px solid var(--border);margin-bottom:0}
+.notion-view-tab{padding:7px 14px;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.notion-view-tab:hover{color:var(--text2)}
+.notion-view-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.notion-actions{margin-left:auto;display:flex;align-items:center;gap:6px;padding:0 0 4px}
+.notion-action-btn{padding:4px 9px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.notion-action-btn:hover{border-color:var(--accent);color:var(--accent)}
+.notion-new-btn{padding:5px 12px;background:var(--accent2);border:1px solid var(--accent);border-radius:4px;color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.notion-new-btn:hover{background:var(--accent)}
+.notion-db{background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:12px}
+.notion-db-head{display:grid;grid-template-columns:32px 1fr 110px 90px 120px 140px 90px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.notion-db-col{padding:7px 10px;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.6px;text-transform:uppercase;display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none;white-space:nowrap;overflow:hidden}
+.notion-db-col:hover{color:var(--text2)}
+.notion-db-row{display:grid;grid-template-columns:32px 1fr 110px 90px 120px 140px 90px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.notion-db-row:last-child{border-bottom:none}
+.notion-db-row:hover{background:rgba(255,255,255,.025)}
+.notion-db-row:hover .notion-cb{opacity:1}
+.notion-cell{padding:8px 10px;font-size:12px;display:flex;align-items:center;overflow:hidden;color:var(--text)}
+.notion-cb{opacity:0;transition:opacity .15s;padding:8px 8px 8px 10px;display:flex;align-items:center}
+.notion-row-title{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
+.notion-row-title .nt-icon{opacity:.6;font-size:11px;flex-shrink:0}
+.notion-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:3px;white-space:nowrap}
+.ns-open{background:rgba(255,255,255,.06);color:var(--text2)}
+.ns-in_progress{background:rgba(74,158,255,.12);color:var(--info)}
+.ns-done{background:rgba(29,158,117,.12);color:var(--accent)}
+.ns-cancelled{background:rgba(226,75,74,.1);color:var(--danger)}
+.notion-pri{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:3px;letter-spacing:.3px;font-family:var(--mono)}
+.np-urgent{background:rgba(226,75,74,.15);color:var(--danger)}
+.np-high{background:rgba(240,160,48,.12);color:var(--warn)}
+.np-medium{background:rgba(74,158,255,.1);color:var(--info)}
+.np-low{background:rgba(255,255,255,.05);color:var(--text3)}
+.notion-type-tag{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notion-contact-cell{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notion-due{font-size:11px;font-family:var(--mono);color:var(--text2)}
+.notion-due.overdue{color:var(--danger)}
+.notion-due.today{color:var(--warn)}
+.notion-new-row{display:flex;align-items:center;gap:8px;padding:8px 14px;border-top:1px solid var(--border);cursor:pointer;color:var(--text3);font-size:12px;transition:color .15s}
+.notion-new-row:hover{color:var(--accent);background:rgba(29,158,117,.03)}
+/* IRIS tasks block below notion db */
+.notion-iris-block{margin-top:14px;background:var(--bg2);border:1px solid rgba(29,158,117,.18);border-radius:6px;overflow:hidden}
+.notion-iris-head{padding:10px 14px;background:rgba(29,158,117,.06);border-bottom:1px solid rgba(29,158,117,.15);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--accent);font-weight:500}
+.notion-iris-row{display:grid;grid-template-columns:32px 1fr 110px 90px 120px 140px 90px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.notion-iris-row:hover{background:rgba(255,255,255,.02)}
+.notion-iris-row:last-child{border-bottom:none}
+/* NOTION BOARD */
+.notion-board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.nboard-col{background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.nboard-col-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text2)}
+.nboard-col-count{background:rgba(255,255,255,.07);color:var(--text3);font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--mono)}
+.nboard-cards{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px}
+.nboard-card{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:10px 12px;cursor:pointer;transition:border-color .15s}
+.nboard-card:hover{border-color:var(--border2)}
+.nboard-card-title{font-size:12px;color:var(--text);margin-bottom:6px;line-height:1.4}
+.nboard-card-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.nboard-empty{padding:12px;color:var(--text3);font-size:11px;text-align:center}
+.nboard-new{padding:8px 12px;cursor:pointer;color:var(--text3);font-size:11px;transition:color .15s;display:flex;align-items:center;gap:5px}
+.nboard-new:hover{color:var(--accent)}
+
+/* ══════════════════════════════════════════════
+   GOOGLE CALENDAR STYLE
+══════════════════════════════════════════════ */
+.gcal-layout{display:flex;gap:0;height:calc(100vh - 60px);overflow:hidden}
+.gcal-sidebar{width:240px;min-width:240px;padding:0 16px 16px 0;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.gcal-create-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg3);border:1px solid var(--border2);border-radius:24px;color:var(--text);font-size:13px;cursor:pointer;font-family:var(--sans);box-shadow:0 1px 3px rgba(0,0,0,.3);transition:all .15s;width:fit-content}
+.gcal-create-btn:hover{background:var(--bg2);border-color:var(--accent);color:var(--accent)}
+.gcal-mini{background:var(--bg2);border-radius:6px;overflow:hidden}
+.gcal-mini-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;font-size:12px;font-weight:500;color:var(--text)}
+.gcal-mini-nav{background:transparent;border:none;color:var(--text2);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:3px}
+.gcal-mini-nav:hover{background:rgba(255,255,255,.07);color:var(--text)}
+.gcal-mini-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:4px 6px 2px}
+.gcal-mini-dow span{text-align:center;font-size:9px;color:var(--text3);font-weight:500;letter-spacing:.3px}
+.gcal-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:2px 6px 6px}
+.gcal-mini-day{text-align:center;font-size:11px;padding:3px 2px;border-radius:50%;width:22px;height:22px;margin:0 auto;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:background .1s;font-family:var(--mono)}
+.gcal-mini-day:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.gcal-mini-day.other{color:var(--text3);opacity:.4}
+.gcal-mini-day.today{background:var(--accent);color:#fff;font-weight:600}
+.gcal-mini-day.selected{background:rgba(29,158,117,.25);color:var(--accent)}
+.gcal-mini-day.has-ev::after{content:'';display:block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin:-2px auto 0;position:relative;top:-2px}
+.gcal-my-cals{font-size:11px}
+.gcal-cal-head{padding:6px 0;color:var(--text3);font-weight:500;letter-spacing:.5px;text-transform:uppercase;font-size:10px;margin-bottom:4px}
+.gcal-cal-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:var(--text2)}
+.gcal-cal-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+/* Main calendar area */
+.gcal-main{flex:1;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid var(--border);padding-left:16px}
+.gcal-header{display:flex;align-items:center;gap:8px;padding:0 0 12px;flex-wrap:wrap}
+.gcal-today-btn{padding:6px 12px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.gcal-today-btn:hover{border-color:var(--accent);color:var(--accent)}
+.gcal-nav-btn{background:transparent;border:none;color:var(--text2);font-size:18px;cursor:pointer;padding:4px 6px;border-radius:4px;line-height:1;transition:color .15s}
+.gcal-nav-btn:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.gcal-month-title{font-size:20px;font-weight:500;color:var(--text);margin:0 4px}
+.gcal-year{font-size:18px;color:var(--text2);font-weight:400}
+.gcal-view-btns{margin-left:auto;display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.gcal-view-btn{padding:5px 12px;background:transparent;border:none;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .15s;border-right:1px solid var(--border)}
+.gcal-view-btn:last-child{border-right:none}
+.gcal-view-btn:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.gcal-view-btn.active{background:var(--bg2);color:var(--accent);font-weight:500}
+.gcal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg3);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0}
+.gcal-dow{padding:7px 8px;font-size:11px;color:var(--text3);font-weight:500;text-align:center;letter-spacing:.5px}
+.gcal-weeks{border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;overflow:hidden}
+.gcal-week{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border)}
+.gcal-week:last-child{border-bottom:none}
+.gcal-day{min-height:90px;padding:4px 5px;border-right:1px solid var(--border);background:var(--bg2);transition:background .1s;cursor:default}
+.gcal-day:last-child{border-right:none}
+.gcal-day:hover{background:rgba(255,255,255,.015)}
+.gcal-day.other-month{background:var(--bg);opacity:.5}
+.gcal-day.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.cal-day-num{font-size:12px;color:var(--text3);margin-bottom:3px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:500}
+.gcal-chip{font-size:11px;padding:2px 6px;border-radius:3px;cursor:pointer;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;color:#fff;font-weight:500}
+.gcal-chip.upcoming{background:#1a6bdc}
+.gcal-chip.today{background:#1d9e75}
+.gcal-chip.overdue{background:#c0392b}
+.gcal-chip.cancelled{background:#555;text-decoration:line-through;opacity:.7}
+.gcal-more{font-size:10px;color:var(--text3);cursor:pointer;padding:1px 5px;border-radius:3px;margin-top:1px;display:inline-block}
+.gcal-more:hover{background:rgba(255,255,255,.07);color:var(--text2)}
+/* Week view */
+.gcal-week-view{flex:1;overflow-y:auto}
+.gcal-week-day-row{display:flex;align-items:flex-start;border-bottom:1px solid var(--border);min-height:52px}
+.gcal-week-label{width:70px;min-width:70px;padding:10px 12px 10px 0;display:flex;flex-direction:column;align-items:center;gap:2px}
+.gcal-wk-day{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;font-weight:500}
+.gcal-wk-num{font-size:22px;font-weight:300;color:var(--text2);line-height:1;font-family:var(--mono)}
+.gcal-wk-num.today-num{background:var(--accent);color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600}
+.gcal-wk-day.today-day{color:var(--accent)}
+.gcal-week-events{flex:1;padding:8px 0;display:flex;flex-direction:column;gap:3px}
+.gcal-week-event{padding:5px 10px;border-radius:4px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s;margin-right:8px}
+.gcal-week-event:hover{opacity:.85}
+.gcal-ev-time{font-size:11px;opacity:.75;white-space:nowrap;font-family:var(--mono);min-width:45px}
+/* List view */
+.gcal-list-section{margin-bottom:16px}
+.gcal-list-section-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:4px 0 8px;font-weight:500}
+.gcal-list-item{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:5px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+.gcal-list-item:hover{background:rgba(255,255,255,.025)}
+.gcal-list-item:last-child{border-bottom:none}
+.gcal-list-date-block{width:42px;min-width:42px;text-align:center}
+.gcal-list-month{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+.gcal-list-day{font-size:22px;font-weight:300;color:var(--text2);line-height:1.2;font-family:var(--mono)}
+.gcal-list-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gcal-list-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.gcal-list-meta{font-size:11px;color:var(--text3)}
+.gcal-list-item.cancelled .gcal-list-title{text-decoration:line-through;opacity:.5}
+/* popup */
+.cal-popup{position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:16px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeIn .15s}
+.cal-popup.open{display:block}
+.cal-popup-close{position:absolute;top:10px;right:12px;cursor:pointer;color:var(--text3);font-size:14px;line-height:1}
+.cal-popup-close:hover{color:var(--text)}
+.cal-popup-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:10px;padding-right:20px}
+.cal-popup-row{display:flex;gap:8px;margin-bottom:6px;font-size:12px;align-items:flex-start}
+.cal-popup-label{color:var(--text3);min-width:60px;font-size:11px}
+/* Day popup overlay */
+.cal-day-overlay{position:fixed;inset:0;z-index:8888;display:none}
+.cal-day-overlay.open{display:block}
+.cal-day-popup{position:fixed;z-index:8889;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:14px;width:320px;max-height:440px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none}
+.cal-day-popup-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-day-popup-date{font-size:13px;font-weight:500;color:var(--text)}
+.cal-day-popup-ev{padding:8px 10px;border-radius:4px;cursor:pointer;transition:background .1s;margin-bottom:4px}
+.cal-day-popup-ev:hover{background:rgba(255,255,255,.04)}
+.cal-day-popup-time{font-size:11px;font-family:var(--mono);margin-bottom:2px}
+.cal-day-popup-title{font-size:12px;font-weight:500;color:var(--text)}
+.cal-day-popup-title.cancelled{text-decoration:line-through;opacity:.5}
+
 </style>
 </head>
 <body>
@@ -790,83 +993,122 @@ async function renderHubSpotContacts(){
 async function renderContacts(){
   const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:[]}
   document.getElementById('topbar-actions').innerHTML=''
-  // Always try Supabase first (to get contact IDs for detail view)
-  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,telegram_id,email,phone,notes,metadata') || []
-  let contacts = data.contacts || []
 
-  // Name resolver: display_name → name → first+last → telegram_id → null
+  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,telegram_id,email,phone,notes,metadata,role') || []
+
   const resolveName = c => c.display_name || c.name || [c.first_name,c.last_name].filter(Boolean).join(' ') || null
-
-  // Filter: keep only real contacts, exclude all test/dev accounts
   const cleaned = sbContacts.filter(c => {
-    const nm = resolveName(c)
-    if(!nm) return false
-    // Remove any name that starts with "Test" (case-insensitive), is a known test slug, or is a generic placeholder
+    const nm = resolveName(c); if(!nm) return false
     if(/^test\b/i.test(nm)) return false
     if(/^(Block1|FreshUser|NewUser|CtxTest|T[0-9]Test|T[0-9]Memory|TestUser)/i.test(nm)) return false
     if(['test','ctxtest'].includes(nm.toLowerCase())) return false
     return true
   })
+  const rows = cleaned.length ? cleaned : (data.contacts||[]).map(c=>({id:null,display_name:c.display_name||c.name||'Unknown',company:c.metadata?.company||null,trust_level:'known',last_seen_at:c.last_seen_at,channel_primary:c.channel||'telegram'}))
 
-  // Prefer Supabase rows (they have the `id` needed for detail view)
-  const rows = cleaned.length ? cleaned : contacts.map(c=>({
-    id: null,
-    display_name: c.display_name||c.name||'Unknown',
-    company: c.metadata?.company||c.company||null,
-    trust_level: c.rank>=5?'partner':c.rank>=4?'verified':c.rank>=3?'known':'stranger',
-    last_seen_at: c.last_seen_at,
-    channel_primary: c.channel||'telegram',
-    sentiment_score: c.sentiment_score
-  }))
+  // Sort state
+  let _sortCol = 'last_seen_at', _sortDir = -1, _search = '', _page = 0
+  const PER_PAGE = 25
 
-  const simRows = SIM.contacts.map(c=>({
-    id: null,
-    display_name: c.display_name,
-    company: c.metadata?.company||null,
-    trust_level: 'known',
-    last_seen_at: c.last_seen_at,
-    channel_primary: c.channel,
-    sentiment_score: c.sentiment_score
-  }))
+  function initials(nm){ return nm.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?' }
+  function avatarColor(nm){
+    const palette=['#e8643c','#c0392b','#8e44ad','#2980b9','#27ae60','#d35400','#16a085','#2c3e50','#7f8c8d','#1abc9c']
+    let h=0; for(let i=0;i<nm.length;i++) h=(h*31+nm.charCodeAt(i))&0xffffffff
+    return palette[Math.abs(h)%palette.length]
+  }
 
-  const finalRows = rows.length ? rows : simRows
+  function render(){
+    const q = _search.toLowerCase()
+    let filtered = rows.filter(c=>{
+      if(!q) return true
+      const nm = resolveName(c)||''
+      return nm.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)
+    })
+    // Sort
+    filtered = filtered.slice().sort((a,b)=>{
+      let av=a[_sortCol]||'', bv=b[_sortCol]||''
+      if(_sortCol==='last_seen_at'){ av=av||'0'; bv=bv||'0' }
+      return av<bv?-_sortDir:av>bv?_sortDir:0
+    })
+    const total = filtered.length
+    const pages = Math.ceil(total/PER_PAGE)||1
+    _page = Math.min(_page, pages-1)
+    const slice = filtered.slice(_page*PER_PAGE, (_page+1)*PER_PAGE)
+    const start = _page*PER_PAGE+1, end = Math.min(start+PER_PAGE-1, total)
 
-  function rankFromTrust(t){return t==='partner'?5:t==='verified'?4:t==='known'?3:t==='stranger'?2:1}
-  function sentimentColor(s){return(s||0.5)>=0.7?'var(--accent)':(s||0.5)>=0.4?'var(--warn)':'var(--danger)'}
+    const arrow = col => `<span class="sort-arrow">${_sortCol===col?(_sortDir===-1?'↓':'↑'):'↕'}</span>`
+    const th = (col,label) => `<th class="${_sortCol===col?'sorted':''}" onclick="_cSort('${col}')">${label}${arrow(col)}</th>`
+    const hsConn = !!_intGet('hs_token')
 
-  const hsConnected = !!_intGet('hs_token')
-  document.getElementById('main-content').innerHTML=`
-    <div class="card">
-      <div class="card-title" style="display:flex;align-items:center;gap:8px">
-        Contacts · ${finalRows.length} ukupno
-        ${hsConnected?`<span class="saas-pill" onclick="renderHubSpotContacts()" title="Prikaži kontakte iz HubSpota">H HubSpot</span>`:''}
-        ${!hsConnected?`<span style="font-size:10px;color:var(--text3);cursor:pointer" onclick="nav('settings',null)" title="Konfigurisi HubSpot">○ HubSpot nije povezan — <u>Podesi</u></span>`:''}
-      </div>
-      <table class="tbl">
-        <thead><tr><th>Ime</th><th>Kompanija / Pozicija</th><th>Kontakt info</th><th>Trust</th><th>Zadnji kontakt</th><th>Kanal</th><th></th></tr></thead>
-        <tbody>${finalRows.map(c=>{
-          const nm = resolveName(c)||'—'
-          const ownerTag = c.trust_level==='owner' ? ' <span style="font-size:9px;color:var(--text3)">(you)</span>' : ''
-          const onclick = c.id ? `renderContactDetail('${c.id}','${nm.replace(/'/g,'')}')` : ''
-          const emailLink = c.email ? `<a href="mailto:${c.email}" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;font-size:11px">${c.email}</a>` : ''
-          const phoneLink = c.phone ? `<span style="color:var(--text2);font-size:11px">${c.phone}</span>` : ''
-          const contactInfo = [emailLink, phoneLink].filter(Boolean).join('<br>')
-          const roleText = c.role ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${c.role}</div>` : ''
-          const hsId = c.metadata?.hs_contact_id
-          const hsPill = hsId ? `<a href="https://app-eu1.hubspot.com/contacts/148227401/contact/${hsId}" target="_blank" onclick="event.stopPropagation()" class="saas-pill">H</a>` : ''
-          return `<tr style="cursor:${c.id?'pointer':'default'}" onclick="${onclick}">
-            <td style="font-weight:500">${nm}${ownerTag}${hsPill}</td>
-            <td style="color:var(--text2)">${c.company||'—'}${roleText}</td>
-            <td>${contactInfo||'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
-            <td>${statusBadge(c.trust_level||'stranger')}</td>
-            <td style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
-            <td style="color:var(--text3)">${c.channel_primary||c.channel||'telegram'}</td>
-            <td style="color:var(--accent);font-size:11px">${c.id?'→':''}</td>
-          </tr>`
-        }).join('')}</tbody>
-      </table>
-    </div>`
+    document.getElementById('main-content').innerHTML=`
+      <div class="hs-wrap">
+        <div class="hs-toolbar">
+          <input class="hs-search" placeholder="Pretraži kontakte…" value="${_search.replace(/"/g,'&quot;')}" oninput="_cSearch(this.value)" id="hs-search-input">
+          <button class="hs-filter-btn">☰ Filter</button>
+          <button class="hs-filter-btn">↕ Sort</button>
+          <button class="hs-filter-btn">⊞ Kolone</button>
+          ${hsConn?`<button class="hs-filter-btn" onclick="renderHubSpotContacts()">
+            <span style="background:#e8643c;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:2px;margin-right:3px">H</span>HubSpot</button>`:''}
+          <button class="hs-create-btn" onclick="openNewContactModal()">+ Kreiraj kontakt</button>
+        </div>
+        <div class="hs-table-wrap">
+          <table class="hs-table">
+            <thead><tr>
+              <th class="hs-cb-cell" style="padding:8px 8px 8px 14px"><input type="checkbox" class="hs-cb"></th>
+              ${th('display_name','Ime')}
+              ${th('company','Kompanija')}
+              ${th('email','Email')}
+              <th>Telefon</th>
+              <th>Trust</th>
+              ${th('last_seen_at','Zadnji kontakt')}
+              <th>Kanal</th>
+            </tr></thead>
+            <tbody>
+              ${slice.map(c=>{
+                const nm = resolveName(c)||'—'
+                const ini = initials(nm)
+                const avc = avatarColor(nm)
+                const hsId = c.metadata?.hs_contact_id
+                const hsPill = hsId?`<a class="hs-pill-hs" href="https://app-eu1.hubspot.com/contacts/148227401/contact/${hsId}" target="_blank" onclick="event.stopPropagation()">H</a>`:''
+                const onclick = c.id?`renderContactDetail('${c.id}','${nm.replace(/'/g,'\\'')}')`:''
+                return `<tr onclick="${onclick}">
+                  <td class="hs-cb-cell" onclick="event.stopPropagation()"><input type="checkbox" class="hs-cb"></td>
+                  <td class="hs-td">
+                    <div class="hs-name-cell">
+                      <div class="hs-avatar" style="background:${avc}">${ini}</div>
+                      <div>
+                        <div class="hs-name-text">${nm}${hsPill}</div>
+                        ${c.role?`<div class="hs-sub">${c.role}</div>`:''}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="hs-td" style="color:var(--text2)">${c.company||'—'}</td>
+                  <td class="hs-td">${c.email?`<a href="mailto:${c.email}" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;font-size:11px">${c.email}</a>`:'<span style="color:var(--text3)">—</span>'}</td>
+                  <td class="hs-td" style="font-size:11px;color:var(--text2)">${c.phone||'—'}</td>
+                  <td class="hs-td">${statusBadge(c.trust_level||'stranger')}</td>
+                  <td class="hs-td" style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
+                  <td class="hs-td" style="color:var(--text3);font-size:11px">${c.channel_primary||c.channel||'telegram'}</td>
+                </tr>`
+              }).join('')}
+            </tbody>
+          </table>
+          <div class="hs-footer">
+            <span>${total>0?`${start}–${end} od ${total} kontakata`:'Nema kontakata'}</span>
+            <div class="hs-page-btns">
+              ${pages>1?Array.from({length:pages},(_, i)=>`<button class="hs-page-btn${i===_page?' active':''}" onclick="_cPage(${i})">${i+1}</button>`).join(''):''}
+              ${_page>0?`<button class="hs-page-btn" onclick="_cPage(${_page-1})">‹</button>`:''}
+              ${_page<pages-1?`<button class="hs-page-btn" onclick="_cPage(${_page+1})">›</button>`:''}
+            </div>
+          </div>
+        </div>
+      </div>`
+  }
+  window._cSort = col => { if(_sortCol===col) _sortDir*=-1; else { _sortCol=col; _sortDir=-1 } render() }
+  window._cSearch = val => { _search=val; _page=0; render() }
+  window._cPage = p => { _page=p; render() }
+  render()
 }
+
 
 async function renderDeals(){
   const data=await api('/api/deals?workspace_id='+WS)||{deals:SIM.deals}
@@ -1055,54 +1297,121 @@ function renderIrisTaskRow(t){
 }
 
 function renderTaskBoard(){
-  const filtered=applyTaskFilters(allRawTasks)
-  const urgent=filtered.filter(t=>(t.priority||'medium')==='urgent')
-  const high=filtered.filter(t=>(t.priority||'medium')==='high')
-  const medium=filtered.filter(t=>(t.priority||'medium')==='medium')
-  const low=filtered.filter(t=>(t.priority||'medium')==='low')
+  const filtered = applyTaskFilters(allRawTasks)
 
-  // IRIS tasks section (always shown below)
-  const irisSection = allIrisTasks.length > 0 ? `
-    <div class="iris-tasks-section">
-      <div class="iris-tasks-header">
-        <span class="iris-tasks-title">🤖 IRIS Taskovi</span>
-        <span class="iris-tasks-count">${allIrisTasks.length} na čekanju</span>
-        <span style="font-size:10px;color:var(--text3);margin-left:8px">· zadaci koje IRIS treba obaviti</span>
+  const typeLabel = {task:'Task',meeting_proposal:'Meeting Proposal',pending_notification:'Notif.',open_loop:'Open Loop'}
+  const typeIcon  = {task:'📋',meeting_proposal:'📅',pending_notification:'📬',open_loop:'🔄'}
+  const statusDot = {open:'⚪',in_progress:'🔵',done:'🟢',cancelled:'⚫'}
+
+  function dueClass(due){
+    if(!due) return ''
+    const d = new Date(due), now = new Date()
+    const diff = d - now
+    if(diff < 0) return 'overdue'
+    if(diff < 86400000) return 'today'
+    return ''
+  }
+  function fmtDue(due){
+    if(!due) return '—'
+    const d = new Date(due)
+    const months=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec']
+    return months[d.getMonth()]+' '+d.getDate()
+  }
+
+  function dbRow(t, isIris=false){
+    const cls = dueClass(t.due_date)
+    const icon = typeIcon[t.task_type]||'📋'
+    return `<div class="${isIris?'notion-iris-row':'notion-db-row'}" onclick="openTaskDetail('${t.id}')">
+      <div class="notion-cb"><input type="checkbox" class="hs-cb" onclick="event.stopPropagation()"></div>
+      <div class="notion-cell">
+        <div class="notion-row-title"><span class="nt-icon">${icon}</span>${t.title}</div>
       </div>
-      <div class="iris-tasks-list">
-        ${allIrisTasks.map(renderIrisTaskRow).join('')}
+      <div class="notion-cell">
+        <span class="notion-status ns-${t.status||'open'}">${statusDot[t.status||'open']||'⚪'} ${t.status==='in_progress'?'In Progress':t.status==='open'?'Open':t.status==='done'?'Done':'Cancelled'}</span>
       </div>
+      <div class="notion-cell">
+        <span class="notion-pri np-${t.priority||'medium'}">${(t.priority||'medium').toUpperCase()}</span>
+      </div>
+      <div class="notion-cell"><span class="notion-type-tag">${typeLabel[t.task_type]||'Task'}</span></div>
+      <div class="notion-cell"><span class="notion-contact-cell">${t.contact_name||'—'}</span></div>
+      <div class="notion-cell"><span class="notion-due ${cls}">${fmtDue(t.due_date)}</span></div>
+    </div>`
+  }
+
+  const irisSection = allIrisTasks.length>0 ? `
+    <div class="notion-iris-block">
+      <div class="notion-iris-head">
+        <span>🤖</span><span>IRIS Taskovi</span>
+        <span class="nboard-col-count">${allIrisTasks.length}</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:4px;font-weight:400">· čeka tvoj odgovor</span>
+      </div>
+      <div class="notion-db-head">
+        <div class="notion-db-col"></div>
+        <div class="notion-db-col">Naziv</div>
+        <div class="notion-db-col">Status</div>
+        <div class="notion-db-col">Prioritet</div>
+        <div class="notion-db-col">Tip</div>
+        <div class="notion-db-col">Kontakt</div>
+        <div class="notion-db-col">Rok</div>
+      </div>
+      ${allIrisTasks.map(t=>dbRow(t,true)).join('')}
     </div>` : ''
 
   if(taskViewMode==='kanban'){
-    const col=(title,cls,items)=>`
-      <div class="kb-col ${cls}">
-        <div class="kb-col-head">
-          <span class="kb-col-title">${title}</span>
-          <span class="kb-col-count">${items.length}</span>
-        </div>
-        <div class="kb-cards">
-          ${items.length?items.map(renderKanbanCard).join(''):`<div class="kb-empty">Nema taskova</div>`}
-        </div>
-      </div>`
+    // Notion-style board
+    const cols = [
+      {key:'urgent',label:'🔴 Urgent',items:filtered.filter(t=>(t.priority||'medium')==='urgent')},
+      {key:'high',  label:'🟡 High',  items:filtered.filter(t=>(t.priority||'medium')==='high')},
+      {key:'medium',label:'🔵 Medium',items:filtered.filter(t=>(t.priority||'medium')==='medium')},
+      {key:'low',   label:'⚫ Low',   items:filtered.filter(t=>(t.priority||'medium')==='low')},
+    ]
     document.getElementById('main-content').innerHTML=`
-      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">${filtered.length} aktivnih · ${allRawTasks.length} ukupno</div>
-      <div class="kanban-board">
-        ${col('🔴 Urgent','kb-col-urgent',urgent)}
-        ${col('🟡 High','kb-col-high',high)}
-        ${col('🔵 Medium','kb-col-medium',medium)}
-        ${col('⚫ Low','kb-col-low',low)}
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${filtered.length} aktivnih</div>
+      <div class="notion-board">
+        ${cols.map(col=>`
+          <div class="nboard-col">
+            <div class="nboard-col-head">
+              <span>${col.label}</span>
+              <span class="nboard-col-count">${col.items.length}</span>
+            </div>
+            <div class="nboard-cards">
+              ${col.items.map(t=>`
+                <div class="nboard-card" onclick="openTaskDetail('${t.id}')">
+                  <div class="nboard-card-title">${typeIcon[t.task_type]||'📋'} ${t.title}</div>
+                  <div class="nboard-card-meta">
+                    <span class="notion-status ns-${t.status||'open'}" style="font-size:10px">${t.status==='in_progress'?'In Progress':t.status==='open'?'Open':'Done'}</span>
+                    ${t.contact_name?`<span style="font-size:10px;color:var(--text3)">👤 ${t.contact_name}</span>`:''}
+                    ${t.due_date?`<span class="notion-due ${dueClass(t.due_date)}" style="font-size:10px">${fmtDue(t.due_date)}</span>`:''}
+                  </div>
+                </div>`).join('')}
+              ${!col.items.length?`<div class="nboard-empty">Nema taskova</div>`:''}
+            </div>
+            <div class="nboard-new" onclick="openNewTaskModal()">＋ Novi</div>
+          </div>`).join('')}
       </div>
       ${irisSection}`
   } else {
+    // Notion table view
     document.getElementById('main-content').innerHTML=`
-      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">${filtered.length} aktivnih · ${allRawTasks.length} ukupno</div>
-      <div class="task-list-view">
-        ${filtered.length?filtered.map(renderListRow).join(''):`<div class="card"><div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Nema taskova koji odgovaraju filteru</div></div></div>`}
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${filtered.length} aktivnih · ${allRawTasks.length} ukupno</div>
+      <div class="notion-db">
+        <div class="notion-db-head">
+          <div class="notion-db-col"></div>
+          <div class="notion-db-col">📝 Naziv</div>
+          <div class="notion-db-col">Status</div>
+          <div class="notion-db-col">Prioritet</div>
+          <div class="notion-db-col">Tip</div>
+          <div class="notion-db-col">Kontakt</div>
+          <div class="notion-db-col">Rok</div>
+        </div>
+        ${filtered.map(t=>dbRow(t,false)).join('')}
+        ${!filtered.length?`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nema taskova koji odgovaraju filteru</div>`:''}
+        <div class="notion-new-row" onclick="openNewTaskModal()">＋ Novi task</div>
       </div>
       ${irisSection}`
   }
 }
+
 
 function scrollToReminders(){
   // Switch to list view filtered to tasks with reminders
@@ -1554,79 +1863,57 @@ function renderSettings(){
 function toggleSettings(){nav('settings',document.querySelector('.nav-item:last-child'))}
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
 // ── CALENDAR STATE ────────────────────────────────────────────────────────────
 let _calEvents = []
 let _calViewMonth = new Date()
+let _calMiniMonth = new Date()
 let _calView = 'month' // month | week | list
 
 async function renderCalendar(){
   document.getElementById('topbar-actions').innerHTML=''
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje…</div></div>'
-  // Fetch from Google Calendar via Railway proxy (from start of year, 400 days ahead)
   const yearStart=new Date(new Date().getFullYear(),0,1).toISOString()
   const saasResp=await fetch(BASE+'/api/saas/events?timeMin='+encodeURIComponent(yearStart)+'&days=400&maxResults=500').then(r=>r.ok?r.json():null).catch(()=>null)
   if(saasResp&&saasResp.events){
     _calEvents=saasResp.events.map(e=>({
-      id: e.gcal_id,
-      gcal_id: e.gcal_id,
-      title: e.title,
-      description: e.description||'',
-      start_time: e.start_time,
-      end_time: e.end_time,
-      status: e.status||'confirmed',
-      contact_id: null,
-      metadata: {gcal_id:e.gcal_id,link:e.link}
+      id:e.gcal_id, gcal_id:e.gcal_id, title:e.title,
+      description:e.description||'', start_time:e.start_time, end_time:e.end_time,
+      status:e.status||'confirmed', contact_id:null, metadata:{gcal_id:e.gcal_id,link:e.link}
     }))
-  } else {
-    _calEvents=[]
-  }
+  } else { _calEvents=[] }
   _calViewMonth = new Date()
+  _calMiniMonth = new Date()
   _calView = 'month'
   _renderCalView()
 }
 
 function _renderCalView(){
   const mc = document.getElementById('main-content')
-  const popup = document.getElementById('cal-popup')
-  if(popup) popup.remove()
+  const popup = document.getElementById('cal-popup'); if(popup) popup.remove()
 
   const now = new Date()
-  // Use local date (not UTC) to avoid timezone shift bugs
   function _localDs(d){ const dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0') }
   const todayStr = _localDs(now)
 
   function evClass(ev){
     if(!ev.start_time) return 'upcoming'
-    const d = _localDs(ev.start_time)
+    const d=_localDs(ev.start_time)
     if(d===todayStr) return 'today'
-    if(d < todayStr) return 'overdue'
+    if(d<todayStr) return 'overdue'
     return 'upcoming'
   }
-  function fmtT(iso){
-    if(!iso) return ''
-    const d = new Date(iso)
-    return d.toLocaleTimeString('default',{hour:'2-digit',minute:'2-digit'})
-  }
-  function fmtDateShort(iso){
-    if(!iso) return '—'
-    const d = new Date(iso)
-    return d.toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
-  }
-  function evColor(cls, ev){ if(ev && ev.status==='cancelled') return '#e53935'; return cls==='today'?'#1d9e75':cls==='overdue'?'#ea4335':'#4285f4' }
+  function fmtT(iso){ if(!iso) return ''; const d=new Date(iso); return d.toLocaleTimeString('default',{hour:'2-digit',minute:'2-digit'}) }
+  function fmtDateShort(iso){ if(!iso) return '—'; const d=new Date(iso); return d.toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) }
+  function evColor(cls,ev){ if(ev&&ev.status==='cancelled') return '#e53935'; return cls==='today'?'#1d9e75':cls==='overdue'?'#ea4335':'#1a6bdc' }
 
-  function showPopup(ev, x, y){
-    const old = document.getElementById('cal-popup')
-    if(old) old.remove()
-    const cls = evClass(ev)
-    const col = evColor(cls, ev)
-    const p = document.createElement('div')
-    p.id = 'cal-popup'
-    p.className = 'cal-popup open'
-    const px = Math.min(x+10, window.innerWidth-360)
-    const py = Math.min(y, window.innerHeight-220)
-    p.style.left = Math.max(10, px)+'px'
-    p.style.top = Math.max(10, py)+'px'
-    p.innerHTML = `
+  function showPopup(ev,x,y){
+    const old=document.getElementById('cal-popup'); if(old) old.remove()
+    const cls=evClass(ev); const col=evColor(cls,ev)
+    const p=document.createElement('div'); p.id='cal-popup'; p.className='cal-popup open'
+    p.style.left=Math.max(10,Math.min(x+10,window.innerWidth-360))+'px'
+    p.style.top=Math.max(10,Math.min(y,window.innerHeight-220))+'px'
+    p.innerHTML=`
       <span class="cal-popup-close" onclick="document.getElementById('cal-popup').remove()">✕</span>
       <div style="width:4px;height:36px;background:${col};border-radius:2px;float:left;margin-right:12px;margin-bottom:8px"></div>
       <div class="cal-popup-title">${ev.title||'Bez naslova'}</div>
@@ -1635,214 +1922,186 @@ function _renderCalView(){
       <div class="cal-popup-row"><span class="cal-popup-label">Vrijeme</span><span>${fmtT(ev.start_time)||'Cijeli dan'}</span></div>
       ${ev.description?`<div class="cal-popup-row"><span class="cal-popup-label">Opis</span><span>${ev.description}</span></div>`:''}
       <div class="cal-popup-row"><span class="cal-popup-label">Status</span><span>${statusBadge(ev.status||'confirmed')}</span></div>
-      ${(()=>{const att=(ev.metadata?.attendees||[]);if(!att.length)return '';return `<div class="cal-popup-row"><span class="cal-popup-label">Učesnici</span><div style="display:flex;flex-wrap:wrap;gap:4px">${att.map(a=>`<span style="background:rgba(29,158,117,0.15);border:1px solid rgba(29,158,117,0.35);color:#1D9E75;font-size:11px;padding:2px 7px;border-radius:10px">${a.name}${a.role==='added'?' <span style="font-size:9px;opacity:.7">(dodan)</span>':''}</span>`).join('')}</div></div>`;})()}`
+      ${(()=>{const att=(ev.metadata?.attendees||[]);if(!att.length)return '';return `<div class="cal-popup-row"><span class="cal-popup-label">Učesnici</span><div style="display:flex;flex-wrap:wrap;gap:4px">${att.map(a=>`<span style="background:rgba(29,158,117,.15);border:1px solid rgba(29,158,117,.35);color:#1D9E75;font-size:11px;padding:2px 7px;border-radius:10px">${a.name}</span>`).join('')}</div></div>`;})()}`
     document.body.appendChild(p)
-    setTimeout(()=>document.addEventListener('click', function h(e){
-      if(!p.contains(e.target)){p.remove();document.removeEventListener('click',h)}
-    }),10)
+    setTimeout(()=>document.addEventListener('click',function h(e){ if(!p.contains(e.target)){p.remove();document.removeEventListener('click',h)} }),10)
   }
 
-  window._calShowEv = (id, e) => {
-    e && e.stopPropagation()
-    const ev = _calEvents.find(x=>x.id===id)
-    if(ev) showPopup(ev, e?.clientX||400, e?.clientY||200)
-  }
-
-  window._closeDayPopup = () => {
-    document.getElementById('cal-day-popup').style.display='none'
-    document.getElementById('cal-day-popup-overlay').classList.remove('open')
-  }
-
-  window._calDayPopup = (ds, e) => {
-    e && e.stopPropagation()
-    const evs = _calEvents.filter(ev=>ev.start_time && _localDs(ev.start_time)===ds)
+  window._calShowEv = (id,e) => { e&&e.stopPropagation(); const ev=_calEvents.find(x=>x.id===id); if(ev) showPopup(ev,e?.clientX||400,e?.clientY||200) }
+  window._closeDayPopup = () => { document.getElementById('cal-day-popup').style.display='none'; document.getElementById('cal-day-popup-overlay').classList.remove('open') }
+  window._calDayPopup = (ds,e) => {
+    e&&e.stopPropagation()
+    const evs=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)===ds)
     if(!evs.length) return
-    const popup = document.getElementById('cal-day-popup')
-    const body = document.getElementById('cal-day-popup-body')
-    const dateEl = document.getElementById('cal-day-popup-date')
-
-    // Format date label
-    const [yr,mo,dy] = ds.split('-').map(Number)
-    const dayNames = ['Nedjelja','Ponedjeljak','Utorak','Srijeda','Četvrtak','Petak','Subota']
-    const monthNms = ['januara','februara','marta','aprila','maja','juna','jula','augusta','septembra','oktobra','novembra','decembra']
-    const d = new Date(yr,mo-1,dy)
-    dateEl.textContent = dayNames[d.getDay()] + ', ' + dy + '. ' + monthNms[mo-1]
-
-    body.innerHTML = evs.map(ev=>{
-      const isCancelled = ev.status==='cancelled'
-      const t = fmtT(ev.start_time)
-      const cls = evClass(ev)
-      const colorMap = {upcoming:'#7eb4ff',today:'var(--accent)',overdue:'#ff8a80'}
-      const c = colorMap[cls]||'var(--text2)'
+    const popup=document.getElementById('cal-day-popup'), body=document.getElementById('cal-day-popup-body'), dateEl=document.getElementById('cal-day-popup-date')
+    const [yr,mo,dy]=ds.split('-').map(Number)
+    const dayNms=['Nedjelja','Ponedjeljak','Utorak','Srijeda','Četvrtak','Petak','Subota']
+    const monNms=['januara','februara','marta','aprila','maja','juna','jula','augusta','septembra','oktobra','novembra','decembra']
+    const d=new Date(yr,mo-1,dy); dateEl.textContent=dayNms[d.getDay()]+', '+dy+'. '+monNms[mo-1]
+    body.innerHTML=evs.map(ev=>{
+      const isCancelled=ev.status==='cancelled', t=fmtT(ev.start_time), cls=evClass(ev)
+      const colorMap={upcoming:'#7eb4ff',today:'var(--accent)',overdue:'#ff8a80'}; const c=colorMap[cls]||'var(--text2)'
       return '<div class="cal-day-popup-ev" onclick="event.stopPropagation();window._closeDayPopup();window._calShowEv(\''+ev.id+'\',event)">'
-        +'<div class="cal-day-popup-time" style="color:'+c+'">'+( t||'Cijeli dan' )+(isCancelled?' · <span style="color:var(--danger);font-size:10px">OTKAZANO</span>':'')+'</div>'
+        +'<div class="cal-day-popup-time" style="color:'+c+'">'+(t||'Cijeli dan')+(isCancelled?' · <span style="color:var(--danger);font-size:10px">OTKAZANO</span>':'')+'</div>'
         +'<div class="cal-day-popup-title'+(isCancelled?' cancelled':'')+'">'+( ev.title||'Bez naslova' )+'</div>'
         +'</div>'
     }).join('')
-
-    // Position near click
-    const x = e?.clientX||window.innerWidth/2
-    const y = e?.clientY||window.innerHeight/2
+    const x=e?.clientX||window.innerWidth/2, y=e?.clientY||window.innerHeight/2
     const pw=340, ph=Math.min(evs.length*70+60,460)
-    const left = Math.min(x, window.innerWidth-pw-16)
-    const top  = Math.min(y+8, window.innerHeight-ph-16)
-    popup.style.left = left+'px'
-    popup.style.top  = top+'px'
+    popup.style.left=Math.min(x,window.innerWidth-pw-16)+'px'
+    popup.style.top=Math.min(y+8,window.innerHeight-ph-16)+'px'
     popup.style.display='block'
     document.getElementById('cal-day-popup-overlay').classList.add('open')
   }
 
-  const y = _calViewMonth.getFullYear()
-  const m = _calViewMonth.getMonth()
-  const monthNames = ['Januar','Februar','Mart','April','Maj','Juni','Juli','August','Septembar','Oktobar','Novembar','Decembar']
-  const DOW_FULL = ['Pon','Uto','Sri','Čet','Pet','Sub','Ned']
+  const y=_calViewMonth.getFullYear(), m=_calViewMonth.getMonth()
+  const my=_calMiniMonth.getFullYear(), mm=_calMiniMonth.getMonth()
+  const monthNames=['Januar','Februar','Mart','April','Maj','Juni','Juli','August','Septembar','Oktobar','Novembar','Decembar']
+  const DOW_FULL=['Pon','Uto','Sri','Čet','Pet','Sub','Ned']
+  const DOW_MIN=['P','U','S','Č','P','S','N']
 
-  // ── HEADER ──────────────────────────────────────────────────────────────────
-  const header = `
-    <div class="cal-header">
-      <div class="cal-header-left">
-        <button class="cal-today-btn" onclick="_calViewMonth=new Date();_renderCalView()">Danas</button>
-        <button class="cal-nav-btn" onclick="_calViewMonth=new Date(_calViewMonth.getFullYear(),_calViewMonth.getMonth()-1,1);_renderCalView()">‹</button>
-        <button class="cal-nav-btn" onclick="_calViewMonth=new Date(_calViewMonth.getFullYear(),_calViewMonth.getMonth()+1,1);_renderCalView()">›</button>
-        <span class="cal-month-title">${monthNames[m]}</span><span class="cal-year">${y}</span>
-      </div>
-      <div class="cal-view-btns">
-        <button class="cal-view-btn ${_calView==='month'?'active':''}" onclick="_calView='month';_renderCalView()">Mjesec</button>
-        <button class="cal-view-btn ${_calView==='week'?'active':''}" onclick="_calView='week';_renderCalView()">Sedmica</button>
-        <button class="cal-view-btn ${_calView==='list'?'active':''}" onclick="_calView='list';_renderCalView()">Lista</button>
-      </div>
-    </div>`
-
-  // ── MONTH VIEW ──────────────────────────────────────────────────────────────
-  if(_calView === 'month'){
-    const firstDay = new Date(y, m, 1)
-    const lastDay = new Date(y, m+1, 0)
-    let startDow = firstDay.getDay()
-    startDow = (startDow===0)?6:startDow-1
-
-    const days = []
-    for(let i=0;i<startDow;i++){
-      days.push({date:new Date(y,m,1-startDow+i),cur:false})
-    }
-    for(let i=1;i<=lastDay.getDate();i++) days.push({date:new Date(y,m,i),cur:true})
-    const rem = (7 - days.length%7)%7
-    for(let i=1;i<=rem;i++) days.push({date:new Date(y,m+1,i),cur:false})
-
-    const byDate = {}
-    for(const ev of _calEvents){
-      if(!ev.start_time) continue
-      const k = _localDs(ev.start_time)
-      if(!byDate[k]) byDate[k]=[]
-      byDate[k].push(ev)
-    }
-
-    const weeks = []
-    for(let i=0;i<days.length;i+=7) weeks.push(days.slice(i,i+7))
-
-    const dowHtml = DOW_FULL.map(d=>`<div class="cal-dow">${d}</div>`).join('')
-    const weeksHtml = weeks.map(week=>`
-      <div class="cal-week">${week.map(({date,cur})=>{
-        const ds = _localDs(date)
-        const isToday = ds===todayStr
-        const evs = byDate[ds]||[]
-        const maxChips = 3
-        const chips = evs.slice(0,maxChips).map(ev=>{
-          const cls=evClass(ev)
-          const isCancelled = ev.status==='cancelled'
-          const t = fmtT(ev.start_time)
-          return `<div class="cal-chip ${cls}${isCancelled?' cancelled':''}" onclick="event.stopPropagation();window._calShowEv('${ev.id}',event)">${t?t+' ':''}<b style="font-weight:500">${(ev.title||'Event').slice(0,24)}</b></div>`
-        }).join('')
-        const more = evs.length>maxChips
-          ? `<button class="cal-more-btn" onclick="event.stopPropagation();window._calDayPopup('${ds}',event)">+${evs.length-maxChips} više sastanaka</button>`
-          : ''
-        const dayClick = evs.length>0 ? `onclick="window._calDayPopup('${ds}',event)"` : ''
-        return `<div class="cal-day${!cur?' other-month':''}${isToday?' today':''}" ${dayClick}>
-          <div class="cal-day-num">${date.getDate()}</div>
-          ${chips}${more}
-        </div>`
-      }).join('')}</div>`).join('')
-
-    mc.innerHTML = `<div class="cal-wrap">
-      ${header}
-      <div class="cal-dow-row">${dowHtml}</div>
-      <div class="cal-weeks">${weeksHtml}</div>
-    </div>`
-
-  // ── WEEK VIEW ───────────────────────────────────────────────────────────────
-  } else if(_calView === 'week'){
-    const dow = now.getDay()
-    const weekStart = new Date(now)
-    weekStart.setDate(now.getDate() - (dow===0?6:dow-1))
-
-    const rows = []
-    for(let i=0;i<7;i++){
-      const d = new Date(weekStart)
-      d.setDate(weekStart.getDate()+i)
-      const ds = _localDs(d)
-      const isToday = ds===todayStr
-      const evs = _calEvents.filter(ev=>ev.start_time && _localDs(ev.start_time)===ds)
-      const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
-      const wkDay = dayNames[d.getDay()]
-      const evHtml = evs.length ? evs.map(ev=>{
-        const cls=evClass(ev)
-        const isCancelled = ev.status==='cancelled'
-        const col=evColor(cls,ev)
-        const textColor = isCancelled?'#e57373':cls==='overdue'?'#ff8a80':cls==='today'?'var(--accent)':'#7eb4ff'
-        const titleStyle = isCancelled?'font-weight:500;text-decoration:line-through;opacity:.6':'font-weight:500'
-        return `<div class="cal-week-event" style="background:${col}20;border-left:3px solid ${col};color:${textColor};${isCancelled?'opacity:.65':''}" onclick="window._calShowEv('${ev.id}',event)">
-          <span class="ev-time">${fmtT(ev.start_time)||'Cijeli dan'}</span>
-          <span style="${titleStyle}">${ev.title||'Bez naslova'}</span>
-        </div>`
-      }).join('') : `<div style="font-size:11px;color:var(--text3);padding:14px 0;opacity:.4">—</div>`
-      rows.push(`<div class="cal-week-day-row">
-        <div class="cal-week-label">
-          <span class="wk-day${isToday?' today-day':''}">${wkDay}</span>
-          <span class="wk-num${isToday?' today-num':''}">${d.getDate()}</span>
+  // ── MINI CALENDAR ──────────────────────────────────────────────────────────
+  function buildMini(){
+    const firstDay=new Date(my,mm,1), lastDay=new Date(my,mm+1,0)
+    let startDow=firstDay.getDay(); startDow=(startDow===0)?6:startDow-1
+    const days=[]
+    for(let i=0;i<startDow;i++) days.push({d:new Date(my,mm,1-startDow+i),cur:false})
+    for(let i=1;i<=lastDay.getDate();i++) days.push({d:new Date(my,mm,i),cur:true})
+    const rem=(7-days.length%7)%7
+    for(let i=1;i<=rem;i++) days.push({d:new Date(my,mm+1,i),cur:false})
+    const allDsWithEvs=new Set(_calEvents.filter(e=>e.start_time).map(e=>_localDs(e.start_time)))
+    return `<div class="gcal-mini">
+      <div class="gcal-mini-head">
+        <span>${monthNames[mm]} ${my}</span>
+        <div style="display:flex;gap:2px">
+          <button class="gcal-mini-nav" onclick="_calMiniMonth=new Date(_calMiniMonth.getFullYear(),_calMiniMonth.getMonth()-1,1);_renderCalView()">‹</button>
+          <button class="gcal-mini-nav" onclick="_calMiniMonth=new Date(_calMiniMonth.getFullYear(),_calMiniMonth.getMonth()+1,1);_renderCalView()">›</button>
         </div>
-        <div class="cal-week-events">${evHtml}</div>
+      </div>
+      <div class="gcal-mini-dow">${DOW_MIN.map(d=>`<span>${d}</span>`).join('')}</div>
+      <div class="gcal-mini-grid">${days.map(({d,cur})=>{
+        const ds=_localDs(d), isToday=ds===todayStr, isSelected=d.getMonth()===m&&d.getDate()===_calViewMonth.getDate()&&d.getFullYear()===y
+        const hasEv=allDsWithEvs.has(ds)
+        return `<div class="gcal-mini-day${!cur?' other':''}${isToday?' today':''}${isSelected&&!isToday?' selected':''}" onclick="_calViewMonth=new Date(${d.getFullYear()},${d.getMonth()},1);_calView='month';_renderCalView()">${d.getDate()}${hasEv&&!isToday?'<span style="display:block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin:0 auto;margin-top:-2px"></span>':''}</div>`
+      }).join('')}</div>
+    </div>`
+  }
+
+  const sidebar = `<div class="gcal-sidebar">
+    <button class="gcal-create-btn" onclick="openNewEventModal()">＋ Kreiraj</button>
+    ${buildMini()}
+    <div class="gcal-my-cals">
+      <div class="gcal-cal-head">Moji kalendari</div>
+      <div class="gcal-cal-item"><div class="gcal-cal-dot" style="background:#1d9e75"></div>Ajdin Brković</div>
+      <div class="gcal-cal-item"><div class="gcal-cal-dot" style="background:#1a6bdc"></div>Sastanci</div>
+    </div>
+  </div>`
+
+  // ── MAIN HEADER ────────────────────────────────────────────────────────────
+  const header=`<div class="gcal-header">
+    <button class="gcal-today-btn" onclick="_calViewMonth=new Date();_calMiniMonth=new Date();_renderCalView()">Danas</button>
+    <button class="gcal-nav-btn" onclick="_calViewMonth=new Date(_calViewMonth.getFullYear(),_calViewMonth.getMonth()-1,1);_renderCalView()">‹</button>
+    <button class="gcal-nav-btn" onclick="_calViewMonth=new Date(_calViewMonth.getFullYear(),_calViewMonth.getMonth()+1,1);_renderCalView()">›</button>
+    <span class="gcal-month-title">${monthNames[m]}</span><span class="gcal-year">${y}</span>
+    <div class="gcal-view-btns" style="margin-left:auto">
+      <button class="gcal-view-btn${_calView==='month'?' active':''}" onclick="_calView='month';_renderCalView()">Mjesec</button>
+      <button class="gcal-view-btn${_calView==='week'?' active':''}" onclick="_calView='week';_renderCalView()">Sedmica</button>
+      <button class="gcal-view-btn${_calView==='list'?' active':''}" onclick="_calView='list';_renderCalView()">Raspored</button>
+    </div>
+  </div>`
+
+  // ── MONTH VIEW ─────────────────────────────────────────────────────────────
+  let mainHtml = ''
+  if(_calView==='month'){
+    const firstDay=new Date(y,m,1), lastDay=new Date(y,m+1,0)
+    let startDow=firstDay.getDay(); startDow=(startDow===0)?6:startDow-1
+    const days=[]
+    for(let i=0;i<startDow;i++) days.push({date:new Date(y,m,1-startDow+i),cur:false})
+    for(let i=1;i<=lastDay.getDate();i++) days.push({date:new Date(y,m,i),cur:true})
+    const rem=(7-days.length%7)%7
+    for(let i=1;i<=rem;i++) days.push({date:new Date(y,m+1,i),cur:false})
+    const byDate={}
+    for(const ev of _calEvents){ if(!ev.start_time) continue; const k=_localDs(ev.start_time); if(!byDate[k]) byDate[k]=[]; byDate[k].push(ev) }
+    const weeks=[]; for(let i=0;i<days.length;i+=7) weeks.push(days.slice(i,i+7))
+    const dowHtml=DOW_FULL.map(d=>`<div class="gcal-dow">${d}</div>`).join('')
+    const weeksHtml=weeks.map(week=>`<div class="gcal-week">${week.map(({date,cur})=>{
+      const ds=_localDs(date), isToday=ds===todayStr, evs=byDate[ds]||[]
+      const maxChips=3
+      const chips=evs.slice(0,maxChips).map(ev=>{
+        const cls=evClass(ev), isCancelled=ev.status==='cancelled', t=fmtT(ev.start_time)
+        return `<div class="gcal-chip ${cls}${isCancelled?' cancelled':''}" onclick="event.stopPropagation();window._calShowEv('${ev.id}',event)">${t?t+' ':''}<b style="font-weight:500">${(ev.title||'Event').slice(0,22)}</b></div>`
+      }).join('')
+      const more=evs.length>maxChips?`<button class="gcal-more" onclick="event.stopPropagation();window._calDayPopup('${ds}',event)">+${evs.length-maxChips} više</button>`:''
+      const dayClick=evs.length>0?`onclick="window._calDayPopup('${ds}',event)"`:''
+      return `<div class="gcal-day${!cur?' other-month':''}${isToday?' today':''}" ${dayClick}>
+        <div class="cal-day-num">${date.getDate()}</div>
+        ${chips}${more}
+      </div>`
+    }).join('')}</div>`).join('')
+    mainHtml=`<div class="gcal-dow-row">${dowHtml}</div><div class="gcal-weeks">${weeksHtml}</div>`
+
+  // ── WEEK VIEW ──────────────────────────────────────────────────────────────
+  } else if(_calView==='week'){
+    const dow=now.getDay(), weekStart=new Date(now)
+    weekStart.setDate(now.getDate()-(dow===0?6:dow-1))
+    const rows=[]
+    for(let i=0;i<7;i++){
+      const d=new Date(weekStart); d.setDate(weekStart.getDate()+i)
+      const ds=_localDs(d), isToday=ds===todayStr
+      const evs=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)===ds)
+      const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
+      const evHtml=evs.length?evs.map(ev=>{
+        const cls=evClass(ev), isCancelled=ev.status==='cancelled', col=evColor(cls,ev)
+        const tColor=isCancelled?'#e57373':cls==='overdue'?'#ff8a80':cls==='today'?'var(--accent)':'#7eb4ff'
+        return `<div class="gcal-week-event" style="background:${col}20;border-left:3px solid ${col};color:${tColor};${isCancelled?'opacity:.65':''}" onclick="window._calShowEv('${ev.id}',event)">
+          <span class="gcal-ev-time">${fmtT(ev.start_time)||'Cijeli dan'}</span>
+          <span style="${isCancelled?'text-decoration:line-through;opacity:.6':'font-weight:500'}">${ev.title||'Bez naslova'}</span>
+        </div>`
+      }).join(''):`<div style="font-size:11px;color:var(--text3);padding:14px 0;opacity:.4">—</div>`
+      rows.push(`<div class="gcal-week-day-row">
+        <div class="gcal-week-label">
+          <span class="gcal-wk-day${isToday?' today-day':''}">${dayNames[d.getDay()]}</span>
+          <span class="gcal-wk-num${isToday?' today-num':''}">${d.getDate()}</span>
+        </div>
+        <div class="gcal-week-events">${evHtml}</div>
       </div>`)
     }
-    mc.innerHTML = `<div class="cal-wrap">
-      ${header}
-      <div class="cal-week-view">${rows.join('')}</div>
-    </div>`
+    mainHtml=`<div class="gcal-week-view">${rows.join('')}</div>`
 
-  // ── LIST VIEW ────────────────────────────────────────────────────────────────
+  // ── LIST VIEW ──────────────────────────────────────────────────────────────
   } else {
-    const upcoming = _calEvents.filter(ev=>ev.start_time && _localDs(ev.start_time)>=todayStr)
-    const past = _calEvents.filter(ev=>ev.start_time && _localDs(ev.start_time)<todayStr).reverse().slice(0,8)
+    const upcoming=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)>=todayStr)
+    const past=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)<todayStr).reverse().slice(0,12)
     function listItem(ev){
-      const cls=evClass(ev)
-      const isCancelled = ev.status==='cancelled'
-      const col=evColor(cls,ev)
+      const cls=evClass(ev), isCancelled=ev.status==='cancelled', col=evColor(cls,ev)
       const d=new Date(ev.start_time)
-      const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
       const monNames=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec']
-      return `<div class="cal-list-item${isCancelled?' cancelled':''}" onclick="window._calShowEv('${ev.id}',event)">
-        <div class="cal-list-date-block">
-          <div class="cal-list-month">${monNames[d.getMonth()]}</div>
-          <div class="cal-list-day" style="color:${col}">${d.getDate()}</div>
+      const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
+      return `<div class="gcal-list-item${isCancelled?' cancelled':''}" onclick="window._calShowEv('${ev.id}',event)">
+        <div class="gcal-list-date-block">
+          <div class="gcal-list-month">${monNames[d.getMonth()]}</div>
+          <div class="gcal-list-day" style="color:${col}">${d.getDate()}</div>
         </div>
-        <div class="cal-list-dot" style="background:${col}"></div>
+        <div class="gcal-list-dot" style="background:${col}"></div>
         <div style="flex:1;min-width:0">
-          <div class="cal-list-title" style="display:flex;align-items:center;gap:6px">
-            ${ev.title||'Bez naslova'}
-            ${ev.metadata?.gcal_event_id?`<a href="https://calendar.google.com/calendar/event?eid=${btoa(ev.metadata.gcal_event_id+'@google.com')}" target="_blank" onclick="event.stopPropagation()" class="saas-pill" title="Otvori u Google Calendaru">📅 GCal</a>`:''}
-          </div>
-          <div class="cal-list-meta">${dayNames[d.getDay()]}, ${fmtT(ev.start_time)||'Cijeli dan'}${ev.description?' · '+ev.description.slice(0,50):''}${(ev.metadata?.attendees?.length>0)?' · 👥 '+ev.metadata.attendees.map(a=>a.name).join(', '):''}</div>
+          <div class="gcal-list-title">${ev.title||'Bez naslova'}${ev.metadata?.gcal_id?`<a href="https://calendar.google.com/calendar/r" target="_blank" onclick="event.stopPropagation()" class="saas-pill" title="Google Calendar">📅</a>`:''}</div>
+          <div class="gcal-list-meta">${dayNames[d.getDay()]}, ${fmtT(ev.start_time)||'Cijeli dan'}${ev.description?' · '+ev.description.slice(0,50):''}${(ev.metadata?.attendees?.length>0)?' · 👥 '+ev.metadata.attendees.map(a=>a.name).join(', '):''}</div>
         </div>
         ${statusBadge(ev.status||'confirmed')}
       </div>`
     }
-    const upHtml = upcoming.length ? upcoming.map(listItem).join('') : '<div class="empty" style="padding:24px 0"><div class="empty-text">Nema nadolazećih događaja</div></div>'
-    const pastHtml = past.length ? `<div class="cal-list-section"><div class="cal-list-section-title">Prošli</div>${past.map(listItem).join('')}</div>` : ''
-    mc.innerHTML = `<div class="cal-wrap">
-      ${header}
-      <div class="cal-list-section"><div class="cal-list-section-title">Nadolazeći</div>${upHtml}</div>
-      ${pastHtml}
-    </div>`
+    const upHtml=upcoming.length?upcoming.map(listItem).join(''):`<div style="padding:20px 0;color:var(--text3);font-size:12px">Nema nadolazećih događaja</div>`
+    const pastHtml=past.length?`<div class="gcal-list-section"><div class="gcal-list-section-title">Prošli</div>${past.map(listItem).join('')}</div>`:''
+    mainHtml=`<div style="flex:1;overflow-y:auto"><div class="gcal-list-section"><div class="gcal-list-section-title">Nadolazeći</div>${upHtml}</div>${pastHtml}</div>`
   }
 
+  mc.innerHTML=`<div class="gcal-layout">
+    ${sidebar}
+    <div class="gcal-main">
+      ${header}
+      ${mainHtml}
+    </div>
+  </div>`
 }
 
 
