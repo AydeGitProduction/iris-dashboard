@@ -581,6 +581,9 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 .cal-day-popup-title{font-size:12px;font-weight:500;color:var(--text)}
 .cal-day-popup-title.cancelled{text-decoration:line-through;opacity:.5}
 
+
+.mini-dot{display:block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin:0 auto;margin-top:-1px}
+.hs-clickable{cursor:pointer}
 </style>
 </head>
 <body>
@@ -991,121 +994,143 @@ async function renderHubSpotContacts(){
 }
 
 async function renderContacts(){
-  const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:[]}
   document.getElementById('topbar-actions').innerHTML=''
+  document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje kontakata…</div></div>'
 
-  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,telegram_id,email,phone,notes,metadata,role') || []
-
-  const resolveName = c => c.display_name || c.name || [c.first_name,c.last_name].filter(Boolean).join(' ') || null
-  const cleaned = sbContacts.filter(c => {
-    const nm = resolveName(c); if(!nm) return false
+  // Primary source: HubSpot via Railway proxy
+  const saasResp = await fetch(BASE+'/api/saas/contacts?limit=500').then(r=>r.ok?r.json():null).catch(()=>null)
+  let hsContacts = (saasResp?.contacts || []).filter(c => {
+    const nm = c.name||''
     if(/^test\b/i.test(nm)) return false
     if(/^(Block1|FreshUser|NewUser|CtxTest|T[0-9]Test|T[0-9]Memory|TestUser)/i.test(nm)) return false
     if(['test','ctxtest'].includes(nm.toLowerCase())) return false
-    return true
+    return nm.length > 0
   })
-  const rows = cleaned.length ? cleaned : (data.contacts||[]).map(c=>({id:null,display_name:c.display_name||c.name||'Unknown',company:c.metadata?.company||null,trust_level:'known',last_seen_at:c.last_seen_at,channel_primary:c.channel||'telegram'}))
+
+  // Supplement: Supabase for trust_level, last_seen_at, telegram_id, IRIS id
+  const sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=500&select=id,display_name,email,phone,trust_level,last_seen_at,channel_primary,metadata') || []
+  const sbByEmail = {}; const sbByHsId = {}
+  for(const sb of sbContacts){
+    if(sb.email) sbByEmail[sb.email.toLowerCase()] = sb
+    const hsId = sb.metadata?.hs_contact_id
+    if(hsId) sbByHsId[String(hsId)] = sb
+  }
+
+  // Merge HubSpot + Supabase rows
+  const rows = hsContacts.map(c => {
+    const sb = sbByHsId[String(c.hs_id)] || (c.email ? sbByEmail[c.email.toLowerCase()] : null) || {}
+    return {
+      id:            sb.id || null,
+      hs_id:         c.hs_id,
+      display_name:  c.name || sb.display_name || '—',
+      email:         c.email || sb.email || null,
+      phone:         c.phone || sb.phone || null,
+      company:       c.company || null,
+      role:          c.role || null,
+      trust_level:   sb.trust_level || 'stranger',
+      last_seen_at:  sb.last_seen_at || c.updated_at || null,
+      channel_primary: sb.channel_primary || 'hubspot',
+    }
+  })
 
   // Sort state
-  let _sortCol = 'last_seen_at', _sortDir = -1, _search = '', _page = 0
-  const PER_PAGE = 25
+  let _sortCol='last_seen_at', _sortDir=-1, _search='', _page=0
+  const PER_PAGE=25
 
-  function initials(nm){ return nm.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?' }
+  function initials(nm){ return (nm||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?' }
   function avatarColor(nm){
-    const palette=['#e8643c','#c0392b','#8e44ad','#2980b9','#27ae60','#d35400','#16a085','#2c3e50','#7f8c8d','#1abc9c']
-    let h=0; for(let i=0;i<nm.length;i++) h=(h*31+nm.charCodeAt(i))&0xffffffff
-    return palette[Math.abs(h)%palette.length]
+    const p=['#e8643c','#c0392b','#8e44ad','#2980b9','#27ae60','#d35400','#16a085','#2c3e50','#7f8c8d','#1abc9c']
+    let h=0; for(let i=0;i<(nm||'').length;i++) h=(h*31+(nm||'').charCodeAt(i))&0xffffffff
+    return p[Math.abs(h)%p.length]
   }
 
   function render(){
-    const q = _search.toLowerCase()
-    let filtered = rows.filter(c=>{
+    const q=_search.toLowerCase()
+    let filtered=rows.filter(c=>{
       if(!q) return true
-      const nm = resolveName(c)||''
+      const nm=c.display_name||''
       return nm.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)
     })
-    // Sort
-    filtered = filtered.slice().sort((a,b)=>{
+    filtered=filtered.slice().sort((a,b)=>{
       let av=a[_sortCol]||'', bv=b[_sortCol]||''
-      if(_sortCol==='last_seen_at'){ av=av||'0'; bv=bv||'0' }
       return av<bv?-_sortDir:av>bv?_sortDir:0
     })
-    const total = filtered.length
-    const pages = Math.ceil(total/PER_PAGE)||1
-    _page = Math.min(_page, pages-1)
-    const slice = filtered.slice(_page*PER_PAGE, (_page+1)*PER_PAGE)
-    const start = _page*PER_PAGE+1, end = Math.min(start+PER_PAGE-1, total)
+    const total=filtered.length, pages=Math.ceil(total/PER_PAGE)||1
+    _page=Math.min(_page,pages-1)
+    const slice=filtered.slice(_page*PER_PAGE,(_page+1)*PER_PAGE)
+    const start=_page*PER_PAGE+1, end=Math.min(start+PER_PAGE-1,total)
 
-    const arrow = col => `<span class="sort-arrow">${_sortCol===col?(_sortDir===-1?'↓':'↑'):'↕'}</span>`
-    const th = (col,label) => `<th class="${_sortCol===col?'sorted':''}" onclick="_cSort('${col}')">${label}${arrow(col)}</th>`
-    const hsConn = !!_intGet('hs_token')
+    const arrow=col=>`<span class="sort-arrow">${_sortCol===col?(_sortDir===-1?'↓':'↑'):'↕'}</span>`
+    const th=(col,lbl)=>`<th class="${_sortCol===col?'sorted':''}" onclick="_cSort('${col}')">${lbl}${arrow(col)}</th>`
+
+    const rowsHtml = slice.map(c=>{
+      const nm=c.display_name||'—', ini=initials(nm), col=avatarColor(nm)
+      const hsLink=c.hs_id?`<a class="hs-pill-hs" href="https://app-eu1.hubspot.com/contacts/148227401/contact/${c.hs_id}" target="_blank" onclick="event.stopPropagation()">H</a>`:''
+      const rowClick=c.id?`data-cid="${c.id}" data-cnm="${nm.replace(/"/g,'&quot;')}"`:''
+      return `<tr class="${c.id?'hs-clickable':''}" ${rowClick}>
+        <td class="hs-cb-cell" onclick="event.stopPropagation()"><input type="checkbox" class="hs-cb"></td>
+        <td class="hs-td">
+          <div class="hs-name-cell">
+            <div class="hs-avatar" style="background:${col}">${ini}</div>
+            <div>
+              <div class="hs-name-text">${nm}${hsLink}</div>
+              ${c.role?`<div class="hs-sub">${c.role}</div>`:''}
+            </div>
+          </div>
+        </td>
+        <td class="hs-td" style="color:var(--text2)">${c.company||'—'}</td>
+        <td class="hs-td">${c.email?`<a href="mailto:${c.email}" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;font-size:11px">${c.email}</a>`:'<span style="color:var(--text3)">—</span>'}</td>
+        <td class="hs-td" style="font-size:11px;color:var(--text2)">${c.phone||'—'}</td>
+        <td class="hs-td">${statusBadge(c.trust_level||'stranger')}</td>
+        <td class="hs-td" style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
+        <td class="hs-td" style="color:var(--text3);font-size:11px">${c.channel_primary||'hubspot'}</td>
+      </tr>`
+    }).join('')
 
     document.getElementById('main-content').innerHTML=`
       <div class="hs-wrap">
         <div class="hs-toolbar">
-          <input class="hs-search" placeholder="Pretraži kontakte…" value="${_search.replace(/"/g,'&quot;')}" oninput="_cSearch(this.value)" id="hs-search-input">
+          <input class="hs-search" id="hs-search-input" placeholder="Pretraži kontakte…" oninput="_cSearch(this.value)">
           <button class="hs-filter-btn">☰ Filter</button>
           <button class="hs-filter-btn">↕ Sort</button>
-          <button class="hs-filter-btn">⊞ Kolone</button>
-          ${hsConn?`<button class="hs-filter-btn" onclick="renderHubSpotContacts()">
-            <span style="background:#e8643c;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:2px;margin-right:3px">H</span>HubSpot</button>`:''}
           <button class="hs-create-btn" onclick="openNewContactModal()">+ Kreiraj kontakt</button>
         </div>
         <div class="hs-table-wrap">
-          <table class="hs-table">
+          <table class="hs-table" id="hs-contacts-table">
             <thead><tr>
               <th class="hs-cb-cell" style="padding:8px 8px 8px 14px"><input type="checkbox" class="hs-cb"></th>
               ${th('display_name','Ime')}
               ${th('company','Kompanija')}
-              ${th('email','Email')}
-              <th>Telefon</th>
-              <th>Trust</th>
+              <th>Email</th><th>Telefon</th>
+              ${th('trust_level','Trust')}
               ${th('last_seen_at','Zadnji kontakt')}
               <th>Kanal</th>
             </tr></thead>
-            <tbody>
-              ${slice.map(c=>{
-                const nm = resolveName(c)||'—'
-                const ini = initials(nm)
-                const avc = avatarColor(nm)
-                const hsId = c.metadata?.hs_contact_id
-                const hsPill = hsId?`<a class="hs-pill-hs" href="https://app-eu1.hubspot.com/contacts/148227401/contact/${hsId}" target="_blank" onclick="event.stopPropagation()">H</a>`:''
-                const onclick = c.id?`renderContactDetail('${c.id}','${nm.replace(/'/g,'')}')`:''
-                return `<tr onclick="${onclick}">
-                  <td class="hs-cb-cell" onclick="event.stopPropagation()"><input type="checkbox" class="hs-cb"></td>
-                  <td class="hs-td">
-                    <div class="hs-name-cell">
-                      <div class="hs-avatar" style="background:${avc}">${ini}</div>
-                      <div>
-                        <div class="hs-name-text">${nm}${hsPill}</div>
-                        ${c.role?`<div class="hs-sub">${c.role}</div>`:''}
-                      </div>
-                    </div>
-                  </td>
-                  <td class="hs-td" style="color:var(--text2)">${c.company||'—'}</td>
-                  <td class="hs-td">${c.email?`<a href="mailto:${c.email}" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;font-size:11px">${c.email}</a>`:'<span style="color:var(--text3)">—</span>'}</td>
-                  <td class="hs-td" style="font-size:11px;color:var(--text2)">${c.phone||'—'}</td>
-                  <td class="hs-td">${statusBadge(c.trust_level||'stranger')}</td>
-                  <td class="hs-td" style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
-                  <td class="hs-td" style="color:var(--text3);font-size:11px">${c.channel_primary||c.channel||'telegram'}</td>
-                </tr>`
-              }).join('')}
-            </tbody>
+            <tbody>${rowsHtml}${!rowsHtml?'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--text3)">Nema kontakata</td></tr>':''}</tbody>
           </table>
           <div class="hs-footer">
             <span>${total>0?`${start}–${end} od ${total} kontakata`:'Nema kontakata'}</span>
             <div class="hs-page-btns">
-              ${pages>1?Array.from({length:pages},(_, i)=>`<button class="hs-page-btn${i===_page?' active':''}" onclick="_cPage(${i})">${i+1}</button>`).join(''):''}
               ${_page>0?`<button class="hs-page-btn" onclick="_cPage(${_page-1})">‹</button>`:''}
+              ${Array.from({length:Math.min(pages,7)},(_,i)=>`<button class="hs-page-btn${i===_page?' active':''}" onclick="_cPage(${i})">${i+1}</button>`).join('')}
               ${_page<pages-1?`<button class="hs-page-btn" onclick="_cPage(${_page+1})">›</button>`:''}
             </div>
           </div>
         </div>
       </div>`
+
+    // Row click via event delegation (avoids inline onclick quoting issues)
+    document.getElementById('hs-contacts-table')?.addEventListener('click', e=>{
+      const tr=e.target.closest('tr.hs-clickable')
+      if(!tr) return
+      const cid=tr.dataset.cid, cnm=tr.dataset.cnm
+      if(cid) renderContactDetail(cid, cnm)
+    })
   }
-  window._cSort = col => { if(_sortCol===col) _sortDir*=-1; else { _sortCol=col; _sortDir=-1 } render() }
-  window._cSearch = val => { _search=val; _page=0; render() }
-  window._cPage = p => { _page=p; render() }
+
+  window._cSort=col=>{ if(_sortCol===col) _sortDir*=-1; else{_sortCol=col;_sortDir=-1}; render() }
+  window._cSearch=val=>{ _search=val; _page=0; render() }
+  window._cPage=p=>{ _page=p; render() }
   render()
 }
 
@@ -1959,244 +1984,259 @@ function toggleSettings(){nav('settings',document.querySelector('.nav-item:last-
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
 // ── CALENDAR STATE ────────────────────────────────────────────────────────────
 let _calEvents = []
 let _calViewMonth = new Date()
 let _calMiniMonth = new Date()
-let _calView = 'month' // month | week | list
+let _calView = 'month'
 
 async function renderCalendar(){
   document.getElementById('topbar-actions').innerHTML=''
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje…</div></div>'
   const yearStart=new Date(new Date().getFullYear(),0,1).toISOString()
   const saasResp=await fetch(BASE+'/api/saas/events?timeMin='+encodeURIComponent(yearStart)+'&days=400&maxResults=500').then(r=>r.ok?r.json():null).catch(()=>null)
-  if(saasResp&&saasResp.events){
-    _calEvents=saasResp.events.map(e=>({
-      id:e.gcal_id, gcal_id:e.gcal_id, title:e.title,
-      description:e.description||'', start_time:e.start_time, end_time:e.end_time,
-      status:e.status||'confirmed', contact_id:null, metadata:{gcal_id:e.gcal_id,link:e.link}
-    }))
-  } else { _calEvents=[] }
-  _calViewMonth = new Date()
-  _calMiniMonth = new Date()
-  _calView = 'month'
+  _calEvents=(saasResp?.events||[]).map(e=>({
+    id:e.gcal_id,gcal_id:e.gcal_id,title:e.title,description:e.description||'',
+    start_time:e.start_time,end_time:e.end_time,status:e.status||'confirmed',
+    contact_id:null,metadata:{gcal_id:e.gcal_id,link:e.link}
+  }))
+  _calViewMonth=new Date(); _calMiniMonth=new Date(); _calView='month'
   _renderCalView()
 }
 
 function _renderCalView(){
-  const mc = document.getElementById('main-content')
-  const popup = document.getElementById('cal-popup'); if(popup) popup.remove()
+  const mc=document.getElementById('main-content')
+  document.getElementById('cal-popup')?.remove()
 
-  const now = new Date()
-  function _localDs(d){ const dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0') }
-  const todayStr = _localDs(now)
-
-  function evClass(ev){
-    if(!ev.start_time) return 'upcoming'
-    const d=_localDs(ev.start_time)
-    if(d===todayStr) return 'today'
-    if(d<todayStr) return 'overdue'
-    return 'upcoming'
-  }
-  function fmtT(iso){ if(!iso) return ''; const d=new Date(iso); return d.toLocaleTimeString('default',{hour:'2-digit',minute:'2-digit'}) }
-  function fmtDateShort(iso){ if(!iso) return '—'; const d=new Date(iso); return d.toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) }
-  function evColor(cls,ev){ if(ev&&ev.status==='cancelled') return '#e53935'; return cls==='today'?'#1d9e75':cls==='overdue'?'#ea4335':'#1a6bdc' }
+  const now=new Date()
+  const _localDs=d=>{ const dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0') }
+  const todayStr=_localDs(now)
+  const evClass=ev=>{ if(!ev.start_time) return 'upcoming'; const d=_localDs(ev.start_time); return d===todayStr?'today':d<todayStr?'overdue':'upcoming' }
+  const fmtT=iso=>{ if(!iso) return ''; const d=new Date(iso); return d.toLocaleTimeString('default',{hour:'2-digit',minute:'2-digit'}) }
+  const fmtDateShort=iso=>{ if(!iso) return '—'; return new Date(iso).toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) }
+  const evColor=(cls,ev)=>ev?.status==='cancelled'?'#e53935':cls==='today'?'#1d9e75':cls==='overdue'?'#ea4335':'#1a6bdc'
 
   function showPopup(ev,x,y){
-    const old=document.getElementById('cal-popup'); if(old) old.remove()
-    const cls=evClass(ev); const col=evColor(cls,ev)
+    document.getElementById('cal-popup')?.remove()
+    const cls=evClass(ev),col=evColor(cls,ev)
     const p=document.createElement('div'); p.id='cal-popup'; p.className='cal-popup open'
     p.style.left=Math.max(10,Math.min(x+10,window.innerWidth-360))+'px'
     p.style.top=Math.max(10,Math.min(y,window.innerHeight-220))+'px'
-    p.innerHTML=`
-      <span class="cal-popup-close" onclick="document.getElementById('cal-popup').remove()">✕</span>
+    const att=(ev.metadata?.attendees||[])
+    p.innerHTML=`<span class="cal-popup-close">✕</span>
       <div style="width:4px;height:36px;background:${col};border-radius:2px;float:left;margin-right:12px;margin-bottom:8px"></div>
-      <div class="cal-popup-title">${ev.title||'Bez naslova'}</div>
-      <div style="clear:both"></div>
+      <div class="cal-popup-title">${ev.title||'Bez naslova'}</div><div style="clear:both"></div>
       <div class="cal-popup-row"><span class="cal-popup-label">Datum</span><span>${fmtDateShort(ev.start_time)}</span></div>
       <div class="cal-popup-row"><span class="cal-popup-label">Vrijeme</span><span>${fmtT(ev.start_time)||'Cijeli dan'}</span></div>
       ${ev.description?`<div class="cal-popup-row"><span class="cal-popup-label">Opis</span><span>${ev.description}</span></div>`:''}
       <div class="cal-popup-row"><span class="cal-popup-label">Status</span><span>${statusBadge(ev.status||'confirmed')}</span></div>
-      ${(()=>{const att=(ev.metadata?.attendees||[]);if(!att.length)return '';return `<div class="cal-popup-row"><span class="cal-popup-label">Učesnici</span><div style="display:flex;flex-wrap:wrap;gap:4px">${att.map(a=>`<span style="background:rgba(29,158,117,.15);border:1px solid rgba(29,158,117,.35);color:#1D9E75;font-size:11px;padding:2px 7px;border-radius:10px">${a.name}</span>`).join('')}</div></div>`;})()}`
+      ${att.length?`<div class="cal-popup-row"><span class="cal-popup-label">Učesnici</span><div style="display:flex;flex-wrap:wrap;gap:4px">${att.map(a=>`<span style="background:rgba(29,158,117,.15);border:1px solid rgba(29,158,117,.35);color:#1D9E75;font-size:11px;padding:2px 7px;border-radius:10px">${a.name}</span>`).join('')}</div></div>`:''}`
     document.body.appendChild(p)
+    p.querySelector('.cal-popup-close').onclick=()=>p.remove()
     setTimeout(()=>document.addEventListener('click',function h(e){ if(!p.contains(e.target)){p.remove();document.removeEventListener('click',h)} }),10)
   }
 
-  window._calShowEv = (id,e) => { e&&e.stopPropagation(); const ev=_calEvents.find(x=>x.id===id); if(ev) showPopup(ev,e?.clientX||400,e?.clientY||200) }
-  window._closeDayPopup = () => { document.getElementById('cal-day-popup').style.display='none'; document.getElementById('cal-day-popup-overlay').classList.remove('open') }
-  window._calDayPopup = (ds,e) => {
-    e&&e.stopPropagation()
+  window._calShowEv=(id,e)=>{ e?.stopPropagation(); const ev=_calEvents.find(x=>x.id===id); if(ev) showPopup(ev,e?.clientX||400,e?.clientY||200) }
+  window._closeDayPopup=()=>{ document.getElementById('cal-day-popup').style.display='none'; document.getElementById('cal-day-popup-overlay').classList.remove('open') }
+  window._calDayPopup=(ds,e)=>{
+    e?.stopPropagation()
     const evs=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)===ds)
     if(!evs.length) return
-    const popup=document.getElementById('cal-day-popup'), body=document.getElementById('cal-day-popup-body'), dateEl=document.getElementById('cal-day-popup-date')
+    const popup=document.getElementById('cal-day-popup'),body=document.getElementById('cal-day-popup-body'),dateEl=document.getElementById('cal-day-popup-date')
     const [yr,mo,dy]=ds.split('-').map(Number)
+    const d=new Date(yr,mo-1,dy)
     const dayNms=['Nedjelja','Ponedjeljak','Utorak','Srijeda','Četvrtak','Petak','Subota']
     const monNms=['januara','februara','marta','aprila','maja','juna','jula','augusta','septembra','oktobra','novembra','decembra']
-    const d=new Date(yr,mo-1,dy); dateEl.textContent=dayNms[d.getDay()]+', '+dy+'. '+monNms[mo-1]
+    dateEl.textContent=dayNms[d.getDay()]+', '+dy+'. '+monNms[mo-1]
     body.innerHTML=evs.map(ev=>{
-      const isCancelled=ev.status==='cancelled', t=fmtT(ev.start_time), cls=evClass(ev)
-      const colorMap={upcoming:'#7eb4ff',today:'var(--accent)',overdue:'#ff8a80'}; const c=colorMap[cls]||'var(--text2)'
-      return '<div class="cal-day-popup-ev" onclick="event.stopPropagation();window._closeDayPopup();window._calShowEv(\''+ev.id+'\',event)">'
-        +'<div class="cal-day-popup-time" style="color:'+c+'">'+(t||'Cijeli dan')+(isCancelled?' · <span style="color:var(--danger);font-size:10px">OTKAZANO</span>':'')+'</div>'
-        +'<div class="cal-day-popup-title'+(isCancelled?' cancelled':'')+'">'+( ev.title||'Bez naslova' )+'</div>'
-        +'</div>'
+      const cls=evClass(ev),t=fmtT(ev.start_time),col={upcoming:'#7eb4ff',today:'var(--accent)',overdue:'#ff8a80'}[cls]||'var(--text2)'
+      return `<div class="cal-day-popup-ev" data-evid="${ev.id}">
+        <div class="cal-day-popup-time" style="color:${col}">${t||'Cijeli dan'}${ev.status==='cancelled'?' · <span style="color:var(--danger);font-size:10px">OTKAZANO</span>':''}</div>
+        <div class="cal-day-popup-title${ev.status==='cancelled'?' cancelled':''}">${ev.title||'Bez naslova'}</div>
+      </div>`
     }).join('')
-    const x=e?.clientX||window.innerWidth/2, y=e?.clientY||window.innerHeight/2
-    const pw=340, ph=Math.min(evs.length*70+60,460)
-    popup.style.left=Math.min(x,window.innerWidth-pw-16)+'px'
-    popup.style.top=Math.min(y+8,window.innerHeight-ph-16)+'px'
+    body.addEventListener('click',e=>{ const ev=e.target.closest('[data-evid]'); if(ev){ window._closeDayPopup(); window._calShowEv(ev.dataset.evid,e) } })
+    const x=e?.clientX||window.innerWidth/2,y=e?.clientY||window.innerHeight/2
+    popup.style.left=Math.min(x,window.innerWidth-356)+'px'
+    popup.style.top=Math.min(y+8,window.innerHeight-480)+'px'
     popup.style.display='block'
     document.getElementById('cal-day-popup-overlay').classList.add('open')
   }
 
-  const y=_calViewMonth.getFullYear(), m=_calViewMonth.getMonth()
-  const my=_calMiniMonth.getFullYear(), mm=_calMiniMonth.getMonth()
+  const y=_calViewMonth.getFullYear(),m=_calViewMonth.getMonth()
+  const my=_calMiniMonth.getFullYear(),mm=_calMiniMonth.getMonth()
   const monthNames=['Januar','Februar','Mart','April','Maj','Juni','Juli','August','Septembar','Oktobar','Novembar','Decembar']
   const DOW_FULL=['Pon','Uto','Sri','Čet','Pet','Sub','Ned']
   const DOW_MIN=['P','U','S','Č','P','S','N']
 
-  // ── MINI CALENDAR ──────────────────────────────────────────────────────────
+  // ── MINI CAL (event delegation — no inline onclick on day cells) ───────────
   function buildMini(){
-    const firstDay=new Date(my,mm,1), lastDay=new Date(my,mm+1,0)
-    let startDow=firstDay.getDay(); startDow=(startDow===0)?6:startDow-1
+    const first=new Date(my,mm,1),last=new Date(my,mm+1,0)
+    let dow=first.getDay(); dow=dow===0?6:dow-1
     const days=[]
-    for(let i=0;i<startDow;i++) days.push({d:new Date(my,mm,1-startDow+i),cur:false})
-    for(let i=1;i<=lastDay.getDate();i++) days.push({d:new Date(my,mm,i),cur:true})
+    for(let i=0;i<dow;i++) days.push({d:new Date(my,mm,1-dow+i),cur:false})
+    for(let i=1;i<=last.getDate();i++) days.push({d:new Date(my,mm,i),cur:true})
     const rem=(7-days.length%7)%7
     for(let i=1;i<=rem;i++) days.push({d:new Date(my,mm+1,i),cur:false})
-    const allDsWithEvs=new Set(_calEvents.filter(e=>e.start_time).map(e=>_localDs(e.start_time)))
+    const hasEvSet=new Set(_calEvents.filter(e=>e.start_time).map(e=>_localDs(e.start_time)))
+    const cellsHtml=days.map(({d,cur})=>{
+      const ds=_localDs(d),isToday=ds===todayStr
+      const cls=['gcal-mini-day',!cur?'other':'',isToday?'today':''].filter(Boolean).join(' ')
+      const dot=hasEvSet.has(ds)&&!isToday?'<i class="mini-dot"></i>':''
+      return `<div class="${cls}" data-goto="${d.getFullYear()},${d.getMonth()}">${d.getDate()}${dot}</div>`
+    }).join('')
     return `<div class="gcal-mini">
       <div class="gcal-mini-head">
         <span>${monthNames[mm]} ${my}</span>
         <div style="display:flex;gap:2px">
-          <button class="gcal-mini-nav" onclick="_calMiniMonth=new Date(_calMiniMonth.getFullYear(),_calMiniMonth.getMonth()-1,1);_renderCalView()">‹</button>
-          <button class="gcal-mini-nav" onclick="_calMiniMonth=new Date(_calMiniMonth.getFullYear(),_calMiniMonth.getMonth()+1,1);_renderCalView()">›</button>
+          <button class="gcal-mini-nav" id="mini-prev">‹</button>
+          <button class="gcal-mini-nav" id="mini-next">›</button>
         </div>
       </div>
       <div class="gcal-mini-dow">${DOW_MIN.map(d=>`<span>${d}</span>`).join('')}</div>
-      <div class="gcal-mini-grid">${days.map(({d,cur})=>{
-        const ds=_localDs(d), isToday=ds===todayStr, isSelected=d.getMonth()===m&&d.getDate()===_calViewMonth.getDate()&&d.getFullYear()===y
-        const hasEv=allDsWithEvs.has(ds)
-        return `<div class="gcal-mini-day${!cur?' other':''}${isToday?' today':''}${isSelected&&!isToday?' selected':''}" onclick="_calViewMonth=new Date(${d.getFullYear()},${d.getMonth()},1);_calView='month';_renderCalView()">${d.getDate()}${hasEv&&!isToday?'<span style="display:block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin:0 auto;margin-top:-2px"></span>':''}</div>`
-      }).join('')}</div>
+      <div class="gcal-mini-grid" id="mini-grid">${cellsHtml}</div>
     </div>`
   }
 
-  const sidebar = `<div class="gcal-sidebar">
-    <button class="gcal-create-btn" onclick="openNewEventModal()">＋ Kreiraj</button>
-    ${buildMini()}
-    <div class="gcal-my-cals">
-      <div class="gcal-cal-head">Moji kalendari</div>
-      <div class="gcal-cal-item"><div class="gcal-cal-dot" style="background:#1d9e75"></div>Ajdin Brković</div>
-      <div class="gcal-cal-item"><div class="gcal-cal-dot" style="background:#1a6bdc"></div>Sastanci</div>
-    </div>
-  </div>`
-
-  // ── MAIN HEADER ────────────────────────────────────────────────────────────
+  // ── HEADER ─────────────────────────────────────────────────────────────────
   const header=`<div class="gcal-header">
-    <button class="gcal-today-btn" onclick="_calViewMonth=new Date();_calMiniMonth=new Date();_renderCalView()">Danas</button>
-    <button class="gcal-nav-btn" onclick="_calViewMonth=new Date(_calViewMonth.getFullYear(),_calViewMonth.getMonth()-1,1);_renderCalView()">‹</button>
-    <button class="gcal-nav-btn" onclick="_calViewMonth=new Date(_calViewMonth.getFullYear(),_calViewMonth.getMonth()+1,1);_renderCalView()">›</button>
+    <button class="gcal-today-btn" id="cal-today">Danas</button>
+    <button class="gcal-nav-btn" id="cal-prev">‹</button>
+    <button class="gcal-nav-btn" id="cal-next">›</button>
     <span class="gcal-month-title">${monthNames[m]}</span><span class="gcal-year">${y}</span>
-    <div class="gcal-view-btns" style="margin-left:auto">
-      <button class="gcal-view-btn${_calView==='month'?' active':''}" onclick="_calView='month';_renderCalView()">Mjesec</button>
-      <button class="gcal-view-btn${_calView==='week'?' active':''}" onclick="_calView='week';_renderCalView()">Sedmica</button>
-      <button class="gcal-view-btn${_calView==='list'?' active':''}" onclick="_calView='list';_renderCalView()">Raspored</button>
+    <div class="gcal-view-btns">
+      <button class="gcal-view-btn${_calView==='month'?' active':''}" data-view="month">Mjesec</button>
+      <button class="gcal-view-btn${_calView==='week'?' active':''}" data-view="week">Sedmica</button>
+      <button class="gcal-view-btn${_calView==='list'?' active':''}" data-view="list">Raspored</button>
     </div>
   </div>`
 
   // ── MONTH VIEW ─────────────────────────────────────────────────────────────
-  let mainHtml = ''
+  let mainHtml=''
   if(_calView==='month'){
-    const firstDay=new Date(y,m,1), lastDay=new Date(y,m+1,0)
-    let startDow=firstDay.getDay(); startDow=(startDow===0)?6:startDow-1
+    const first=new Date(y,m,1),last=new Date(y,m+1,0)
+    let dow=first.getDay(); dow=dow===0?6:dow-1
     const days=[]
-    for(let i=0;i<startDow;i++) days.push({date:new Date(y,m,1-startDow+i),cur:false})
-    for(let i=1;i<=lastDay.getDate();i++) days.push({date:new Date(y,m,i),cur:true})
+    for(let i=0;i<dow;i++) days.push({date:new Date(y,m,1-dow+i),cur:false})
+    for(let i=1;i<=last.getDate();i++) days.push({date:new Date(y,m,i),cur:true})
     const rem=(7-days.length%7)%7
     for(let i=1;i<=rem;i++) days.push({date:new Date(y,m+1,i),cur:false})
     const byDate={}
-    for(const ev of _calEvents){ if(!ev.start_time) continue; const k=_localDs(ev.start_time); if(!byDate[k]) byDate[k]=[]; byDate[k].push(ev) }
+    for(const ev of _calEvents){ if(!ev.start_time) continue; const k=_localDs(ev.start_time); (byDate[k]||(byDate[k]=[])).push(ev) }
     const weeks=[]; for(let i=0;i<days.length;i+=7) weeks.push(days.slice(i,i+7))
-    const dowHtml=DOW_FULL.map(d=>`<div class="gcal-dow">${d}</div>`).join('')
-    const weeksHtml=weeks.map(week=>`<div class="gcal-week">${week.map(({date,cur})=>{
-      const ds=_localDs(date), isToday=ds===todayStr, evs=byDate[ds]||[]
-      const maxChips=3
-      const chips=evs.slice(0,maxChips).map(ev=>{
-        const cls=evClass(ev), isCancelled=ev.status==='cancelled', t=fmtT(ev.start_time)
-        return `<div class="gcal-chip ${cls}${isCancelled?' cancelled':''}" onclick="event.stopPropagation();window._calShowEv('${ev.id}',event)">${t?t+' ':''}<b style="font-weight:500">${(ev.title||'Event').slice(0,22)}</b></div>`
-      }).join('')
-      const more=evs.length>maxChips?`<button class="gcal-more" onclick="event.stopPropagation();window._calDayPopup('${ds}',event)">+${evs.length-maxChips} više</button>`:''
-      const dayClick=evs.length>0?`onclick="window._calDayPopup('${ds}',event)"`:''
-      return `<div class="gcal-day${!cur?' other-month':''}${isToday?' today':''}" ${dayClick}>
-        <div class="cal-day-num">${date.getDate()}</div>
-        ${chips}${more}
-      </div>`
-    }).join('')}</div>`).join('')
-    mainHtml=`<div class="gcal-dow-row">${dowHtml}</div><div class="gcal-weeks">${weeksHtml}</div>`
+    mainHtml=`<div class="gcal-dow-row">${DOW_FULL.map(d=>`<div class="gcal-dow">${d}</div>`).join('')}</div>
+    <div class="gcal-weeks" id="gcal-month-grid">
+      ${weeks.map(week=>`<div class="gcal-week">${week.map(({date,cur})=>{
+        const ds=_localDs(date),isToday=ds===todayStr,evs=byDate[ds]||[]
+        const chips=evs.slice(0,3).map(ev=>{
+          const cls=evClass(ev),t=fmtT(ev.start_time),cancelled=ev.status==='cancelled'
+          return `<div class="gcal-chip ${cls}${cancelled?' cancelled':''}" data-evid="${ev.id}">${t?t+' ':''}<b style="font-weight:500">${(ev.title||'').slice(0,22)}</b></div>`
+        }).join('')
+        const more=evs.length>3?`<button class="gcal-more" data-dayds="${ds}">+${evs.length-3} više</button>`:''
+        return `<div class="gcal-day${!cur?' other-month':''}${isToday?' today':''}"${evs.length?` data-dayds="${ds}"`:''}>${
+          isToday?`<div class="cal-day-num">${date.getDate()}</div>`:
+          `<div class="cal-day-num">${date.getDate()}</div>`
+        }${chips}${more}</div>`
+      }).join('')}</div>`).join('')}
+    </div>`
 
-  // ── WEEK VIEW ──────────────────────────────────────────────────────────────
   } else if(_calView==='week'){
-    const dow=now.getDay(), weekStart=new Date(now)
-    weekStart.setDate(now.getDate()-(dow===0?6:dow-1))
+    const dow2=now.getDay(),ws=new Date(now); ws.setDate(now.getDate()-(dow2===0?6:dow2-1))
     const rows=[]
     for(let i=0;i<7;i++){
-      const d=new Date(weekStart); d.setDate(weekStart.getDate()+i)
-      const ds=_localDs(d), isToday=ds===todayStr
+      const d=new Date(ws); d.setDate(ws.getDate()+i)
+      const ds=_localDs(d),isToday=ds===todayStr
       const evs=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)===ds)
-      const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
-      const evHtml=evs.length?evs.map(ev=>{
-        const cls=evClass(ev), isCancelled=ev.status==='cancelled', col=evColor(cls,ev)
-        const tColor=isCancelled?'#e57373':cls==='overdue'?'#ff8a80':cls==='today'?'var(--accent)':'#7eb4ff'
-        return `<div class="gcal-week-event" style="background:${col}20;border-left:3px solid ${col};color:${tColor};${isCancelled?'opacity:.65':''}" onclick="window._calShowEv('${ev.id}',event)">
-          <span class="gcal-ev-time">${fmtT(ev.start_time)||'Cijeli dan'}</span>
-          <span style="${isCancelled?'text-decoration:line-through;opacity:.6':'font-weight:500'}">${ev.title||'Bez naslova'}</span>
-        </div>`
-      }).join(''):`<div style="font-size:11px;color:var(--text3);padding:14px 0;opacity:.4">—</div>`
+      const dayNms=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
       rows.push(`<div class="gcal-week-day-row">
         <div class="gcal-week-label">
-          <span class="gcal-wk-day${isToday?' today-day':''}">${dayNames[d.getDay()]}</span>
+          <span class="gcal-wk-day${isToday?' today-day':''}">${dayNms[d.getDay()]}</span>
           <span class="gcal-wk-num${isToday?' today-num':''}">${d.getDate()}</span>
         </div>
-        <div class="gcal-week-events">${evHtml}</div>
+        <div class="gcal-week-events">${evs.length?evs.map(ev=>{
+          const cls=evClass(ev),col=evColor(cls,ev),c=ev.status==='cancelled'
+          return `<div class="gcal-week-event" style="background:${col}20;border-left:3px solid ${col}" data-evid="${ev.id}">
+            <span class="gcal-ev-time">${fmtT(ev.start_time)||'Cijeli dan'}</span>
+            <span style="${c?'text-decoration:line-through;opacity:.6':'font-weight:500'}">${ev.title||'Bez naslova'}</span>
+          </div>`
+        }).join(''):`<div style="font-size:11px;color:var(--text3);padding:14px 0;opacity:.4">—</div>`}</div>
       </div>`)
     }
-    mainHtml=`<div class="gcal-week-view">${rows.join('')}</div>`
+    mainHtml=`<div class="gcal-week-view" id="gcal-week-grid">${rows.join('')}</div>`
 
-  // ── LIST VIEW ──────────────────────────────────────────────────────────────
   } else {
     const upcoming=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)>=todayStr)
     const past=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)<todayStr).reverse().slice(0,12)
-    function listItem(ev){
-      const cls=evClass(ev), isCancelled=ev.status==='cancelled', col=evColor(cls,ev)
+    const li=ev=>{
+      const cls=evClass(ev),col=evColor(cls,ev),c=ev.status==='cancelled'
       const d=new Date(ev.start_time)
-      const monNames=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec']
-      const dayNames=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
-      return `<div class="gcal-list-item${isCancelled?' cancelled':''}" onclick="window._calShowEv('${ev.id}',event)">
-        <div class="gcal-list-date-block">
-          <div class="gcal-list-month">${monNames[d.getMonth()]}</div>
-          <div class="gcal-list-day" style="color:${col}">${d.getDate()}</div>
-        </div>
+      const mon=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'],dn=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
+      return `<div class="gcal-list-item${c?' cancelled':''}" data-evid="${ev.id}">
+        <div class="gcal-list-date-block"><div class="gcal-list-month">${mon[d.getMonth()]}</div><div class="gcal-list-day" style="color:${col}">${d.getDate()}</div></div>
         <div class="gcal-list-dot" style="background:${col}"></div>
         <div style="flex:1;min-width:0">
-          <div class="gcal-list-title">${ev.title||'Bez naslova'}${ev.metadata?.gcal_id?`<a href="https://calendar.google.com/calendar/r" target="_blank" onclick="event.stopPropagation()" class="saas-pill" title="Google Calendar">📅</a>`:''}</div>
-          <div class="gcal-list-meta">${dayNames[d.getDay()]}, ${fmtT(ev.start_time)||'Cijeli dan'}${ev.description?' · '+ev.description.slice(0,50):''}${(ev.metadata?.attendees?.length>0)?' · 👥 '+ev.metadata.attendees.map(a=>a.name).join(', '):''}</div>
+          <div class="gcal-list-title">${ev.title||'Bez naslova'}</div>
+          <div class="gcal-list-meta">${dn[d.getDay()]}, ${fmtT(ev.start_time)||'Cijeli dan'}${ev.description?' · '+ev.description.slice(0,50):''}</div>
         </div>
         ${statusBadge(ev.status||'confirmed')}
       </div>`
     }
-    const upHtml=upcoming.length?upcoming.map(listItem).join(''):`<div style="padding:20px 0;color:var(--text3);font-size:12px">Nema nadolazećih događaja</div>`
-    const pastHtml=past.length?`<div class="gcal-list-section"><div class="gcal-list-section-title">Prošli</div>${past.map(listItem).join('')}</div>`:''
-    mainHtml=`<div style="flex:1;overflow-y:auto"><div class="gcal-list-section"><div class="gcal-list-section-title">Nadolazeći</div>${upHtml}</div>${pastHtml}</div>`
+    mainHtml=`<div style="overflow-y:auto;flex:1">
+      <div class="gcal-list-section"><div class="gcal-list-section-title">Nadolazeći</div>
+        <div id="gcal-list-up">${upcoming.length?upcoming.map(li).join(''):'<div style="padding:16px 0;color:var(--text3);font-size:12px">Nema nadolazećih događaja</div>'}</div>
+      </div>
+      ${past.length?`<div class="gcal-list-section"><div class="gcal-list-section-title">Prošli</div><div id="gcal-list-past">${past.map(li).join('')}</div></div>`:''}
+    </div>`
   }
 
   mc.innerHTML=`<div class="gcal-layout">
-    ${sidebar}
-    <div class="gcal-main">
-      ${header}
-      ${mainHtml}
+    <div class="gcal-sidebar">
+      <button class="gcal-create-btn" id="gcal-create-btn">＋ Kreiraj</button>
+      ${buildMini()}
+      <div class="gcal-my-cals">
+        <div class="gcal-cal-head">Moji kalendari</div>
+        <div class="gcal-cal-item"><div class="gcal-cal-dot" style="background:#1d9e75"></div>Ajdin Brković</div>
+        <div class="gcal-cal-item"><div class="gcal-cal-dot" style="background:#1a6bdc"></div>Sastanci</div>
+      </div>
     </div>
+    <div class="gcal-main">${header}${mainHtml}</div>
   </div>`
+
+  // ── Event delegation (all clicks handled here, no inline onclick) ──────────
+  // Mini-cal grid
+  mc.querySelector('#mini-grid')?.addEventListener('click',e=>{
+    const cell=e.target.closest('[data-goto]')
+    if(!cell) return
+    const [yr2,mo2]=cell.dataset.goto.split(',').map(Number)
+    _calViewMonth=new Date(yr2,mo2,1); _calView='month'; _renderCalView()
+  })
+  mc.querySelector('#mini-prev')?.addEventListener('click',()=>{
+    _calMiniMonth=new Date(_calMiniMonth.getFullYear(),_calMiniMonth.getMonth()-1,1); _renderCalView()
+  })
+  mc.querySelector('#mini-next')?.addEventListener('click',()=>{
+    _calMiniMonth=new Date(_calMiniMonth.getFullYear(),_calMiniMonth.getMonth()+1,1); _renderCalView()
+  })
+  // Create btn
+  mc.querySelector('#gcal-create-btn')?.addEventListener('click',()=>openNewEventModal())
+  // Header nav
+  mc.querySelector('#cal-today')?.addEventListener('click',()=>{ _calViewMonth=new Date(); _calMiniMonth=new Date(); _renderCalView() })
+  mc.querySelector('#cal-prev')?.addEventListener('click',()=>{ _calViewMonth=new Date(y,m-1,1); _renderCalView() })
+  mc.querySelector('#cal-next')?.addEventListener('click',()=>{ _calViewMonth=new Date(y,m+1,1); _renderCalView() })
+  mc.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{ _calView=btn.dataset.view; _renderCalView() }))
+  // Month grid — event chips and day clicks
+  mc.querySelector('#gcal-month-grid')?.addEventListener('click',e=>{
+    const chip=e.target.closest('[data-evid]'); if(chip){ window._calShowEv(chip.dataset.evid,e); return }
+    const more=e.target.closest('[data-dayds]'); if(more){ window._calDayPopup(more.dataset.dayds,e); return }
+    const day=e.target.closest('.gcal-day[data-dayds]'); if(day){ window._calDayPopup(day.dataset.dayds,e) }
+  })
+  // Week grid
+  mc.querySelector('#gcal-week-grid')?.addEventListener('click',e=>{
+    const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e)
+  })
+  // List views
+  mc.querySelector('#gcal-list-up')?.addEventListener('click',e=>{ const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e) })
+  mc.querySelector('#gcal-list-past')?.addEventListener('click',e=>{ const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e) })
 }
 
 
