@@ -584,6 +584,82 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 
 .mini-dot{display:block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin:0 auto;margin-top:-1px}
 .hs-clickable{cursor:pointer}
+
+/* ══════════════════════════════════════════════
+   HUBSPOT CONTACT DETAIL
+══════════════════════════════════════════════ */
+.hs-detail-layout{display:flex;gap:0;height:calc(100vh - 100px);overflow:hidden}
+.hs-detail-left{width:290px;min-width:290px;border-right:1px solid var(--border);overflow-y:auto;padding:20px 18px}
+.hs-detail-right{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:0 0 0 20px}
+.hs-det-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:600;color:#fff;margin-bottom:10px;flex-shrink:0;font-family:var(--mono)}
+.hs-det-name{font-size:17px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.3}
+.hs-det-sub{font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.5}
+.hs-det-actions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.hs-det-action{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap}
+.hs-det-action:hover{border-color:var(--accent);color:var(--accent)}
+.hs-prop-section{margin-bottom:18px}
+.hs-prop-section-head{display:flex;align-items:center;justify-content:space-between;padding:6px 0 7px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.hs-prop-section-title{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.3px}
+.hs-prop-row{display:flex;flex-direction:column;padding:3px 0;margin-bottom:7px}
+.hs-prop-label{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;font-family:var(--mono);margin-bottom:2px}
+.hs-prop-val{font-size:12px;color:var(--text);line-height:1.4}
+.hs-prop-val a{color:var(--accent);text-decoration:none}
+.hs-prop-val a:hover{text-decoration:underline}
+/* Activity feed */
+.hs-act-tabs{display:flex;border-bottom:1px solid var(--border);gap:0;flex-shrink:0}
+.hs-act-tab{padding:9px 14px;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;user-select:none}
+.hs-act-tab:hover{color:var(--text2)}
+.hs-act-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.hs-act-feed{flex:1;overflow-y:auto;padding:8px 4px 8px 0}
+.hs-act-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.hs-act-item:last-child{border-bottom:none}
+.hs-act-icon{width:30px;height:30px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px}
+.hs-act-body{flex:1;min-width:0}
+.hs-act-title{font-size:12px;color:var(--text);margin-bottom:2px;line-height:1.4;font-weight:500}
+.hs-act-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.hs-act-note{font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 10px;margin-top:6px;line-height:1.5;white-space:pre-wrap;max-height:80px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+
+/* ══════════════════════════════════════════════
+   GOOGLE CALENDAR TIME GRID (WEEK VIEW)
+══════════════════════════════════════════════ */
+.gcal-tg-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.gcal-tg-head{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)}
+.gcal-tg-gutter{width:52px;min-width:52px;flex-shrink:0}
+.gcal-tg-day-head{flex:1;text-align:center;padding:8px 4px;cursor:default;border-left:1px solid var(--border)}
+.gcal-tg-day-head.today{background:rgba(29,158,117,.04)}
+.gcal-tg-day-name{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+.gcal-tg-day-num{font-size:22px;font-weight:300;color:var(--text2);line-height:1.2;font-family:var(--mono);margin:0 auto;width:36px;text-align:center}
+.gcal-tg-day-num.today-circle{background:var(--accent);color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;margin:0 auto}
+.gcal-tg-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.gcal-tg-inner{display:flex;position:relative}
+.gcal-tg-hours{width:52px;min-width:52px;flex-shrink:0;position:sticky;left:0;background:var(--bg2);z-index:2}
+.gcal-tg-hour{display:flex;align-items:flex-start;justify-content:flex-end;padding:0 8px 0 0;position:relative}
+.gcal-tg-hour span{font-size:10px;color:var(--text3);font-family:var(--mono);transform:translateY(-50%);display:block;margin-top:0;line-height:1}
+.gcal-tg-col{flex:1;border-left:1px solid var(--border);position:relative;min-width:0}
+.gcal-tg-col.today{background:rgba(29,158,117,.02)}
+.gcal-tg-cell{border-bottom:1px solid rgba(255,255,255,.04)}
+.gcal-tg-cell:nth-child(odd){background:transparent}
+.gcal-tg-col .gcal-tg-cell:nth-last-child(-n+7){border-bottom:none}
+.gcal-tg-ev{position:absolute;border-radius:3px;padding:3px 6px;cursor:pointer;overflow:hidden;z-index:1;transition:opacity .15s;box-sizing:border-box}
+.gcal-tg-ev:hover{opacity:.85;z-index:3}
+.gcal-tg-ev-title{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.gcal-tg-now{position:absolute;left:0;right:0;z-index:4;pointer-events:none}
+.gcal-tg-now::after{content:'';display:block;height:2px;background:#ea4335;position:relative}
+.gcal-tg-now-dot{width:10px;height:10px;border-radius:50%;background:#ea4335;position:absolute;left:-5px;top:-4px}
+
+/* ══════════════════════════════════════════════
+   NOTION TASK DETAIL — enhanced panel
+══════════════════════════════════════════════ */
+.ntd-title{font-size:22px;font-weight:700;color:var(--text);line-height:1.3;padding:4px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px;outline:none}
+.ntd-props{display:flex;flex-direction:column;gap:0;margin-bottom:16px}
+.ntd-prop-row{display:flex;align-items:center;gap:0;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);min-height:34px}
+.ntd-prop-row:last-child{border-bottom:none}
+.ntd-prop-key{width:130px;min-width:130px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:.3px;padding-right:8px;flex-shrink:0}
+.ntd-prop-val{flex:1;font-size:12px;color:var(--text);display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.ntd-prop-select{background:transparent;border:none;color:var(--text);font-size:12px;font-family:var(--sans);cursor:pointer;padding:2px 4px;border-radius:3px;transition:background .15s}
+.ntd-prop-select:hover,.ntd-prop-select:focus{background:rgba(255,255,255,.07);outline:none}
+.ntd-notes-label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;font-family:var(--mono);margin-bottom:6px}
+.ntd-notes{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;min-height:60px}
 </style>
 </head>
 <body>
@@ -2084,7 +2160,7 @@ function _renderCalView(){
       const ds=_localDs(d),isToday=ds===todayStr
       const cls=['gcal-mini-day',!cur?'other':'',isToday?'today':''].filter(Boolean).join(' ')
       const dot=hasEvSet.has(ds)&&!isToday?'<i class="mini-dot"></i>':''
-      return `<div class="${cls}" data-goto="${d.getFullYear()},${d.getMonth()}">${d.getDate()}${dot}</div>`
+      return `<div class="${cls}" data-goto="${d.getFullYear()},${d.getMonth()},${d.getDate()}">${d.getDate()}${dot}</div>`
     }).join('')
     return `<div class="gcal-mini">
       <div class="gcal-mini-head">
@@ -2100,11 +2176,21 @@ function _renderCalView(){
   }
 
   // ── HEADER ─────────────────────────────────────────────────────────────────
+  let headerTitle
+  if(_calView==='week'){
+    const wAnchor=_calViewMonth, wdow=wAnchor.getDay(), wws=new Date(wAnchor)
+    wws.setDate(wAnchor.getDate()-(wdow===0?6:wdow-1))
+    const wwe=new Date(wws); wwe.setDate(wws.getDate()+6)
+    const sm=monthNames[wws.getMonth()], em=monthNames[wwe.getMonth()]
+    headerTitle=`<span class="gcal-month-title">${sm===em?sm:sm+' – '+em}</span><span class="gcal-year">${wws.getDate()}–${wwe.getDate()}. ${wwe.getFullYear()}</span>`
+  } else {
+    headerTitle=`<span class="gcal-month-title">${monthNames[m]}</span><span class="gcal-year">${y}</span>`
+  }
   const header=`<div class="gcal-header">
     <button class="gcal-today-btn" id="cal-today">Danas</button>
     <button class="gcal-nav-btn" id="cal-prev">‹</button>
     <button class="gcal-nav-btn" id="cal-next">›</button>
-    <span class="gcal-month-title">${monthNames[m]}</span><span class="gcal-year">${y}</span>
+    ${headerTitle}
     <div class="gcal-view-btns">
       <button class="gcal-view-btn${_calView==='month'?' active':''}" data-view="month">Mjesec</button>
       <button class="gcal-view-btn${_calView==='week'?' active':''}" data-view="week">Sedmica</button>
@@ -2142,28 +2228,70 @@ function _renderCalView(){
     </div>`
 
   } else if(_calView==='week'){
-    const dow2=now.getDay(),ws=new Date(now); ws.setDate(now.getDate()-(dow2===0?6:dow2-1))
-    const rows=[]
-    for(let i=0;i<7;i++){
-      const d=new Date(ws); d.setDate(ws.getDate()+i)
-      const ds=_localDs(d),isToday=ds===todayStr
-      const evs=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)===ds)
-      const dayNms=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
-      rows.push(`<div class="gcal-week-day-row">
-        <div class="gcal-week-label">
-          <span class="gcal-wk-day${isToday?' today-day':''}">${dayNms[d.getDay()]}</span>
-          <span class="gcal-wk-num${isToday?' today-num':''}">${d.getDate()}</span>
-        </div>
-        <div class="gcal-week-events">${evs.length?evs.map(ev=>{
-          const cls=evClass(ev),col=evColor(cls,ev),c=ev.status==='cancelled'
-          return `<div class="gcal-week-event" style="background:${col}20;border-left:3px solid ${col}" data-evid="${ev.id}">
-            <span class="gcal-ev-time">${fmtT(ev.start_time)||'Cijeli dan'}</span>
-            <span style="${c?'text-decoration:line-through;opacity:.6':'font-weight:500'}">${ev.title||'Bez naslova'}</span>
-          </div>`
-        }).join(''):`<div style="font-size:11px;color:var(--text3);padding:14px 0;opacity:.4">—</div>`}</div>
-      </div>`)
+    // Use _calViewMonth as the anchor date for navigation
+    const anchor=_calViewMonth
+    const dow2=anchor.getDay(), ws=new Date(anchor)
+    ws.setDate(anchor.getDate()-(dow2===0?6:dow2-1))
+    const dayNms=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
+    const HOUR_H=48 // px per hour
+    const hours=Array.from({length:24},(_,i)=>i)
+
+    // Build day headers + events map
+    const dayHeaders=[]
+    for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);dayHeaders.push({d,ds:_localDs(d),isToday:_localDs(d)===todayStr})}
+    const evsByDay={}
+    for(const {ds} of dayHeaders) evsByDay[ds]=[]
+    for(const ev of _calEvents){ if(!ev.start_time)continue; const ds=_localDs(ev.start_time); if(evsByDay[ds]) evsByDay[ds].push(ev) }
+
+    function evBlock(ev,totalCols,colIdx){
+      const st=new Date(ev.start_time)
+      const en=ev.end_time?new Date(ev.end_time):new Date(st.getTime()+60*60000)
+      const startMins=st.getHours()*60+st.getMinutes()
+      let endMins=en.getHours()*60+en.getMinutes()
+      if(endMins<=startMins) endMins=startMins+60
+      const top=(startMins/60)*HOUR_H
+      const height=Math.max(((endMins-startMins)/60)*HOUR_H,22)
+      const cls=evClass(ev),col=evColor(cls,ev)
+      const cancelled=ev.status==='cancelled'
+      const colW=totalCols>1?`calc(${100/totalCols}% - 2px)`:''
+      const colL=totalCols>1?`calc(${(colIdx/totalCols)*100}% + 2px)`:'2px'
+      const w=totalCols>1?colW:`calc(100% - 4px)`
+      return `<div class="gcal-tg-ev" data-evid="${ev.id}" style="top:${top}px;height:${height}px;left:${colL};width:${w};background:${col}22;border-left:3px solid ${col};${cancelled?'opacity:.5':''}" title="${ev.title||'Bez naslova'}">
+        <div class="gcal-tg-ev-title">${cancelled?'<s>':''}<b style="font-size:10px;font-family:var(--mono);opacity:.7;margin-right:3px">${fmtT(ev.start_time)||''}</b>${ev.title||'Bez naslova'}${cancelled?'</s>':''}</div>
+      </div>`
     }
-    mainHtml=`<div class="gcal-week-view" id="gcal-week-grid">${rows.join('')}</div>`
+
+    // Current time top position
+    const nowMins=now.getHours()*60+now.getMinutes()
+    const nowTop=(nowMins/60)*HOUR_H
+
+    mainHtml=`<div class="gcal-tg-wrap" id="gcal-week-grid">
+      <div class="gcal-tg-head">
+        <div class="gcal-tg-gutter"></div>
+        ${dayHeaders.map(({d,isToday})=>`
+          <div class="gcal-tg-day-head${isToday?' today':''}">
+            <div class="gcal-tg-day-name">${dayNms[d.getDay()]}</div>
+            <div class="gcal-tg-day-num${isToday?' today-circle':''}">${d.getDate()}</div>
+          </div>`).join('')}
+      </div>
+      <div class="gcal-tg-scroll" id="gcal-tg-scroll">
+        <div class="gcal-tg-inner">
+          <div class="gcal-tg-hours">
+            ${hours.map(h=>`<div class="gcal-tg-hour" style="height:${HOUR_H}px"><span>${h===0?'':String(h).padStart(2,'0')+':00'}</span></div>`).join('')}
+          </div>
+          ${dayHeaders.map(({d,ds,isToday})=>{
+            const evs=evsByDay[ds]||[]
+            // Simple column allocation: show events side by side if they overlap
+            const blocks=evs.map((ev,i)=>evBlock(ev,evs.length>3?evs.length:evs.length>1?evs.length:1,i))
+            return `<div class="gcal-tg-col${isToday?' today':''}">
+              ${hours.map(h=>`<div class="gcal-tg-cell" style="height:${HOUR_H}px"></div>`).join('')}
+              ${isToday?`<div class="gcal-tg-now" style="top:${nowTop}px"><div class="gcal-tg-now-dot"></div></div>`:''}
+              ${blocks.join('')}
+            </div>`
+          }).join('')}
+        </div>
+      </div>
+    </div>`
 
   } else {
     const upcoming=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)>=todayStr)
@@ -2208,8 +2336,10 @@ function _renderCalView(){
   mc.querySelector('#mini-grid')?.addEventListener('click',e=>{
     const cell=e.target.closest('[data-goto]')
     if(!cell) return
-    const [yr2,mo2]=cell.dataset.goto.split(',').map(Number)
-    _calViewMonth=new Date(yr2,mo2,1); _calView='month'; _renderCalView()
+    const [yr2,mo2,dy2]=cell.dataset.goto.split(',').map(Number)
+    _calViewMonth=new Date(yr2,mo2,dy2||1)
+    if(_calView==='week'){_renderCalView();return}
+    _calView='month'; _renderCalView()
   })
   mc.querySelector('#mini-prev')?.addEventListener('click',()=>{
     _calMiniMonth=new Date(_calMiniMonth.getFullYear(),_calMiniMonth.getMonth()-1,1); _renderCalView()
@@ -2221,8 +2351,16 @@ function _renderCalView(){
   mc.querySelector('#gcal-create-btn')?.addEventListener('click',()=>openNewEventModal())
   // Header nav
   mc.querySelector('#cal-today')?.addEventListener('click',()=>{ _calViewMonth=new Date(); _calMiniMonth=new Date(); _renderCalView() })
-  mc.querySelector('#cal-prev')?.addEventListener('click',()=>{ _calViewMonth=new Date(y,m-1,1); _renderCalView() })
-  mc.querySelector('#cal-next')?.addEventListener('click',()=>{ _calViewMonth=new Date(y,m+1,1); _renderCalView() })
+  mc.querySelector('#cal-prev')?.addEventListener('click',()=>{
+    if(_calView==='week'){ const d=new Date(_calViewMonth); d.setDate(d.getDate()-7); _calViewMonth=d }
+    else _calViewMonth=new Date(y,m-1,1)
+    _renderCalView()
+  })
+  mc.querySelector('#cal-next')?.addEventListener('click',()=>{
+    if(_calView==='week'){ const d=new Date(_calViewMonth); d.setDate(d.getDate()+7); _calViewMonth=d }
+    else _calViewMonth=new Date(y,m+1,1)
+    _renderCalView()
+  })
   mc.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{ _calView=btn.dataset.view; _renderCalView() }))
   // Month grid — event chips and day clicks
   mc.querySelector('#gcal-month-grid')?.addEventListener('click',e=>{
@@ -2230,10 +2368,15 @@ function _renderCalView(){
     const more=e.target.closest('[data-dayds]'); if(more){ window._calDayPopup(more.dataset.dayds,e); return }
     const day=e.target.closest('.gcal-day[data-dayds]'); if(day){ window._calDayPopup(day.dataset.dayds,e) }
   })
-  // Week grid
+  // Week grid (time grid events)
   mc.querySelector('#gcal-week-grid')?.addEventListener('click',e=>{
     const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e)
   })
+  // Auto-scroll time grid to 7am on load
+  if(_calView==='week'){
+    const scroll=mc.querySelector('#gcal-tg-scroll')
+    if(scroll) setTimeout(()=>{ scroll.scrollTop=48*7-20 },50)
+  }
   // List views
   mc.querySelector('#gcal-list-up')?.addEventListener('click',e=>{ const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e) })
   mc.querySelector('#gcal-list-past')?.addEventListener('click',e=>{ const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e) })
@@ -2243,21 +2386,19 @@ function _renderCalView(){
 // ── CONTACT DETAIL ────────────────────────────────────────────────────────────
 async function renderContactDetail(contactId, contactName){
   document.getElementById('page-title').textContent = contactName || 'Contact'
-  document.getElementById('topbar-actions').innerHTML=''
+  document.getElementById('topbar-actions').innerHTML=`<button class="hs-det-action" onclick="nav('contacts',document.querySelector('[onclick*=contacts]'))">← Nazad na kontakte</button>`
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje…</div></div>'
 
   function fmtISO(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('bs',{day:'numeric',month:'short',year:'numeric'})}
-  function fmtTimeShort(iso){if(!iso)return'—';return new Date(iso).toLocaleTimeString('bs',{hour:'2-digit',minute:'2-digit'})}
   function fmtDateTime(iso){if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('bs',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('bs',{hour:'2-digit',minute:'2-digit'})}
 
   const [contactArr, memories, calEvents, convArr] = await Promise.all([
     sbGet('iris_contacts', `id=eq.${contactId}&limit=1&select=*`).then(r=>(r||[])),
-    sbGet('iris_memories', `entity_id=eq.${contactId}&status=eq.active&order=created_at.desc&limit=15`).then(r=>(r||[])),
+    sbGet('iris_memories', `entity_id=eq.${contactId}&status=eq.active&order=created_at.desc&limit=20`).then(r=>(r||[])),
     sbGet('iris_calendar_events', `contact_id=eq.${contactId}&order=start_time.asc&limit=20`).then(r=>(r||[])),
     sbGet('conversations', `contact_id=eq.${contactId}&select=id&limit=20`).then(r=>(r||[]))
   ])
 
-  // Fetch messages for this contact's conversations
   let chatMessages = []
   if(convArr.length > 0){
     const ids = convArr.map(c=>c.id).join(',')
@@ -2268,134 +2409,172 @@ async function renderContactDetail(contactId, contactName){
 
   const c = contactArr[0] || {}
   const fullName = c.display_name || c.name || [c.first_name,c.last_name].filter(Boolean).join(' ') || contactName || '?'
-  const initials = fullName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
+  const initials = fullName.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()
+  const avColor = (()=>{const p=['#e8643c','#c0392b','#8e44ad','#2980b9','#27ae60','#d35400','#16a085'];let h=0;for(let i=0;i<fullName.length;i++)h=(h*31+fullName.charCodeAt(i))&0xffffffff;return p[Math.abs(h)%p.length]})()
+
+  // Build unified activity feed
+  const activities = [
+    ...memories.map(m=>({type:'memory',date:m.created_at,title:m.memory_type==='meeting'?'Sastanak zabilježen':m.memory_type==='email'?'Email poslan':'IRIS zabilješka',note:m.content,icon:'🧠'})),
+    ...chatMessages.filter(m=>(m.content_text||'').trim()).map(m=>({type:'chat',date:m.created_at,title:(m.role==='user'||m.direction==='inbound')?fullName+' poslao/la poruku':'IRIS odgovorila',note:m.content_text,icon:m.role==='user'||m.direction==='inbound'?'💬':'🤖'})),
+    ...calEvents.map(ev=>({type:'event',date:ev.start_time,title:'Sastanak: '+(ev.title||'Bez naslova'),note:ev.description||null,icon:'📅'}))
+  ].filter(a=>a.date).sort((a,b)=>new Date(b.date)-new Date(a.date))
+
+  function actFeed(items){
+    if(!items.length) return '<div style="padding:32px 0;text-align:center;color:var(--text3);font-size:12px">Nema aktivnosti</div>'
+    return items.map(a=>`<div class="hs-act-item">
+      <div class="hs-act-icon">${a.icon}</div>
+      <div class="hs-act-body">
+        <div class="hs-act-title">${a.title}</div>
+        <div class="hs-act-meta">${fmtDateTime(a.date)}</div>
+        ${a.note?`<div class="hs-act-note">${(a.note||'').slice(0,300)}</div>`:''}
+      </div>
+    </div>`).join('')
+  }
+
+  function propRow(label,val){return val&&val!=='—'?`<div class="hs-prop-row"><div class="hs-prop-label">${label}</div><div class="hs-prop-val">${val}</div></div>`:''}
+  function propLink(label,val,href){return val?`<div class="hs-prop-row"><div class="hs-prop-label">${label}</div><div class="hs-prop-val"><a href="${href}">${val}</a></div></div>`:''}
 
   document.getElementById('main-content').innerHTML=`
-    <button class="back-btn" onclick="nav('contacts',document.querySelector('[onclick*=contacts]'))">← Nazad na Contacts</button>
-    <div class="contact-detail">
+    <div class="hs-detail-layout">
 
-      <!-- LEFT: Profile card -->
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-            <div class="contact-avatar">${initials}</div>
-            <div>
-              <div style="font-size:15px;font-weight:500">${fullName}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px">${c.username ? '@'+c.username : c.telegram_id ? 'tg: '+c.telegram_id : '—'}</div>
-            </div>
-          </div>
-          <div class="contact-field"><div class="contact-field-label">Kompanija</div><div class="contact-field-value">${c.company||'—'}</div></div>
-          ${(c.role||c.occupation)?`<div class="contact-field"><div class="contact-field-label">Pozicija</div><div class="contact-field-value">${c.role||c.occupation}</div></div>`:''}
-          ${c.email?`<div class="contact-field"><div class="contact-field-label">E-mail</div><div class="contact-field-value"><a href="mailto:${c.email}" style="color:var(--accent);text-decoration:none">${c.email}</a></div></div>`:''}
-          ${c.phone?`<div class="contact-field"><div class="contact-field-label">Telefon</div><div class="contact-field-value"><a href="tel:${c.phone}" style="color:var(--accent);text-decoration:none">${c.phone}</a></div></div>`:''}
-          <div class="contact-field"><div class="contact-field-label">Trust level</div><div class="contact-field-value">${statusBadge(c.trust_level||'stranger')}</div></div>
-          <div class="contact-field"><div class="contact-field-label">Kanal</div><div class="contact-field-value">${c.channel_primary||c.channel||'—'}</div></div>
-          <div class="contact-field"><div class="contact-field-label">Zadnji kontakt</div><div class="contact-field-value">${fmtISO(c.last_seen_at)}</div></div>
-          ${c.notes?`<div class="contact-field" style="flex-direction:column;align-items:flex-start;gap:4px"><div class="contact-field-label">Napomene</div><div style="color:var(--text2);font-size:11px;line-height:1.5">${c.notes}</div></div>`:''}
-          <div class="contact-field"><div class="contact-field-label">ID</div><div class="contact-field-value" style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.id||contactId}</div></div>
+      <!-- LEFT SIDEBAR (HubSpot style) -->
+      <div class="hs-detail-left">
+        <div style="margin-bottom:14px">
+          <div class="hs-det-avatar" style="background:${avColor}">${initials}</div>
+          <div class="hs-det-name">${fullName}</div>
+          <div class="hs-det-sub">${[c.role||c.occupation,c.company].filter(Boolean).join(' · ')||'—'}</div>
         </div>
 
-        <!-- Calendar events for this contact -->
-        <div class="card">
-          <div class="card-title">📅 Zakazani događaji · ${calEvents.length}</div>
-          ${calEvents.length ? calEvents.map(ev=>`
-            <div class="cal-event" style="margin-bottom:6px">
-              <div>
-                <div class="cal-date-day">${ev.start_time?new Date(ev.start_time).getDate():'?'}</div>
-                <div class="cal-date">${ev.start_time?new Date(ev.start_time).toLocaleString('default',{month:'short'}):''}</div>
-              </div>
-              <div>
-                <div class="cal-title">${ev.title||'Bez naslova'}</div>
-                <div class="cal-meta">${ev.description||ev.metadata?.raw_text||''}</div>
-              </div>
-              <div>
-                <div class="cal-time">${fmtTimeShort(ev.start_time)}</div>
-                <div style="margin-top:4px">${statusBadge(ev.status||'confirmed')}</div>
-              </div>
-            </div>`).join('') :
-            '<div class="empty" style="padding:12px 0"><div class="empty-text">Nema zakazanih događaja</div></div>'}
+        <div class="hs-det-actions">
+          ${c.email?`<button class="hs-det-action" onclick="window.open('mailto:${c.email}')">✉ Email</button>`:''}
+          ${c.phone?`<button class="hs-det-action" onclick="window.open('tel:${c.phone}')">📞 Pozovi</button>`:''}
+          <button class="hs-det-action" onclick="openNewTaskModal()">＋ Task</button>
+          <button class="hs-det-action" onclick="openNewEventModal()">📅 Zakaži</button>
+        </div>
+
+        <!-- About section -->
+        <div class="hs-prop-section">
+          <div class="hs-prop-section-head">
+            <span class="hs-prop-section-title">O kontaktu</span>
+            <span style="font-size:10px;color:var(--text3)">▾</span>
+          </div>
+          ${propRow('Kompanija', c.company)}
+          ${propRow('Pozicija', c.role||c.occupation)}
+          ${propRow('Trust Level', c.trust_level||'stranger')}
+          ${propRow('Kanal', c.channel_primary||c.channel||'—')}
+          ${propRow('Kreiran', fmtISO(c.created_at))}
+          ${propRow('Zadnji kontakt', fmtISO(c.last_seen_at))}
+        </div>
+
+        <!-- Contact Info section -->
+        <div class="hs-prop-section">
+          <div class="hs-prop-section-head">
+            <span class="hs-prop-section-title">Kontakt informacije</span>
+            <span style="font-size:10px;color:var(--text3)">▾</span>
+          </div>
+          ${propLink('E-mail', c.email, 'mailto:'+(c.email||''))}
+          ${propRow('Telefon', c.phone)}
+          ${propRow('Username', c.username?'@'+c.username:null)}
+          ${propRow('Telegram ID', c.telegram_id?String(c.telegram_id):null)}
+        </div>
+
+        <!-- IRIS Intelligence section -->
+        <div class="hs-prop-section">
+          <div class="hs-prop-section-head">
+            <span class="hs-prop-section-title">IRIS Intelligence</span>
+            <span style="font-size:10px;color:var(--text3)">▾</span>
+          </div>
+          ${propRow('Memorija', memories.length+' zapisa')}
+          ${propRow('Poruke', chatMessages.filter(m=>(m.content_text||'').trim()).length+' poruka')}
+          ${propRow('Sastanci', calEvents.length+' događaja')}
+          ${c.notes?`<div class="hs-prop-row"><div class="hs-prop-label">Napomene</div><div class="hs-prop-val" style="white-space:pre-wrap;color:var(--text2);font-size:11px">${c.notes}</div></div>`:''}
+          <div class="hs-prop-row"><div class="hs-prop-label">ID</div><div class="hs-prop-val" style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.id||contactId}</div></div>
         </div>
       </div>
 
-      <!-- RIGHT: Memories + Chat History -->
-      <div style="display:flex;flex-direction:column;gap:14px">
-
-        <div class="card">
-          <div class="card-title">🧠 IRIS Memories · ${memories.length} zapisa</div>
-          ${memories.length ? memories.map(m=>`
-            <div class="memory-item">
-              <div class="memory-date">${fmtISO(m.created_at)} · ${m.memory_type||'conversation'}</div>
-              ${m.content||'—'}
-            </div>`).join('') :
-            '<div class="empty" style="padding:16px 0"><div class="empty-text">Nema zapisa u memoriji za ovaj kontakt</div></div>'}
+      <!-- RIGHT MAIN (Activity feed) -->
+      <div class="hs-detail-right">
+        <div class="hs-act-tabs">
+          <div class="hs-act-tab active" data-tab="all">Sve aktivnosti <span style="font-size:10px;color:var(--text3);margin-left:4px">${activities.length}</span></div>
+          <div class="hs-act-tab" data-tab="notes">🧠 Memorije <span style="font-size:10px;color:var(--text3);margin-left:4px">${memories.length}</span></div>
+          <div class="hs-act-tab" data-tab="messages">💬 Poruke <span style="font-size:10px;color:var(--text3);margin-left:4px">${chatMessages.filter(m=>(m.content_text||'').trim()).length}</span></div>
+          <div class="hs-act-tab" data-tab="meetings">📅 Sastanci <span style="font-size:10px;color:var(--text3);margin-left:4px">${calEvents.length}</span></div>
         </div>
-
-        <div class="card">
-          <div class="card-title">💬 Chat historija · ${chatMessages.length} poruka</div>
-          ${chatMessages.length ? `
-            <div style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;padding-right:4px">
-              ${chatMessages.map(m=>{
-                const isUser = m.role==='user'||m.direction==='inbound'
-                const txt = m.content_text||''
-                if(!txt.trim()) return ''
-                return `<div style="display:flex;flex-direction:column;align-items:${isUser?'flex-start':'flex-end'};gap:2px">
-                  <div style="max-width:85%;background:${isUser?'var(--bg3)':'rgba(29,158,117,0.12)'};border:1px solid ${isUser?'var(--border)':'rgba(29,158,117,0.2)'};border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.5;color:var(--text)">${txt.length>400?txt.slice(0,400)+'…':txt}</div>
-                  <div style="font-size:10px;color:var(--text3);padding:0 4px">${isUser?fullName+' · ':'IRIS · '}${fmtDateTime(m.created_at)}</div>
-                </div>`
-              }).filter(Boolean).join('')}
-            </div>` :
-            '<div class="empty" style="padding:16px 0"><div class="empty-text">Nema poruka za ovaj kontakt</div></div>'}
+        <div class="hs-act-feed" id="hs-act-feed-content">
+          ${actFeed(activities)}
         </div>
-
       </div>
     </div>`
+
+  // Tab switching via event delegation
+  document.getElementById('main-content').querySelectorAll('.hs-act-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.getElementById('main-content').querySelectorAll('.hs-act-tab').forEach(t=>t.classList.remove('active'))
+      tab.classList.add('active')
+      const which=tab.dataset.tab
+      const items = which==='all'?activities:which==='notes'?activities.filter(a=>a.type==='memory'):which==='messages'?activities.filter(a=>a.type==='chat'):activities.filter(a=>a.type==='event')
+      document.getElementById('hs-act-feed-content').innerHTML=actFeed(items)
+    })
+  })
+
 }
 
-// ── TASK DETAIL PANEL ────────────────────────────────────────────────────────
+// ── TASK DETAIL PANEL (Notion-style) ─────────────────────────────────────────
 function openTaskDetail(id){
   const t=taskDetailData[id]
   if(!t)return
-  const typeLabel={'meeting_proposal':'⏳ Meeting Proposal','pending_notification':'📬 Pending Notification','open_loop':'🔄 Open Loop','task':'📋 Task'}
-  const pColor=t.priority==='urgent'?'red':t.priority==='high'?'amber':t.priority==='medium'?'blue':'gray'
+
+  const typeMap={'task':'📋 Task','meeting_proposal':'⏳ Meeting Proposal','pending_notification':'📬 Pending Notification','open_loop':'🔄 Open Loop'}
+  const statusMap={'open':'⚪ Open','in_progress':'🔵 In Progress','done':'🟢 Done','cancelled':'⚫ Cancelled'}
+  const priMap={'urgent':'🔴 Urgent','high':'🟡 High','medium':'🔵 Medium','low':'⚫ Low'}
   const note=t.notes||t.body||''
-  const bodyText=t.body||''
   const proposed=note.match(/Proposed time:\s*([^\n]+)/i)?.[1]||note.match(/proposed[_\s]?time[:\s]+([^\n|]+)/i)?.[1]||''
   const current=note.match(/Current meeting:\s*([^\n]+)/i)?.[1]||note.match(/current[_\s]?meeting[:\s]+([^\n|]+)/i)?.[1]||''
+  const dueOverdue=t.due_date&&new Date(t.due_date)<new Date()
 
-  let actionsHtml=`
-    <button class="btn btn-ghost" onclick="closeTaskDetail()">Zatvori</button>
-    <button class="btn btn-primary" style="background:rgba(226,75,74,0.15);border-color:var(--danger);color:var(--danger)" onclick="markTaskDone('${t.id}')">✓ Zatvori task</button>`
+  // Notion-style property row
+  function ntdProp(icon,label,valHtml){
+    return `<div class="ntd-prop-row">
+      <div class="ntd-prop-key"><span style="opacity:.5;font-size:12px">${icon}</span> ${label}</div>
+      <div class="ntd-prop-val">${valHtml}</div>
+    </div>`
+  }
 
+  // Action buttons based on type
+  let actionBtns=`<button class="btn btn-ghost" onclick="closeTaskDetail()">✕ Zatvori</button>
+    <button class="btn btn-primary" style="background:rgba(226,75,74,.15);border-color:var(--danger);color:var(--danger)" onclick="markTaskDone('${t.id}')">✓ Zatvori task</button>`
   if(t.task_type==='meeting_proposal'){
-    actionsHtml=`
-      <button class="btn btn-ghost" onclick="closeTaskDetail()">Zatvori</button>
-      <button class="btn btn-ghost" style="border-color:var(--danger);color:var(--danger)" onclick="rejectProposal('${t.id}')">✗ Odbij prijedlog</button>
-      <button class="btn btn-primary" onclick="approveProposal('${t.id}')">✓ Approve termin</button>`
+    actionBtns=`<button class="btn btn-ghost" onclick="closeTaskDetail()">✕ Zatvori</button>
+      <button class="btn btn-ghost" style="border-color:var(--danger);color:var(--danger)" onclick="rejectProposal('${t.id}')">✗ Odbij</button>
+      <button class="btn btn-primary" onclick="approveProposal('${t.id}')">✓ Odobri termin</button>`
   } else if(t.task_type==='pending_notification'){
-    actionsHtml=`
-      <button class="btn btn-ghost" onclick="closeTaskDetail()">Zatvori</button>
+    actionBtns=`<button class="btn btn-ghost" onclick="closeTaskDetail()">✕ Zatvori</button>
       <button class="btn btn-primary" onclick="markTaskDone('${t.id}')">✓ Obavijest dostavljena</button>`
   }
 
-  const _contactHtml = t.contact_name ? '<div class="td-section"><div class="td-label">Kontakt</div><div class="td-value">'+t.contact_name+'</div></div>' : ''
-  const _proposedHtml = proposed ? '<div class="td-proposed"><div class="td-label">Prijedlog novog termina</div><div class="td-value">'+proposed+'</div></div>' : ''
-  const _currentHtml = current ? '<div class="td-section"><div class="td-label">Trenutni sastanak</div><div class="td-value" style="color:var(--text2)">'+current+'</div></div>' : ''
-  const _bodyHtml = bodyText&&bodyText!==t.notes ? '<div class="td-section"><div class="td-label">Poruka / Kontekst</div><div class="td-body">'+bodyText+'</div></div>' : ''
-  const _notesHtml = t.notes&&t.notes!==bodyText ? '<div class="td-section"><div class="td-label">Napomene</div><div class="td-body">'+t.notes+'</div></div>' : (t.notes&&t.notes===bodyText&&t.notes ? '<div class="td-section"><div class="td-label">Poruka / Napomene</div><div class="td-body">'+t.notes+'</div></div>' : '')
-  const _dueColor = t.due_date && new Date(t.due_date)<new Date() ? 'var(--danger)' : 'var(--text2)'
-  const _dueHtml = t.due_date ? '<div class="td-section"><div class="td-label">Rok</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:'+_dueColor+'">'+t.due_date+'</div></div>' : ''
-  const _remindRaw = getRemindAt(t)
-  const _remindHtml = _remindRaw ? '<div class="td-section"><div class="td-label" style="color:var(--accent)">🔔 Podsjetnik</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:var(--accent)">'+_remindRaw+' <span style="color:var(--text3)">('+( fmtRemind(_remindRaw)||'' )+')</span></div></div>' : ''
-
   document.getElementById('task-detail-body').innerHTML=`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <span class="badge badge-gray">${typeLabel[t.task_type]||t.task_type||'task'}</span>
-      <span class="badge badge-${pColor}">${(t.priority||'medium').toUpperCase()}</span>
-      <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${(t.created_at||'').slice(0,16).replace('T',' ')}</span>
+    <!-- Notion-style: title at top -->
+    <div class="ntd-title">${typeMap[t.task_type]||'📋'} &nbsp;<span style="font-size:13px;color:var(--text3);font-family:var(--mono);font-weight:400">${(t.created_at||'').slice(0,10)}</span></div>
+    <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1.3;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--border)">${t.title}</div>
+
+    ${proposed?`<div class="td-proposed" style="margin-bottom:16px"><div class="td-label">Prijedlog termina</div><div class="td-value">${proposed}</div></div>`:''}
+    ${current?`<div style="padding:8px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:4px;margin-bottom:16px;font-size:12px;color:var(--text2)">Trenutni: ${current}</div>`:''}
+
+    <!-- Notion-style properties -->
+    <div class="ntd-props">
+      ${ntdProp('◎','Status',`<span class="notion-status ns-${t.status||'open'}">${statusMap[t.status||'open']||'Open'}</span>`)}
+      ${ntdProp('⚑','Prioritet',`<span class="notion-pri np-${t.priority||'medium'}">${priMap[t.priority||'medium']}</span>`)}
+      ${ntdProp('◷','Tip',`<span style="font-size:12px;color:var(--text2)">${typeMap[t.task_type]||'Task'}</span>`)}
+      ${t.contact_name?ntdProp('👤','Kontakt',`<span style="font-size:12px;color:var(--text2)">${t.contact_name}</span>`):''}
+      ${t.due_date?ntdProp('📅','Rok',`<span style="font-size:12px;font-family:var(--mono);color:${dueOverdue?'var(--danger)':'var(--text2)'}">${t.due_date}${dueOverdue?' ⚠️':''}</span>`):''}
+      ${getRemindAt(t)?ntdProp('🔔','Podsjetnik',`<span style="font-size:12px;font-family:var(--mono);color:var(--accent)">${getRemindAt(t)} <span style="color:var(--text3)">(${fmtRemind(getRemindAt(t))||''})</span></span>`):''}
     </div>
-    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:18px;line-height:1.3">${t.title}</div>
-    ${_contactHtml}${_proposedHtml}${_currentHtml}${_bodyHtml}${_notesHtml}${_dueHtml}${_remindHtml}
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">${actionsHtml}</div>
+
+    ${note?`<div class="ntd-notes-label">Napomene / Kontekst</div><div class="ntd-notes">${note}</div>`:''}
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+      ${actionBtns}
+    </div>
   `
   document.getElementById('task-detail-overlay').classList.add('open')
 }
