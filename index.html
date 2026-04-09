@@ -2080,6 +2080,7 @@ let _calEvents = []
 let _calViewMonth = new Date()
 let _calMiniMonth = new Date()
 let _calView = 'month'
+let _calVisible = {ajdin:true,monetize:true,birthdays:true,tasks:false,holidays:true,adkernel:false}
 
 async function renderCalendar(){
   document.getElementById('topbar-actions').innerHTML=''
@@ -2131,7 +2132,7 @@ function _renderCalView(){
   window._closeDayPopup=()=>{ document.getElementById('cal-day-popup').style.display='none'; document.getElementById('cal-day-popup-overlay').classList.remove('open') }
   window._calDayPopup=(ds,e)=>{
     e?.stopPropagation()
-    const evs=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)===ds)
+    const evs=visibleEvents().filter(ev=>ev.start_time&&_localDs(ev.start_time)===ds)
     if(!evs.length) return
     const popup=document.getElementById('cal-day-popup'),body=document.getElementById('cal-day-popup-body'),dateEl=document.getElementById('cal-day-popup-date')
     const [yr,mo,dy]=ds.split('-').map(Number)
@@ -2169,7 +2170,7 @@ function _renderCalView(){
     for(let i=1;i<=last.getDate();i++) days.push({d:new Date(my,mm,i),cur:true})
     const rem=(7-days.length%7)%7
     for(let i=1;i<=rem;i++) days.push({d:new Date(my,mm+1,i),cur:false})
-    const hasEvSet=new Set(_calEvents.filter(e=>e.start_time).map(e=>_localDs(e.start_time)))
+    const hasEvSet=new Set(visibleEvents().filter(e=>e.start_time).map(e=>_localDs(e.start_time)))
     const cellsHtml=days.map(({d,cur})=>{
       const ds=_localDs(d),isToday=ds===todayStr
       const cls=['gcal-mini-day',!cur?'other':'',isToday?'today':''].filter(Boolean).join(' ')
@@ -2227,7 +2228,7 @@ function _renderCalView(){
     const rem=(7-days.length%7)%7
     for(let i=1;i<=rem;i++) days.push({date:new Date(y,m+1,i),cur:false})
     const byDate={}
-    for(const ev of _calEvents){ if(!ev.start_time) continue; const k=_localDs(ev.start_time); (byDate[k]||(byDate[k]=[])).push(ev) }
+    for(const ev of visibleEvents()){ if(!ev.start_time) continue; const k=_localDs(ev.start_time); (byDate[k]||(byDate[k]=[])).push(ev) }
     const weeks=[]; for(let i=0;i<days.length;i+=7) weeks.push(days.slice(i,i+7))
     mainHtml=`<div class="gcal-dow-row">${DOW_FULL.map(d=>`<div class="gcal-dow">${d}</div>`).join('')}</div>
     <div class="gcal-weeks" id="gcal-month-grid">
@@ -2251,7 +2252,7 @@ function _renderCalView(){
     const dayDs=_localDs(dayD), isToday=dayDs===todayStr
     const HOUR_H=48
     const hours=Array.from({length:24},(_,i)=>i)
-    const dayEvs=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)===dayDs)
+    const dayEvs=visibleEvents().filter(ev=>ev.start_time&&_localDs(ev.start_time)===dayDs)
     const allDay=dayEvs.filter(ev=>!ev.start_time||(!new Date(ev.start_time).getHours()&&!new Date(ev.start_time).getMinutes()))
     const timed=dayEvs.filter(ev=>ev.start_time&&(new Date(ev.start_time).getHours()||new Date(ev.start_time).getMinutes()))
     const nowMins=now.getHours()*60+now.getMinutes()
@@ -2319,7 +2320,7 @@ function _renderCalView(){
     for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);dayHeaders.push({d,ds:_localDs(d),isToday:_localDs(d)===todayStr})}
     const evsByDay={}
     for(const {ds} of dayHeaders) evsByDay[ds]=[]
-    for(const ev of _calEvents){ if(!ev.start_time)continue; const ds=_localDs(ev.start_time); if(evsByDay[ds]) evsByDay[ds].push(ev) }
+    for(const ev of visibleEvents()){ if(!ev.start_time)continue; const ds=_localDs(ev.start_time); if(evsByDay[ds]) evsByDay[ds].push(ev) }
 
     function evBlock(ev,totalCols,colIdx){
       const st=new Date(ev.start_time)
@@ -2373,8 +2374,8 @@ function _renderCalView(){
 
   } else {
     const anchorDs=_localDs(_calViewMonth)
-    const upcoming=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)>=anchorDs)
-    const past=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)<anchorDs).reverse().slice(0,12)
+    const upcoming=visibleEvents().filter(ev=>ev.start_time&&_localDs(ev.start_time)>=anchorDs)
+    const past=visibleEvents().filter(ev=>ev.start_time&&_localDs(ev.start_time)<anchorDs).reverse().slice(0,12)
     const li=ev=>{
       const cls=evClass(ev),col=evColor(cls,ev),c=ev.status==='cancelled'
       const d=new Date(ev.start_time)
@@ -2397,14 +2398,28 @@ function _renderCalView(){
     </div>`
   }
 
-  function calCheckbox(color, label, checked=true){
-    return `<div class="gcal-cal-item" style="gap:8px;cursor:pointer">
-      <div style="width:16px;height:16px;border-radius:3px;background:${checked?color:'transparent'};border:2px solid ${color};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+  function calCheckbox(color, label, key){
+    const checked=!!_calVisible[key]
+    return `<div class="gcal-cal-item" data-cal="${key}" style="gap:8px;cursor:pointer;user-select:none">
+      <div style="width:16px;height:16px;border-radius:3px;background:${checked?color:'transparent'};border:2px solid ${color};display:flex;align-items:center;justify-content:center;flex-shrink:0;pointer-events:none">
         ${checked?`<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`:''}
       </div>
-      <span style="font-size:12px;color:var(--text2)">${label}</span>
+      <span style="font-size:12px;color:var(--text2);pointer-events:none">${label}</span>
     </div>`
   }
+  // helper: classify an event to its calendar key for filtering
+  function evCalKey(ev){
+    const t=(ev.title||'').toLowerCase()
+    const d=(ev.description||'').toLowerCase()
+    if(t.includes('birthday')||t.includes('rođendan')) return 'birthdays'
+    if(ev.type==='task') return 'tasks'
+    if(t.includes('holiday')||t.includes('praznik')) return 'holidays'
+    if(t.includes('adkernel')||d.includes('adkernel')) return 'adkernel'
+    if(d.includes('monetize')||t.includes('monetize')) return 'monetize'
+    return 'ajdin'
+  }
+  // filter events by visible calendars
+  function visibleEvents(){ return _calEvents.filter(ev=>_calVisible[evCalKey(ev)]!==false) }
 
   mc.innerHTML=`<div class="gcal-layout">
     <div class="gcal-sidebar">
@@ -2414,17 +2429,17 @@ function _renderCalView(){
         <div class="gcal-cal-head" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
           <span>Moji kalendari</span><span style="font-size:10px">▾</span>
         </div>
-        ${calCheckbox('#1d9e75','Ajdin Brković')}
-        ${calCheckbox('#1a6bdc','Monetize Ad D.O.O')}
-        ${calCheckbox('#e91e63','Birthdays')}
-        ${calCheckbox('#4285f4','Tasks',false)}
+        ${calCheckbox('#1d9e75','Ajdin Brković','ajdin')}
+        ${calCheckbox('#1a6bdc','Monetize Ad D.O.O','monetize')}
+        ${calCheckbox('#e91e63','Birthdays','birthdays')}
+        ${calCheckbox('#4285f4','Tasks','tasks')}
       </div>
       <div class="gcal-my-cals" style="margin-top:12px">
         <div class="gcal-cal-head" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
           <span>Drugi kalendari</span><span style="font-size:10px">▾</span>
         </div>
-        ${calCheckbox('#0b8043','Holidays in Bosnia & Herz.')}
-        ${calCheckbox('#8e24aa','Transferred from adkernel',false)}
+        ${calCheckbox('#0b8043','Holidays in Bosnia & Herz.','holidays')}
+        ${calCheckbox('#8e24aa','Transferred from adkernel','adkernel')}
       </div>
     </div>
     <div class="gcal-main">${header}${mainHtml}</div>
@@ -2484,6 +2499,14 @@ function _renderCalView(){
   // List views
   mc.querySelector('#gcal-list-up')?.addEventListener('click',e=>{ const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e) })
   mc.querySelector('#gcal-list-past')?.addEventListener('click',e=>{ const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e) })
+  // Calendar checkboxes — toggle visibility
+  mc.querySelectorAll('.gcal-cal-item[data-cal]').forEach(item=>{
+    item.addEventListener('click',()=>{
+      const key=item.dataset.cal
+      _calVisible[key]=!_calVisible[key]
+      _renderCalView()
+    })
+  })
 }
 
 
