@@ -1137,14 +1137,14 @@ async function renderContacts(){
     const start=_page*PER_PAGE+1, end=Math.min(start+PER_PAGE-1,total)
 
     const arrow=col=>`<span class="sort-arrow">${_sortCol===col?(_sortDir===-1?'↓':'↑'):'↕'}</span>`
-    const th=(col,lbl)=>`<th class="${_sortCol===col?'sorted':''}" onclick="_cSort('${col}')">${lbl}${arrow(col)}</th>`
+    const thH=(col,lbl)=>`<th class="${_sortCol===col?'sorted':''}" data-sort="${col}" style="cursor:pointer">${lbl}${arrow(col)}</th>`
 
     const rowsHtml = slice.map(c=>{
       const nm=c.display_name||'—', ini=initials(nm), col=avatarColor(nm)
-      const hsLink=c.hs_id?`<a class="hs-pill-hs" href="https://app-eu1.hubspot.com/contacts/148227401/contact/${c.hs_id}" target="_blank" onclick="event.stopPropagation()">H</a>`:''
+      const hsLink=c.hs_id?`<a class="hs-pill-hs" href="https://app-eu1.hubspot.com/contacts/148227401/contact/${c.hs_id}" target="_blank" data-stop="1">H</a>`:''
       const rowClick=c.id?`data-cid="${c.id}" data-cnm="${nm.replace(/"/g,'&quot;')}"`:''
       return `<tr class="${c.id?'hs-clickable':''}" ${rowClick}>
-        <td class="hs-cb-cell" onclick="event.stopPropagation()"><input type="checkbox" class="hs-cb"></td>
+        <td class="hs-cb-cell" data-stop="1"><input type="checkbox" class="hs-cb"></td>
         <td class="hs-td">
           <div class="hs-name-cell">
             <div class="hs-avatar" style="background:${col}">${ini}</div>
@@ -1155,7 +1155,7 @@ async function renderContacts(){
           </div>
         </td>
         <td class="hs-td" style="color:var(--text2)">${c.company||'—'}</td>
-        <td class="hs-td">${c.email?`<a href="mailto:${c.email}" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;font-size:11px">${c.email}</a>`:'<span style="color:var(--text3)">—</span>'}</td>
+        <td class="hs-td" data-stop="1">${c.email?`<a href="mailto:${c.email}" style="color:var(--accent);text-decoration:none;font-size:11px">${c.email}</a>`:'<span style="color:var(--text3)">—</span>'}</td>
         <td class="hs-td" style="font-size:11px;color:var(--text2)">${c.phone||'—'}</td>
         <td class="hs-td">${statusBadge(c.trust_level||'stranger')}</td>
         <td class="hs-td" style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
@@ -1163,50 +1163,64 @@ async function renderContacts(){
       </tr>`
     }).join('')
 
+    // Always rebuild full HTML — preserve search value + restore focus
+    const wasFocused = document.activeElement?.id === 'hs-search-input'
+
     document.getElementById('main-content').innerHTML=`
       <div class="hs-wrap">
         <div class="hs-toolbar">
-          <input class="hs-search" id="hs-search-input" placeholder="Pretraži kontakte…" oninput="_cSearch(this.value)">
+          <input class="hs-search" id="hs-search-input" placeholder="Pretraži kontakte…"
+            autocomplete="off" spellcheck="false"
+            value="${_search.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}">
           <button class="hs-filter-btn">☰ Filter</button>
-          <button class="hs-filter-btn">↕ Sort</button>
-          <button class="hs-create-btn" onclick="openNewContactModal()">+ Kreiraj kontakt</button>
+          <button class="hs-create-btn" id="hs-create-btn">+ Kreiraj kontakt</button>
         </div>
         <div class="hs-table-wrap">
           <table class="hs-table" id="hs-contacts-table">
             <thead><tr>
               <th class="hs-cb-cell" style="padding:8px 8px 8px 14px"><input type="checkbox" class="hs-cb"></th>
-              ${th('display_name','Ime')}
-              ${th('company','Kompanija')}
+              ${thH('display_name','Ime')}
+              ${thH('company','Kompanija')}
               <th>Email</th><th>Telefon</th>
-              ${th('trust_level','Trust')}
-              ${th('last_seen_at','Zadnji kontakt')}
+              ${thH('trust_level','Trust')}
+              ${thH('last_seen_at','Zadnji kontakt')}
               <th>Kanal</th>
             </tr></thead>
-            <tbody>${rowsHtml}${!rowsHtml?'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--text3)">Nema kontakata</td></tr>':''}</tbody>
+            <tbody>${rowsHtml||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--text3)">Nema kontakata</td></tr>'}</tbody>
           </table>
           <div class="hs-footer">
             <span>${total>0?`${start}–${end} od ${total} kontakata`:'Nema kontakata'}</span>
             <div class="hs-page-btns">
-              ${_page>0?`<button class="hs-page-btn" onclick="_cPage(${_page-1})">‹</button>`:''}
-              ${Array.from({length:Math.min(pages,7)},(_,i)=>`<button class="hs-page-btn${i===_page?' active':''}" onclick="_cPage(${i})">${i+1}</button>`).join('')}
-              ${_page<pages-1?`<button class="hs-page-btn" onclick="_cPage(${_page+1})">›</button>`:''}
+              ${_page>0?`<button class="hs-page-btn" data-pg="${_page-1}">‹</button>`:''}
+              ${Array.from({length:Math.min(pages,7)},(_,i)=>`<button class="hs-page-btn${i===_page?' active':''}" data-pg="${i}">${i+1}</button>`).join('')}
+              ${_page<pages-1?`<button class="hs-page-btn" data-pg="${_page+1}">›</button>`:''}
             </div>
           </div>
         </div>
       </div>`
 
-    // Row click via event delegation (avoids inline onclick quoting issues)
-    document.getElementById('hs-contacts-table')?.addEventListener('click', e=>{
+    // Search input — direct event listener
+    const si = document.getElementById('hs-search-input')
+    si.addEventListener('input', e=>{ _search=e.target.value; _page=0; render() })
+
+    // Restore focus after rebuild so user can keep typing
+    if(wasFocused){ si.focus(); const l=si.value.length; si.setSelectionRange(l,l) }
+
+    document.getElementById('hs-create-btn').addEventListener('click',()=>openNewContactModal())
+
+    // Sort + pagination + row clicks — all via delegation
+    document.getElementById('hs-contacts-table').addEventListener('click',e=>{
+      if(e.target.closest('[data-stop]')) return
+      const sortTh=e.target.closest('th[data-sort]')
+      if(sortTh){const col=sortTh.dataset.sort;if(_sortCol===col)_sortDir*=-1;else{_sortCol=col;_sortDir=-1};render();return}
       const tr=e.target.closest('tr.hs-clickable')
-      if(!tr) return
-      const cid=tr.dataset.cid, cnm=tr.dataset.cnm
-      if(cid) renderContactDetail(cid, cnm)
+      if(tr&&tr.dataset.cid) renderContactDetail(tr.dataset.cid,tr.dataset.cnm)
+    })
+    document.querySelector('.hs-page-btns')?.addEventListener('click',e=>{
+      const btn=e.target.closest('[data-pg]');if(btn){_page=+btn.dataset.pg;render()}
     })
   }
 
-  window._cSort=col=>{ if(_sortCol===col) _sortDir*=-1; else{_sortCol=col;_sortDir=-1}; render() }
-  window._cSearch=val=>{ _search=val; _page=0; render() }
-  window._cPage=p=>{ _page=p; render() }
   render()
 }
 
@@ -2077,7 +2091,7 @@ async function renderCalendar(){
     start_time:e.start_time,end_time:e.end_time,status:e.status||'confirmed',
     contact_id:null,metadata:{gcal_id:e.gcal_id,link:e.link}
   }))
-  _calViewMonth=new Date(); _calMiniMonth=new Date(); _calView='month'
+  _calViewMonth=new Date(); _calMiniMonth=new Date(); _calView='day'
   _renderCalView()
 }
 
@@ -2176,8 +2190,11 @@ function _renderCalView(){
   }
 
   // ── HEADER ─────────────────────────────────────────────────────────────────
+  const dayNmsHeader=['Nedjelja','Ponedjeljak','Utorak','Srijeda','Četvrtak','Petak','Subota']
   let headerTitle
-  if(_calView==='week'){
+  if(_calView==='day'){
+    headerTitle=`<span class="gcal-month-title">${dayNmsHeader[_calViewMonth.getDay()]}</span><span class="gcal-year">${_calViewMonth.getDate()}. ${monthNames[_calViewMonth.getMonth()]} ${_calViewMonth.getFullYear()}</span>`
+  } else if(_calView==='week'){
     const wAnchor=_calViewMonth, wdow=wAnchor.getDay(), wws=new Date(wAnchor)
     wws.setDate(wAnchor.getDate()-(wdow===0?6:wdow-1))
     const wwe=new Date(wws); wwe.setDate(wws.getDate()+6)
@@ -2192,8 +2209,9 @@ function _renderCalView(){
     <button class="gcal-nav-btn" id="cal-next">›</button>
     ${headerTitle}
     <div class="gcal-view-btns">
-      <button class="gcal-view-btn${_calView==='month'?' active':''}" data-view="month">Mjesec</button>
+      <button class="gcal-view-btn${_calView==='day'?' active':''}" data-view="day">Dan</button>
       <button class="gcal-view-btn${_calView==='week'?' active':''}" data-view="week">Sedmica</button>
+      <button class="gcal-view-btn${_calView==='month'?' active':''}" data-view="month">Mjesec</button>
       <button class="gcal-view-btn${_calView==='list'?' active':''}" data-view="list">Raspored</button>
     </div>
   </div>`
@@ -2225,6 +2243,66 @@ function _renderCalView(){
           `<div class="cal-day-num">${date.getDate()}</div>`
         }${chips}${more}</div>`
       }).join('')}</div>`).join('')}
+    </div>`
+
+  } else if(_calView==='day'){
+    // ── DAY VIEW (Google Calendar style) ──────────────────────────────────────
+    const dayD=_calViewMonth
+    const dayDs=_localDs(dayD), isToday=dayDs===todayStr
+    const HOUR_H=48
+    const hours=Array.from({length:24},(_,i)=>i)
+    const dayEvs=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)===dayDs)
+    const allDay=dayEvs.filter(ev=>!ev.start_time||(!new Date(ev.start_time).getHours()&&!new Date(ev.start_time).getMinutes()))
+    const timed=dayEvs.filter(ev=>ev.start_time&&(new Date(ev.start_time).getHours()||new Date(ev.start_time).getMinutes()))
+    const nowMins=now.getHours()*60+now.getMinutes()
+    const nowTop=(nowMins/60)*HOUR_H
+    const dayNmsLong=['Nedjelja','Ponedjeljak','Utorak','Srijeda','Četvrtak','Petak','Subota']
+
+    function dayEvBlock(ev){
+      const st=new Date(ev.start_time)
+      const en=ev.end_time?new Date(ev.end_time):new Date(st.getTime()+60*60000)
+      const startMins=st.getHours()*60+st.getMinutes()
+      let endMins=en.getHours()*60+en.getMinutes(); if(endMins<=startMins) endMins=startMins+60
+      const top=(startMins/60)*HOUR_H, height=Math.max(((endMins-startMins)/60)*HOUR_H,22)
+      const cls=evClass(ev), col=evColor(cls,ev), cancelled=ev.status==='cancelled'
+      const endFmt=`${String(en.getHours()).padStart(2,'0')}:${String(en.getMinutes()).padStart(2,'0')}`
+      return `<div class="gcal-tg-ev" data-evid="${ev.id}" style="top:${top}px;height:${height}px;left:2px;right:4px;width:auto;background:${col};border-left:none;border-radius:4px;padding:4px 8px;${cancelled?'opacity:.5':''}">
+        <div style="font-size:12px;font-weight:600;color:#fff;${cancelled?'text-decoration:line-through':''}">${ev.title||'Bez naslova'}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.8)">${fmtT(ev.start_time)} – ${endFmt}</div>
+        ${ev.description?`<div style="font-size:10px;color:rgba(255,255,255,.7);margin-top:2px">${ev.description.slice(0,50)}</div>`:''}
+      </div>`
+    }
+
+    mainHtml=`
+    <div style="font-size:11px;color:var(--text3);margin-bottom:6px;padding-left:52px">
+      GMT+02
+    </div>
+    <div class="gcal-tg-wrap" id="gcal-day-grid" style="flex:1">
+      <div class="gcal-tg-head" style="margin-bottom:0">
+        <div class="gcal-tg-gutter" style="width:52px"></div>
+        <div class="gcal-tg-day-head${isToday?' today':''}" style="border-left:none">
+          <div class="gcal-tg-day-name">${dayNmsLong[dayD.getDay()].toUpperCase().slice(0,3)}</div>
+          <div class="gcal-tg-day-num${isToday?' today-circle':''}">${dayD.getDate()}</div>
+        </div>
+      </div>
+      ${allDay.length?`<div style="display:flex;border-bottom:1px solid var(--border);min-height:28px">
+        <div style="width:52px;font-size:9px;color:var(--text3);text-align:right;padding:6px 8px 0 0;flex-shrink:0">all-day</div>
+        <div style="flex:1;padding:4px;display:flex;flex-direction:column;gap:2px;border-left:1px solid var(--border)">
+          ${allDay.map(ev=>`<div class="gcal-chip ${evClass(ev)}" data-evid="${ev.id}" style="font-size:12px;padding:3px 8px;border-radius:4px">${ev.title||'Bez naslova'}</div>`).join('')}
+        </div>
+      </div>`:''}
+      <div class="gcal-tg-scroll" id="gcal-tg-scroll-day">
+        <div class="gcal-tg-inner" style="flex:1">
+          <div class="gcal-tg-hours">
+            ${hours.map(h=>`<div class="gcal-tg-hour" style="height:${HOUR_H}px"><span>${h===0?'':h<12?h+' AM':h===12?'12 PM':(h-12)+' PM'}</span></div>`).join('')}
+          </div>
+          <div class="gcal-tg-col today" style="flex:1;border-left:1px solid var(--border)">
+            ${hours.map(h=>`<div class="gcal-tg-cell" style="height:${HOUR_H}px"></div>`).join('')}
+            ${isToday?`<div class="gcal-tg-now" style="top:${nowTop}px"><div class="gcal-tg-now-dot"></div></div>`:''}
+            ${timed.map(ev=>dayEvBlock(ev)).join('')}
+          </div>
+        </div>
+      </div>
     </div>`
 
   } else if(_calView==='week'){
@@ -2277,7 +2355,7 @@ function _renderCalView(){
       <div class="gcal-tg-scroll" id="gcal-tg-scroll">
         <div class="gcal-tg-inner">
           <div class="gcal-tg-hours">
-            ${hours.map(h=>`<div class="gcal-tg-hour" style="height:${HOUR_H}px"><span>${h===0?'':String(h).padStart(2,'0')+':00'}</span></div>`).join('')}
+            ${hours.map(h=>`<div class="gcal-tg-hour" style="height:${HOUR_H}px"><span>${h===0?'':h<12?h+' AM':h===12?'12 PM':(h-12)+' PM'}</span></div>`).join('')}
           </div>
           ${dayHeaders.map(({d,ds,isToday})=>{
             const evs=evsByDay[ds]||[]
@@ -2294,8 +2372,9 @@ function _renderCalView(){
     </div>`
 
   } else {
-    const upcoming=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)>=todayStr)
-    const past=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)<todayStr).reverse().slice(0,12)
+    const anchorDs=_localDs(_calViewMonth)
+    const upcoming=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)>=anchorDs)
+    const past=_calEvents.filter(ev=>ev.start_time&&_localDs(ev.start_time)<anchorDs).reverse().slice(0,12)
     const li=ev=>{
       const cls=evClass(ev),col=evColor(cls,ev),c=ev.status==='cancelled'
       const d=new Date(ev.start_time)
@@ -2318,14 +2397,34 @@ function _renderCalView(){
     </div>`
   }
 
+  function calCheckbox(color, label, checked=true){
+    return `<div class="gcal-cal-item" style="gap:8px;cursor:pointer">
+      <div style="width:16px;height:16px;border-radius:3px;background:${checked?color:'transparent'};border:2px solid ${color};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${checked?`<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`:''}
+      </div>
+      <span style="font-size:12px;color:var(--text2)">${label}</span>
+    </div>`
+  }
+
   mc.innerHTML=`<div class="gcal-layout">
     <div class="gcal-sidebar">
       <button class="gcal-create-btn" id="gcal-create-btn">＋ Kreiraj</button>
       ${buildMini()}
-      <div class="gcal-my-cals">
-        <div class="gcal-cal-head">Moji kalendari</div>
-        <div class="gcal-cal-item"><div class="gcal-cal-dot" style="background:#1d9e75"></div>Ajdin Brković</div>
-        <div class="gcal-cal-item"><div class="gcal-cal-dot" style="background:#1a6bdc"></div>Sastanci</div>
+      <div class="gcal-my-cals" style="margin-top:8px">
+        <div class="gcal-cal-head" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+          <span>Moji kalendari</span><span style="font-size:10px">▾</span>
+        </div>
+        ${calCheckbox('#1d9e75','Ajdin Brković')}
+        ${calCheckbox('#1a6bdc','Monetize Ad D.O.O')}
+        ${calCheckbox('#e91e63','Birthdays')}
+        ${calCheckbox('#4285f4','Tasks',false)}
+      </div>
+      <div class="gcal-my-cals" style="margin-top:12px">
+        <div class="gcal-cal-head" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+          <span>Drugi kalendari</span><span style="font-size:10px">▾</span>
+        </div>
+        ${calCheckbox('#0b8043','Holidays in Bosnia & Herz.')}
+        ${calCheckbox('#8e24aa','Transferred from adkernel',false)}
       </div>
     </div>
     <div class="gcal-main">${header}${mainHtml}</div>
@@ -2352,12 +2451,14 @@ function _renderCalView(){
   // Header nav
   mc.querySelector('#cal-today')?.addEventListener('click',()=>{ _calViewMonth=new Date(); _calMiniMonth=new Date(); _renderCalView() })
   mc.querySelector('#cal-prev')?.addEventListener('click',()=>{
-    if(_calView==='week'){ const d=new Date(_calViewMonth); d.setDate(d.getDate()-7); _calViewMonth=d }
+    if(_calView==='day'){ const d=new Date(_calViewMonth); d.setDate(d.getDate()-1); _calViewMonth=d }
+    else if(_calView==='week'){ const d=new Date(_calViewMonth); d.setDate(d.getDate()-7); _calViewMonth=d }
     else _calViewMonth=new Date(y,m-1,1)
     _renderCalView()
   })
   mc.querySelector('#cal-next')?.addEventListener('click',()=>{
-    if(_calView==='week'){ const d=new Date(_calViewMonth); d.setDate(d.getDate()+7); _calViewMonth=d }
+    if(_calView==='day'){ const d=new Date(_calViewMonth); d.setDate(d.getDate()+1); _calViewMonth=d }
+    else if(_calView==='week'){ const d=new Date(_calViewMonth); d.setDate(d.getDate()+7); _calViewMonth=d }
     else _calViewMonth=new Date(y,m+1,1)
     _renderCalView()
   })
@@ -2368,14 +2469,17 @@ function _renderCalView(){
     const more=e.target.closest('[data-dayds]'); if(more){ window._calDayPopup(more.dataset.dayds,e); return }
     const day=e.target.closest('.gcal-day[data-dayds]'); if(day){ window._calDayPopup(day.dataset.dayds,e) }
   })
-  // Week grid (time grid events)
+  // Week/Day grid (time grid events)
   mc.querySelector('#gcal-week-grid')?.addEventListener('click',e=>{
     const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e)
   })
-  // Auto-scroll time grid to 7am on load
-  if(_calView==='week'){
-    const scroll=mc.querySelector('#gcal-tg-scroll')
-    if(scroll) setTimeout(()=>{ scroll.scrollTop=48*7-20 },50)
+  mc.querySelector('#gcal-day-grid')?.addEventListener('click',e=>{
+    const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e)
+  })
+  // Auto-scroll to 8am on load
+  if(_calView==='week'||_calView==='day'){
+    const scroll=mc.querySelector('#gcal-tg-scroll')||mc.querySelector('#gcal-tg-scroll-day')
+    if(scroll) setTimeout(()=>{ scroll.scrollTop=48*8-20 },50)
   }
   // List views
   mc.querySelector('#gcal-list-up')?.addEventListener('click',e=>{ const ev=e.target.closest('[data-evid]'); if(ev) window._calShowEv(ev.dataset.evid,e) })
@@ -2434,86 +2538,188 @@ async function renderContactDetail(contactId, contactName){
   function propRow(label,val){return val&&val!=='—'?`<div class="hs-prop-row"><div class="hs-prop-label">${label}</div><div class="hs-prop-val">${val}</div></div>`:''}
   function propLink(label,val,href){return val?`<div class="hs-prop-row"><div class="hs-prop-label">${label}</div><div class="hs-prop-val"><a href="${href}">${val}</a></div></div>`:''}
 
+  // Most recent memory as "IRIS Insight" summary
+  const insightText = memories.length
+    ? memories.slice(0,3).map(m=>m.content||'').filter(Boolean).join(' · ')
+    : 'Nema IRIS zapisa za ovaj kontakt. Pošalji poruku ili zakaži sastanak da IRIS počne učiti o kontaktu.'
+
   document.getElementById('main-content').innerHTML=`
-    <div class="hs-detail-layout">
+    <div style="display:flex;gap:0;height:calc(100vh - 100px);overflow:hidden">
 
-      <!-- LEFT SIDEBAR (HubSpot style) -->
-      <div class="hs-detail-left">
-        <div style="margin-bottom:14px">
-          <div class="hs-det-avatar" style="background:${avColor}">${initials}</div>
-          <div class="hs-det-name">${fullName}</div>
-          <div class="hs-det-sub">${[c.role||c.occupation,c.company].filter(Boolean).join(' · ')||'—'}</div>
-        </div>
-
-        <div class="hs-det-actions">
-          ${c.email?`<button class="hs-det-action" onclick="window.open('mailto:${c.email}')">✉ Email</button>`:''}
-          ${c.phone?`<button class="hs-det-action" onclick="window.open('tel:${c.phone}')">📞 Pozovi</button>`:''}
-          <button class="hs-det-action" onclick="openNewTaskModal()">＋ Task</button>
-          <button class="hs-det-action" onclick="openNewEventModal()">📅 Zakaži</button>
-        </div>
-
-        <!-- About section -->
-        <div class="hs-prop-section">
-          <div class="hs-prop-section-head">
-            <span class="hs-prop-section-title">O kontaktu</span>
-            <span style="font-size:10px;color:var(--text3)">▾</span>
+      <!-- LEFT SIDEBAR (HubSpot-exact) -->
+      <div style="width:280px;min-width:280px;border-right:1px solid var(--border);overflow-y:auto;padding:18px 16px;flex-shrink:0">
+        <!-- Avatar + Name -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text3);flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           </div>
+          <div style="min-width:0">
+            <div style="font-size:14px;font-weight:600;color:var(--text);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fullName}</div>
+            ${c.email?`<div style="font-size:11px;color:var(--accent);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><a href="mailto:${c.email}" style="color:var(--accent);text-decoration:none">${c.email}</a></div>`:''}
+          </div>
+        </div>
+
+        <!-- HubSpot action buttons row -->
+        <div style="display:flex;gap:4px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+          <button class="hs-det-action" style="flex:1;min-width:48px;flex-direction:column;gap:2px;padding:8px 4px;text-align:center" onclick="openNewTaskModal()">
+            <span style="font-size:14px">📝</span>
+            <span style="font-size:10px">Note</span>
+          </button>
+          ${c.email?`<button class="hs-det-action" style="flex:1;min-width:48px;flex-direction:column;gap:2px;padding:8px 4px;text-align:center" onclick="window.open('mailto:${c.email}')">
+            <span style="font-size:14px">✉</span>
+            <span style="font-size:10px">Email</span>
+          </button>`:''}
+          ${c.phone?`<button class="hs-det-action" style="flex:1;min-width:48px;flex-direction:column;gap:2px;padding:8px 4px;text-align:center" onclick="window.open('tel:${c.phone}')">
+            <span style="font-size:14px">📞</span>
+            <span style="font-size:10px">Call</span>
+          </button>`:''}
+          <button class="hs-det-action" style="flex:1;min-width:48px;flex-direction:column;gap:2px;padding:8px 4px;text-align:center" onclick="openNewTaskModal()">
+            <span style="font-size:14px">✓</span>
+            <span style="font-size:10px">Task</span>
+          </button>
+          <button class="hs-det-action" style="flex:1;min-width:48px;flex-direction:column;gap:2px;padding:8px 4px;text-align:center" onclick="openNewEventModal()">
+            <span style="font-size:14px">📅</span>
+            <span style="font-size:10px">Meeting</span>
+          </button>
+        </div>
+
+        <!-- Key Information -->
+        <div style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--text)">Key information</span>
+          </div>
+          ${propRow('Contact owner', 'Ajdin Brković')}
+          ${propRow('Phone Number', c.phone||'—')}
+          ${propRow('City', c.company||'—')}
+          ${propRow('Lifecycle Stage', c.trust_level==='trusted'?'<span class="badge badge-green">Customer</span>':c.trust_level==='acquaintance'?'<span class="badge badge-blue">Qualified</span>':'<span class="badge badge-amber">Lead</span>')}
+          ${propRow('Lead Status', c.channel_primary||'—')}
+          ${propRow('Last Contacted', fmtISO(c.last_seen_at))}
+        </div>
+
+        <!-- Contact Info -->
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;padding-top:10px;border-top:1px solid var(--border)">About</div>
           ${propRow('Kompanija', c.company)}
           ${propRow('Pozicija', c.role||c.occupation)}
-          ${propRow('Trust Level', c.trust_level||'stranger')}
-          ${propRow('Kanal', c.channel_primary||c.channel||'—')}
-          ${propRow('Kreiran', fmtISO(c.created_at))}
-          ${propRow('Zadnji kontakt', fmtISO(c.last_seen_at))}
-        </div>
-
-        <!-- Contact Info section -->
-        <div class="hs-prop-section">
-          <div class="hs-prop-section-head">
-            <span class="hs-prop-section-title">Kontakt informacije</span>
-            <span style="font-size:10px;color:var(--text3)">▾</span>
-          </div>
           ${propLink('E-mail', c.email, 'mailto:'+(c.email||''))}
           ${propRow('Telefon', c.phone)}
-          ${propRow('Username', c.username?'@'+c.username:null)}
+          ${propRow('Kanal', c.channel_primary||c.channel||'—')}
           ${propRow('Telegram ID', c.telegram_id?String(c.telegram_id):null)}
-        </div>
-
-        <!-- IRIS Intelligence section -->
-        <div class="hs-prop-section">
-          <div class="hs-prop-section-head">
-            <span class="hs-prop-section-title">IRIS Intelligence</span>
-            <span style="font-size:10px;color:var(--text3)">▾</span>
-          </div>
-          ${propRow('Memorija', memories.length+' zapisa')}
-          ${propRow('Poruke', chatMessages.filter(m=>(m.content_text||'').trim()).length+' poruka')}
-          ${propRow('Sastanci', calEvents.length+' događaja')}
           ${c.notes?`<div class="hs-prop-row"><div class="hs-prop-label">Napomene</div><div class="hs-prop-val" style="white-space:pre-wrap;color:var(--text2);font-size:11px">${c.notes}</div></div>`:''}
-          <div class="hs-prop-row"><div class="hs-prop-label">ID</div><div class="hs-prop-val" style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.id||contactId}</div></div>
+          <div class="hs-prop-row"><div class="hs-prop-label">Supabase ID</div><div class="hs-prop-val" style="font-family:var(--mono);font-size:9px;color:var(--text3)">${c.id||contactId}</div></div>
         </div>
       </div>
 
-      <!-- RIGHT MAIN (Activity feed) -->
-      <div class="hs-detail-right">
-        <div class="hs-act-tabs">
-          <div class="hs-act-tab active" data-tab="all">Sve aktivnosti <span style="font-size:10px;color:var(--text3);margin-left:4px">${activities.length}</span></div>
-          <div class="hs-act-tab" data-tab="notes">🧠 Memorije <span style="font-size:10px;color:var(--text3);margin-left:4px">${memories.length}</span></div>
-          <div class="hs-act-tab" data-tab="messages">💬 Poruke <span style="font-size:10px;color:var(--text3);margin-left:4px">${chatMessages.filter(m=>(m.content_text||'').trim()).length}</span></div>
-          <div class="hs-act-tab" data-tab="meetings">📅 Sastanci <span style="font-size:10px;color:var(--text3);margin-left:4px">${calEvents.length}</span></div>
+      <!-- CENTER MAIN (Catch-up / Activity) -->
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
+        <!-- Tabs -->
+        <div class="hs-act-tabs" style="padding:0 20px">
+          <div class="hs-act-tab active" data-tab="catchup">Catch-up</div>
+          <div class="hs-act-tab" data-tab="activity">Activities</div>
+          <div class="hs-act-tab" data-tab="messages">💬 Poruke</div>
         </div>
-        <div class="hs-act-feed" id="hs-act-feed-content">
-          ${actFeed(activities)}
+
+        <div style="flex:1;overflow-y:auto;padding:16px 20px" id="hs-center-content">
+
+          <!-- Contact Insights (IRIS Memories) -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span style="font-size:14px;font-weight:600;color:var(--text)">Contact insights</span>
+              <span style="background:rgba(29,158,117,.15);color:var(--accent);font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;font-family:var(--mono)">IRIS AI</span>
+            </div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7;background:rgba(29,158,117,.04);border:1px solid rgba(29,158,117,.12);border-radius:6px;padding:12px 14px">
+              ${insightText.slice(0,400)}${insightText.length>400?'…':''}
+            </div>
+            ${memories.length?`<div style="font-size:11px;color:var(--text3);margin-top:8px">📊 ${memories.length} IRIS memorija · Zadnja: ${fmtISO(memories[0]?.created_at)}</div>`:''}
+          </div>
+
+          <!-- Recent Interactions -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:14px">
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">Recent interactions</div>
+            ${activities.length ? activities.slice(0,5).map(a=>`
+              <div class="hs-act-item">
+                <div class="hs-act-icon">${a.icon}</div>
+                <div class="hs-act-body">
+                  <div class="hs-act-title">${a.title}</div>
+                  <div class="hs-act-meta">${fmtDateTime(a.date)}</div>
+                  ${a.note?`<div class="hs-act-note">${(a.note||'').slice(0,200)}</div>`:''}
+                </div>
+              </div>`).join('')
+            : `<div style="text-align:center;padding:28px 0"><div style="font-size:28px;opacity:.2;margin-bottom:8px">👁</div><div style="font-size:12px;color:var(--text3)">No activity on this record.</div></div>`}
+          </div>
+
+          <!-- Sentiment / Notes -->
+          ${c.notes?`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:14px">
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">Notes</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap">${c.notes}</div>
+          </div>`:''}
+
         </div>
+      </div>
+
+      <!-- RIGHT SIDEBAR (Associations) -->
+      <div style="width:260px;min-width:260px;border-left:1px solid var(--border);overflow-y:auto;padding:16px;flex-shrink:0">
+
+        <!-- Calendar Events -->
+        <div style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--text)">📅 Meetings (${calEvents.length})</span>
+            <button class="hs-det-action" style="padding:2px 8px;font-size:10px" onclick="openNewEventModal()">+ Add</button>
+          </div>
+          ${calEvents.length ? calEvents.slice(0,3).map(ev=>`
+            <div style="padding:8px 10px;background:var(--bg3);border-radius:4px;margin-bottom:6px;border-left:2px solid var(--accent)">
+              <div style="font-size:12px;font-weight:500;color:var(--text)">${ev.title||'Bez naslova'}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">${ev.start_time?new Date(ev.start_time).toLocaleDateString('bs',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'}</div>
+            </div>`).join('')
+          : `<div style="font-size:11px;color:var(--text3);padding:10px 0;text-align:center">See the meetings associated with this record.</div>`}
+        </div>
+
+        <!-- IRIS Memories -->
+        <div style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--text)">🧠 Memories (${memories.length})</span>
+          </div>
+          ${memories.length ? memories.slice(0,3).map(m=>`
+            <div style="padding:7px 10px;background:var(--bg3);border-radius:4px;margin-bottom:6px;border-left:2px solid rgba(29,158,117,.5)">
+              <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:2px">${m.memory_type||'note'} · ${fmtISO(m.created_at)}</div>
+              <div style="font-size:11px;color:var(--text2);line-height:1.4">${(m.content||'').slice(0,80)}${(m.content||'').length>80?'…':''}</div>
+            </div>`).join('')
+          : `<div style="font-size:11px;color:var(--text3);padding:10px 0;text-align:center">No IRIS memories for this contact.</div>`}
+        </div>
+
+        <!-- Tasks -->
+        <div style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--text)">✓ Tasks (0)</span>
+            <button class="hs-det-action" style="padding:2px 8px;font-size:10px" onclick="openNewTaskModal()">+ Add</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);padding:10px 0;text-align:center">Track tasks associated with this record.</div>
+        </div>
+
       </div>
     </div>`
 
-  // Tab switching via event delegation
+  // Tab switching
   document.getElementById('main-content').querySelectorAll('.hs-act-tab').forEach(tab=>{
     tab.addEventListener('click',()=>{
-      document.getElementById('main-content').querySelectorAll('.hs-act-tab').forEach(t=>t.classList.remove('active'))
-      tab.classList.add('active')
+      const tabs=document.getElementById('main-content').querySelectorAll('.hs-act-tab')
+      tabs.forEach(t=>t.classList.remove('active')); tab.classList.add('active')
       const which=tab.dataset.tab
-      const items = which==='all'?activities:which==='notes'?activities.filter(a=>a.type==='memory'):which==='messages'?activities.filter(a=>a.type==='chat'):activities.filter(a=>a.type==='event')
-      document.getElementById('hs-act-feed-content').innerHTML=actFeed(items)
+      const cc=document.getElementById('hs-center-content')
+      if(!cc) return
+      if(which==='activity'){
+        cc.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px">
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">All activities</div>
+          ${actFeed(activities)}
+        </div>`
+      } else if(which==='messages'){
+        const msgs=activities.filter(a=>a.type==='chat')
+        cc.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px">
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">💬 Poruke (${msgs.length})</div>
+          ${actFeed(msgs)}
+        </div>`
+      }
+      // catchup tab restores default — just reload
     })
   })
 
