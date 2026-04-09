@@ -1574,6 +1574,16 @@ function openTaskDetail(id){
       <button class="btn btn-primary" onclick="markTaskDone('${t.id}')">✓ Obavijest dostavljena</button>`
   }
 
+  const _contactHtml = t.contact_name ? '<div class="td-section"><div class="td-label">Kontakt</div><div class="td-value">'+t.contact_name+'</div></div>' : ''
+  const _proposedHtml = proposed ? '<div class="td-proposed"><div class="td-label">Prijedlog novog termina</div><div class="td-value">'+proposed+'</div></div>' : ''
+  const _currentHtml = current ? '<div class="td-section"><div class="td-label">Trenutni sastanak</div><div class="td-value" style="color:var(--text2)">'+current+'</div></div>' : ''
+  const _bodyHtml = bodyText&&bodyText!==t.notes ? '<div class="td-section"><div class="td-label">Poruka / Kontekst</div><div class="td-body">'+bodyText+'</div></div>' : ''
+  const _notesHtml = t.notes&&t.notes!==bodyText ? '<div class="td-section"><div class="td-label">Napomene</div><div class="td-body">'+t.notes+'</div></div>' : (t.notes&&t.notes===bodyText&&t.notes ? '<div class="td-section"><div class="td-label">Poruka / Napomene</div><div class="td-body">'+t.notes+'</div></div>' : '')
+  const _dueColor = t.due_date && new Date(t.due_date)<new Date() ? 'var(--danger)' : 'var(--text2)'
+  const _dueHtml = t.due_date ? '<div class="td-section"><div class="td-label">Rok</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:'+_dueColor+'">'+t.due_date+'</div></div>' : ''
+  const _remindRaw = getRemindAt(t)
+  const _remindHtml = _remindRaw ? '<div class="td-section"><div class="td-label" style="color:var(--accent)">🔔 Podsjetnik</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:var(--accent)">'+_remindRaw+' <span style="color:var(--text3)">('+( fmtRemind(_remindRaw)||'' )+')</span></div></div>' : ''
+
   document.getElementById('task-detail-body').innerHTML=`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
       <span class="badge badge-gray">${typeLabel[t.task_type]||t.task_type||'task'}</span>
@@ -1581,14 +1591,7 @@ function openTaskDetail(id){
       <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${(t.created_at||'').slice(0,16).replace('T',' ')}</span>
     </div>
     <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:18px;line-height:1.3">${t.title}</div>
-    ${t.contact_name?`<div class="td-section"><div class="td-label">Kontakt</div><div class="td-value">${t.contact_name}</div></div>`:''}
-    ${proposed?`<div class="td-proposed"><div class="td-label">Prijedlog novog termina</div><div class="td-value">${proposed}</div></div>`:''}
-    ${current?`<div class="td-section"><div class="td-label">Trenutni sastanak</div><div class="td-value" style="color:var(--text2)">${current}</div></div>`:''}
-    ${bodyText&&bodyText!==t.notes?`<div class="td-section"><div class="td-label">Poruka / Kontekst</div><div class="td-body">${bodyText}</div></div>`:''}
-    ${t.notes&&t.notes!==bodyText?`<div class="td-section"><div class="td-label">Napomene</div><div class="td-body">${t.notes}</div></div>`:''}
-    ${t.notes&&t.notes===bodyText&&t.notes?`<div class="td-section"><div class="td-label">Poruka / Napomene</div><div class="td-body">${t.notes}</div></div>`:''}
-    ${t.due_date?`<div class="td-section"><div class="td-label">Rok</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:${new Date(t.due_date)<new Date()?'var(--danger)':'var(--text2)'}">${t.due_date}</div></div>`:''}
-    ${(()=>{const r=getRemindAt(t);if(!r)return'';const rf=fmtRemind(r);return`<div class="td-section"><div class="td-label" style="color:var(--accent)">🔔 Podsjetnik</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:var(--accent)">${r} <span style="color:var(--text3)">(${rf||''})</span></div></div>`})()}
+    ${_contactHtml}${_proposedHtml}${_currentHtml}${_bodyHtml}${_notesHtml}${_dueHtml}${_remindHtml}
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">${actionsHtml}</div>
   `
   document.getElementById('task-detail-overlay').classList.add('open')
