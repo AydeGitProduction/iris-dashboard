@@ -1070,7 +1070,7 @@ async function renderContacts(){
                 const avc = avatarColor(nm)
                 const hsId = c.metadata?.hs_contact_id
                 const hsPill = hsId?`<a class="hs-pill-hs" href="https://app-eu1.hubspot.com/contacts/148227401/contact/${hsId}" target="_blank" onclick="event.stopPropagation()">H</a>`:''
-                const onclick = c.id?`renderContactDetail('${c.id}','${nm.replace(/'/g,'\\'')}')`:''
+                const onclick = c.id?`renderContactDetail('${c.id}','${nm.replace(/'/g,'')}')`:''
                 return `<tr onclick="${onclick}">
                   <td class="hs-cb-cell" onclick="event.stopPropagation()"><input type="checkbox" class="hs-cb"></td>
                   <td class="hs-td">
@@ -1419,6 +1419,101 @@ function scrollToReminders(){
   taskViewMode='list'
   renderTasks()
 }
+
+function openNewContactModal(){
+  document.getElementById('modal-title').textContent = 'Novi kontakt'
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="nc-name" placeholder="Ime i prezime *" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+      <input id="nc-email" placeholder="Email" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+      <input id="nc-phone" placeholder="Telefon" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+      <input id="nc-company" placeholder="Kompanija" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+      <input id="nc-role" placeholder="Pozicija / Role" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+      <button class="btn btn-primary" style="width:100%;padding:9px;margin-top:4px" onclick="submitNewContact()">Kreiraj kontakt →</button>
+    </div>`
+  document.getElementById('modal').classList.add('open')
+  setTimeout(() => document.getElementById('nc-name')?.focus(), 50)
+}
+
+async function submitNewContact(){
+  const name = document.getElementById('nc-name').value.trim()
+  if(!name){ alert('Upiši ime kontakta'); return }
+  const email   = document.getElementById('nc-email').value.trim()
+  const phone   = document.getElementById('nc-phone').value.trim()
+  const company = document.getElementById('nc-company').value.trim()
+  const role    = document.getElementById('nc-role').value.trim()
+  // POST to Railway → HubSpot via IRIS API
+  const r = await fetch(BASE+'/api/saas/contacts', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ name, email:email||null, phone:phone||null, company:company||null, role:role||null })
+  })
+  const res = r.ok ? await r.json() : null
+  if(res && res.ok){
+    closeModal()
+    renderContacts()
+  } else {
+    alert('Greška pri kreiranju kontakta: '+(res?.error||r.status))
+  }
+}
+
+function openNewEventModal(){
+  const today = new Date()
+  const dateStr = today.toISOString().slice(0,10)
+  const timeStr = String(today.getHours()+1).padStart(2,'0')+':00'
+  document.getElementById('modal-title').textContent = 'Novi događaj'
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="nev-title" placeholder="Naziv događaja *" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Datum</div>
+          <input type="date" id="nev-date" value="${dateStr}" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Vrijeme</div>
+          <input type="time" id="nev-time" value="${timeStr}" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Trajanje (min)</div>
+          <input type="number" id="nev-dur" value="60" min="15" step="15" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Lokacija</div>
+          <input id="nev-loc" placeholder="Opcionalno" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+        </div>
+      </div>
+      <textarea id="nev-desc" placeholder="Opis (opcionalno)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%;height:60px;resize:vertical"></textarea>
+      <button class="btn btn-primary" style="width:100%;padding:9px;margin-top:4px" onclick="submitNewEvent()">Kreiraj događaj →</button>
+    </div>`
+  document.getElementById('modal').classList.add('open')
+  setTimeout(() => document.getElementById('nev-title')?.focus(), 50)
+}
+
+async function submitNewEvent(){
+  const title = document.getElementById('nev-title').value.trim()
+  if(!title){ alert('Upiši naziv događaja'); return }
+  const date  = document.getElementById('nev-date').value
+  const time  = document.getElementById('nev-time').value
+  const dur   = parseInt(document.getElementById('nev-dur').value)||60
+  const loc   = document.getElementById('nev-loc').value.trim()
+  const desc  = document.getElementById('nev-desc').value.trim()
+  const start = new Date(date+'T'+time+':00').toISOString()
+  const end   = new Date(new Date(date+'T'+time+':00').getTime()+dur*60000).toISOString()
+  const r = await fetch(BASE+'/api/saas/events', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ title, start_time:start, end_time:end, description:desc||null, location:loc||null })
+  })
+  const res = r.ok ? await r.json() : null
+  if(res && res.ok){
+    closeModal()
+    renderCalendar()
+  } else {
+    alert('Greška pri kreiranju događaja: '+(res?.error||r.status))
+  }
+}
+
 
 function openNewTaskModal(){
   const today=new Date().toISOString().slice(0,10)
