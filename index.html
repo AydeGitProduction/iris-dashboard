@@ -160,6 +160,32 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .setting-val{font-family:var(--mono);font-size:12px;color:var(--text);flex:1}
 .setting-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:12px}
 
+/* ── INTEGRATIONS ─────────────────────────────────────────────── */
+.integration-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+@media(max-width:900px){.integration-grid{grid-template-columns:1fr}}
+.int-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.int-card-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.int-logo{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;flex-shrink:0}
+.int-logo-hs{background:#ff7a59;color:#fff}
+.int-logo-gcal{background:#4285f4;color:#fff}
+.int-logo-notion{background:#fff;color:#000;border:1px solid #e0e0e0}
+.int-name{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.int-badge{font-size:10px;padding:3px 8px;border-radius:20px;font-family:var(--mono);font-weight:600;letter-spacing:.3px}
+.int-badge-on{background:rgba(29,158,117,.15);color:var(--accent);border:1px solid rgba(29,158,117,.3)}
+.int-badge-off{background:rgba(255,255,255,.05);color:var(--text3);border:1px solid var(--border)}
+.int-badge-err{background:rgba(234,67,53,.12);color:#ea4335;border:1px solid rgba(234,67,53,.3)}
+.int-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.int-field{display:flex;flex-direction:column;gap:4px}
+.int-label{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase}
+.int-input{padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:var(--mono);width:100%;box-sizing:border-box}
+.int-input:focus{outline:none;border-color:var(--accent)}
+.int-input::placeholder{color:var(--text3)}
+.int-actions{display:flex;gap:8px;margin-top:4px}
+.int-stats{display:flex;gap:16px;padding:10px 16px;background:rgba(255,255,255,.02);border-top:1px solid var(--border);font-size:11px;color:var(--text3)}
+.int-stat{display:flex;flex-direction:column;gap:2px}
+.int-stat-val{font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.saas-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.2);border-radius:3px;padding:1px 6px;font-size:10px;color:var(--accent);font-family:var(--mono);margin-left:6px;cursor:pointer;text-decoration:none}
+.saas-pill:hover{background:rgba(29,158,117,.15)}
 /* ── KANBAN BOARD ─────────────────────────────────────────────── */
 .kanban-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .kanban-view-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:5px;overflow:hidden}
@@ -718,11 +744,54 @@ async function renderFeed(){
     </div>`
 }
 
+async function renderHubSpotContacts(){
+  const token = _intGet('hs_token')
+  if (!token) { alert('HubSpot nije konfigurisan. Idi u Settings → Integracije.'); return; }
+  const mc = document.getElementById('main-content')
+  const existing = mc.querySelector('#hs-contacts-section')
+  if (existing) { existing.remove(); return; } // toggle off
+
+  const loading = document.createElement('div')
+  loading.id = 'hs-contacts-section'
+  loading.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12px">Učitavam HubSpot kontakte...</div>'
+  mc.appendChild(loading)
+
+  const hsContacts = await _fetchHubSpotContacts(100)
+  if (!hsContacts) {
+    loading.innerHTML = '<div style="padding:16px;color:var(--danger);font-size:12px">Greška pri učitavanju HubSpot kontakata. Provjeri token.</div>'
+    return
+  }
+
+  loading.innerHTML = `
+    <div class="card" style="margin-top:16px">
+      <div class="card-title" style="display:flex;align-items:center;gap:8px">
+        <span style="background:#ff7a59;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px">H</span>
+        HubSpot Contacts · ${hsContacts.length} ukupno
+        <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;margin-left:auto" onclick="renderHubSpotContacts()">Zatvori ✕</button>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Ime</th><th>Kompanija</th><th>Email</th><th>Phone</th><th>Pozicija</th><th>HS ID</th></tr></thead>
+        <tbody>${hsContacts.map(c=>{
+          const p = c.properties || {}
+          const nm = [p.firstname,p.lastname].filter(Boolean).join(' ') || '—'
+          return `<tr>
+            <td style="font-weight:500"><a href="https://app.hubspot.com/contacts/view/contact/${c.id}" target="_blank" style="color:var(--accent);text-decoration:none">${nm}</a></td>
+            <td style="color:var(--text2)">${p.company||'—'}</td>
+            <td style="font-size:11px">${p.email||'—'}</td>
+            <td style="font-size:11px">${p.phone||'—'}</td>
+            <td style="font-size:11px;color:var(--text3)">${p.jobtitle||'—'}</td>
+            <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${c.id}</td>
+          </tr>`
+        }).join('')}</tbody>
+      </table>
+    </div>`
+}
+
 async function renderContacts(){
   const data=await api('/api/contacts/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:WS,query:''})})||{contacts:[]}
   document.getElementById('topbar-actions').innerHTML=''
   // Always try Supabase first (to get contact IDs for detail view)
-  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,telegram_id,email,phone,notes') || []
+  let sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=200&select=id,display_name,name,first_name,last_name,company,trust_level,last_seen_at,channel_primary,channel,telegram_id,email,phone,notes,metadata') || []
   let contacts = data.contacts || []
 
   // Name resolver: display_name → name → first+last → telegram_id → null
@@ -765,9 +834,14 @@ async function renderContacts(){
   function rankFromTrust(t){return t==='partner'?5:t==='verified'?4:t==='known'?3:t==='stranger'?2:1}
   function sentimentColor(s){return(s||0.5)>=0.7?'var(--accent)':(s||0.5)>=0.4?'var(--warn)':'var(--danger)'}
 
+  const hsConnected = !!_intGet('hs_token')
   document.getElementById('main-content').innerHTML=`
     <div class="card">
-      <div class="card-title">Contacts · ${finalRows.length} ukupno</div>
+      <div class="card-title" style="display:flex;align-items:center;gap:8px">
+        Contacts · ${finalRows.length} ukupno
+        ${hsConnected?`<span class="saas-pill" onclick="renderHubSpotContacts()" title="Prikaži kontakte iz HubSpota">H HubSpot</span>`:''}
+        ${!hsConnected?`<span style="font-size:10px;color:var(--text3);cursor:pointer" onclick="nav('settings',null)" title="Konfigurisi HubSpot">○ HubSpot nije povezan — <u>Podesi</u></span>`:''}
+      </div>
       <table class="tbl">
         <thead><tr><th>Ime</th><th>Kompanija / Pozicija</th><th>Kontakt info</th><th>Trust</th><th>Zadnji kontakt</th><th>Kanal</th><th></th></tr></thead>
         <tbody>${finalRows.map(c=>{
@@ -778,8 +852,10 @@ async function renderContacts(){
           const phoneLink = c.phone ? `<span style="color:var(--text2);font-size:11px">${c.phone}</span>` : ''
           const contactInfo = [emailLink, phoneLink].filter(Boolean).join('<br>')
           const roleText = c.role ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${c.role}</div>` : ''
+          const hsId = c.metadata?.hs_contact_id
+          const hsPill = hsId ? `<a href="https://app.hubspot.com/contacts/view/contact/${hsId}" target="_blank" onclick="event.stopPropagation()" class="saas-pill">H</a>` : ''
           return `<tr style="cursor:${c.id?'pointer':'default'}" onclick="${onclick}">
-            <td style="font-weight:500">${nm}${ownerTag}</td>
+            <td style="font-weight:500">${nm}${ownerTag}${hsPill}</td>
             <td style="color:var(--text2)">${c.company||'—'}${roleText}</td>
             <td>${contactInfo||'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
             <td>${statusBadge(c.trust_level||'stranger')}</td>
@@ -867,8 +943,10 @@ function renderKanbanCard(t){
   const remind=getRemindAt(t)
   const remindFmt=fmtRemind(remind)
   const due=fmtDue(t.due_date)
+  const notionId=t.metadata?.notion_page_id
+  const notionPill=notionId?`<a href="https://notion.so/${notionId.replace(/-/g,'')}" target="_blank" onclick="event.stopPropagation()" class="saas-pill" title="Otvori u Notionu">N</a>`:''
   return`<div class="kb-card" onclick="openTaskDetail('${t.id}')">
-    <div class="kb-card-type">${typeIcon(t.task_type)} <span>${typeLabel(t.task_type)}</span></div>
+    <div class="kb-card-type" style="display:flex;align-items:center;justify-content:space-between">${typeIcon(t.task_type)} <span>${typeLabel(t.task_type)}</span>${notionPill}</div>
     <div class="kb-card-title">${t.title}</div>
     <div class="kb-card-meta">
       ${t.contact_name?`<div class="kb-card-row">👤 ${t.contact_name}</div>`:''}
@@ -902,7 +980,7 @@ function renderListRow(t){
 
 async function renderTasks(){
   let rawTasks=[]
-  const sb=await sbGet('iris_tasks','status=neq.done&status=neq.cancelled&or=(created_by.neq.iris_signals_main,created_by.is.null)&order=priority.asc,created_at.desc&limit=100&select=id,title,task_type,priority,status,contact_name,notes,body,due_date,created_at,contact_id,created_by')
+  const sb=await sbGet('iris_tasks','status=neq.done&status=neq.cancelled&or=(created_by.neq.iris_signals_main,created_by.is.null)&order=priority.asc,created_at.desc&limit=100&select=id,title,task_type,priority,status,contact_name,notes,body,due_date,created_at,contact_id,created_by,metadata')
   if(sb&&sb.length) rawTasks=sb
   else rawTasks=SIM.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
 
@@ -1249,9 +1327,173 @@ async function renderSaaS(){
     </div>`
 }
 
+// ── Integration credentials stored in localStorage ───────────────────────
+const _intGet = (k) => localStorage.getItem('iris_int_'+k) || ''
+const _intSet = (k, v) => { localStorage.setItem('iris_int_'+k, v); return v; }
+const _intStatus = (k) => {
+  const val = _intGet(k)
+  return val ? 'on' : 'off'
+}
+
+async function _testHubSpot() {
+  const token = _intGet('hs_token')
+  if (!token) return { status:'off', msg:'Not configured' }
+  try {
+    const r = await fetch('https://api.hubapi.com/crm/v3/objects/contacts?limit=1&properties=firstname,email', {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    })
+    if (r.status === 200) {
+      const d = await r.json()
+      return { status:'on', msg:`Connected · ${d.total || '?'} contacts`, total: d.total }
+    }
+    if (r.status === 401) return { status:'err', msg:'Invalid token (401)' }
+    return { status:'err', msg:`HTTP ${r.status}` }
+  } catch(e) { return { status:'err', msg:e.message?.slice(0,40) } }
+}
+
+async function _fetchHubSpotContacts(limit=100) {
+  const token = _intGet('hs_token')
+  if (!token) return null
+  try {
+    const r = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts?limit=${limit}&properties=firstname,lastname,email,phone,company,jobtitle,hs_lead_status,notes_last_updated`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!r.ok) return null
+    const d = await r.json()
+    return d.results || []
+  } catch(e) { return null }
+}
+
+async function _saveIntegration(type) {
+  if (type === 'hubspot') {
+    _intSet('hs_token', document.getElementById('int-hs-token').value.trim())
+    const badge = document.getElementById('int-hs-badge')
+    badge.textContent = 'Testing...'
+    const result = await _testHubSpot()
+    _updateBadge('int-hs-badge', result.status, result.msg)
+    _intSet('hs_status', JSON.stringify(result))
+  }
+  if (type === 'gcal') {
+    _intSet('gcal_client_id', document.getElementById('int-gcal-cid').value.trim())
+    _intSet('gcal_client_secret', document.getElementById('int-gcal-csec').value.trim())
+    _intSet('gcal_refresh_token', document.getElementById('int-gcal-rt').value.trim())
+    const hasAll = _intGet('gcal_client_id') && _intGet('gcal_client_secret') && _intGet('gcal_refresh_token')
+    _updateBadge('int-gcal-badge', hasAll ? 'on' : 'off', hasAll ? 'Credentials saved' : 'Incomplete')
+  }
+  if (type === 'notion') {
+    _intSet('notion_token', document.getElementById('int-notion-token').value.trim())
+    _intSet('notion_db_tasks', document.getElementById('int-notion-tasks-db').value.trim())
+    const hasAll = _intGet('notion_token') && _intGet('notion_db_tasks')
+    _updateBadge('int-notion-badge', hasAll ? 'on' : 'off', hasAll ? 'Credentials saved' : 'Incomplete')
+  }
+  // After saving, push credentials to n8n workflow via a simple marker
+  // (n8n credentials are managed separately in the workflow code)
+}
+
+function _updateBadge(id, status, msg) {
+  const el = document.getElementById(id)
+  if (!el) return
+  el.className = 'int-badge ' + (status==='on'?'int-badge-on':status==='err'?'int-badge-err':'int-badge-off')
+  el.textContent = status==='on'?'✓ Connected':status==='err'?'✗ Error':'○ Not set'
+  const tip = document.getElementById(id+'-tip')
+  if (tip) tip.textContent = msg
+}
+
+function _maskToken(t) { if(!t||t.length<8) return ''; return t.slice(0,4)+'••••'+t.slice(-4); }
+
 function renderSettings(){
-  document.getElementById('topbar-actions').innerHTML=''
+  const hs = _intGet('hs_token')
+  const gcalCid = _intGet('gcal_client_id')
+  const gcalRt = _intGet('gcal_refresh_token')
+  const notionTok = _intGet('notion_token')
+  const notionDb = _intGet('notion_db_tasks')
+
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-ghost" onclick="nav('integrations',this)">🔌 Integracije</button>`
   document.getElementById('main-content').innerHTML=`
+
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px">🔌 SaaS Integracije</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Kada uneseš API ključeve, IRIS automatski kreira/ažurira kontakte u HubSpotu, evente u Google Calendaru i taskove u Notionu — paralelno sa lokalnom bazom. Supabase ostaje kao primarni cache za dashboard.</div>
+
+    <div class="integration-grid">
+
+      <!-- HubSpot -->
+      <div class="int-card">
+        <div class="int-card-head">
+          <div class="int-logo int-logo-hs">H</div>
+          <div class="int-name">HubSpot CRM</div>
+          <span class="int-badge ${hs?'int-badge-on':'int-badge-off'}" id="int-hs-badge">${hs?'✓ Connected':'○ Not set'}</span>
+        </div>
+        <div class="int-body">
+          <div class="int-field">
+            <div class="int-label">Private App Token</div>
+            <input class="int-input" id="int-hs-token" type="password" placeholder="pat-eu1-xxxxxxxx-xxxx-..." value="${hs ? _maskToken(hs) : ''}">
+            <div style="font-size:10px;color:var(--text3);margin-top:2px" id="int-hs-badge-tip">Contacts scope: crm.objects.contacts.read + write</div>
+          </div>
+          <div style="font-size:10px;color:var(--text3)">→ app.hubspot.com → Settings → Integrations → Private Apps → Create app</div>
+          <div class="int-actions">
+            <button class="btn btn-primary" style="font-size:11px;padding:6px 14px" onclick="_saveIntegration('hubspot')">Snimi & Testiraj</button>
+            ${hs?`<a href="https://app.hubspot.com/contacts" target="_blank" class="btn btn-ghost" style="font-size:11px;padding:6px 14px">Otvori HubSpot ↗</a>`:''}
+          </div>
+        </div>
+        ${hs?`<div class="int-stats"><div class="int-stat"><div class="int-stat-val" id="hs-stat-contacts">—</div><div>contacts</div></div></div>`:''}
+      </div>
+
+      <!-- Google Calendar -->
+      <div class="int-card">
+        <div class="int-card-head">
+          <div class="int-logo int-logo-gcal">📅</div>
+          <div class="int-name">Google Calendar</div>
+          <span class="int-badge ${(gcalCid&&gcalRt)?'int-badge-on':'int-badge-off'}" id="int-gcal-badge">${(gcalCid&&gcalRt)?'✓ Configured':'○ Not set'}</span>
+        </div>
+        <div class="int-body">
+          <div class="int-field">
+            <div class="int-label">OAuth2 Client ID</div>
+            <input class="int-input" id="int-gcal-cid" type="text" placeholder="xxxxx.apps.googleusercontent.com" value="${_maskToken(gcalCid)}">
+          </div>
+          <div class="int-field">
+            <div class="int-label">OAuth2 Client Secret</div>
+            <input class="int-input" id="int-gcal-csec" type="password" placeholder="GOCSPX-..." value="${gcalCid?'••••••••':''}">
+          </div>
+          <div class="int-field">
+            <div class="int-label">Refresh Token</div>
+            <input class="int-input" id="int-gcal-rt" type="password" placeholder="1//0g..." value="${gcalRt?'••••••••':''}">
+            <div style="font-size:10px;color:var(--text3);margin-top:2px" id="int-gcal-badge-tip">console.cloud.google.com → OAuth2 → Calendar API scope</div>
+          </div>
+          <div style="font-size:10px;color:var(--text3)">→ console.cloud.google.com → APIs → Calendar API → OAuth consent + credentials</div>
+          <div class="int-actions">
+            <button class="btn btn-primary" style="font-size:11px;padding:6px 14px" onclick="_saveIntegration('gcal')">Snimi</button>
+            <a href="https://calendar.google.com" target="_blank" class="btn btn-ghost" style="font-size:11px;padding:6px 14px">Google Calendar ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notion -->
+      <div class="int-card">
+        <div class="int-card-head">
+          <div class="int-logo int-logo-notion">N</div>
+          <div class="int-name">Notion Tasks</div>
+          <span class="int-badge ${(notionTok&&notionDb)?'int-badge-on':'int-badge-off'}" id="int-notion-badge">${(notionTok&&notionDb)?'✓ Configured':'○ Not set'}</span>
+        </div>
+        <div class="int-body">
+          <div class="int-field">
+            <div class="int-label">Integration Token</div>
+            <input class="int-input" id="int-notion-token" type="password" placeholder="secret_xxxx..." value="${notionTok?'••••••••':''}">
+          </div>
+          <div class="int-field">
+            <div class="int-label">Tasks Database ID</div>
+            <input class="int-input" id="int-notion-tasks-db" type="text" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value="${notionDb || ''}">
+            <div style="font-size:10px;color:var(--text3);margin-top:2px" id="int-notion-badge-tip">notion.so/my-integrations → New integration → Get token</div>
+          </div>
+          <div style="font-size:10px;color:var(--text3)">→ notion.so/my-integrations → Kreiraj integration → Kopiraj secret → Podijeli database sa integration</div>
+          <div class="int-actions">
+            <button class="btn btn-primary" style="font-size:11px;padding:6px 14px" onclick="_saveIntegration('notion')">Snimi</button>
+            ${notionDb?`<a href="https://notion.so/${notionDb.replace(/-/g,'')}" target="_blank" class="btn btn-ghost" style="font-size:11px;padding:6px 14px">Otvori Notion ↗</a>`:''}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin:24px 0 16px">⚙️ IRIS konfiguracija</div>
     <div class="two-col">
       <div class="card">
         <div class="card-title">Konekcija</div>
@@ -1263,15 +1505,26 @@ function renderSettings(){
         </div>
       </div>
       <div class="card">
-        <div class="card-title">IRIS konfiguracija</div>
-        <div class="setting-row"><div class="setting-label">Mod</div><div class="setting-val">${isLive?'Live':'Simulation'}</div></div>
-        <div class="setting-row"><div class="setting-label">Soniox</div><div class="setting-val">Live (169724ff...)</div></div>
-        <div class="setting-row"><div class="setting-label">ContentOS</div><div class="setting-val">Nije konfigurisan</div></div>
-        <div class="setting-row"><div class="setting-label">Sai webhook</div><div class="setting-val">Nije konfigurisan</div></div>
-        <div class="setting-row"><div class="setting-label">Autopilot level</div><div class="setting-val">20% — Learning</div></div>
-        <div class="setting-row"><div class="setting-label">Tenanti</div><div class="setting-val">4 (1 owner + 3 sim)</div></div>
+        <div class="card-title">IRIS status</div>
+        <div class="setting-row"><div class="setting-label">Mod</div><div class="setting-val">${isLive?'🟢 Live':'🔵 Simulation'}</div></div>
+        <div class="setting-row"><div class="setting-label">HubSpot</div><div class="setting-val">${hs?'🟢 Konfigurisan':'⚪ Nije konfigurisan'}</div></div>
+        <div class="setting-row"><div class="setting-label">Google Calendar</div><div class="setting-val">${(gcalCid&&gcalRt)?'🟢 Konfigurisan':'⚪ Nije konfigurisan'}</div></div>
+        <div class="setting-row"><div class="setting-label">Notion</div><div class="setting-val">${(notionTok&&notionDb)?'🟢 Konfigurisan':'⚪ Nije konfigurisan'}</div></div>
+        <div class="setting-row"><div class="setting-label">WIKI API</div><div class="setting-val">⚪ Nije konfigurisan</div></div>
       </div>
     </div>`
+
+  // If HubSpot is connected, show live count
+  if (hs) {
+    setTimeout(async () => {
+      const r = await _testHubSpot()
+      _updateBadge('int-hs-badge', r.status, r.msg)
+      if (r.status === 'on' && r.total !== undefined) {
+        const el = document.getElementById('hs-stat-contacts')
+        if (el) el.textContent = r.total
+      }
+    }, 0)
+  }
 }
 
 function toggleSettings(){nav('settings',document.querySelector('.nav-item:last-child'))}
@@ -1532,7 +1785,10 @@ function _renderCalView(){
         </div>
         <div class="cal-list-dot" style="background:${col}"></div>
         <div style="flex:1;min-width:0">
-          <div class="cal-list-title">${ev.title||'Bez naslova'}</div>
+          <div class="cal-list-title" style="display:flex;align-items:center;gap:6px">
+            ${ev.title||'Bez naslova'}
+            ${ev.metadata?.gcal_event_id?`<a href="https://calendar.google.com/calendar/event?eid=${btoa(ev.metadata.gcal_event_id+'@google.com')}" target="_blank" onclick="event.stopPropagation()" class="saas-pill" title="Otvori u Google Calendaru">📅 GCal</a>`:''}
+          </div>
           <div class="cal-list-meta">${dayNames[d.getDay()]}, ${fmtT(ev.start_time)||'Cijeli dan'}${ev.description?' · '+ev.description.slice(0,50):''}${(ev.metadata?.attendees?.length>0)?' · 👥 '+ev.metadata.attendees.map(a=>a.name).join(', '):''}</div>
         </div>
         ${statusBadge(ev.status||'confirmed')}
