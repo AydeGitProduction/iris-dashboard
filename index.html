@@ -160,6 +160,67 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .setting-val{font-family:var(--mono);font-size:12px;color:var(--text);flex:1}
 .setting-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:12px}
 
+/* ── KANBAN BOARD ─────────────────────────────────────────────── */
+.kanban-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.kanban-view-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:5px;overflow:hidden}
+.kv-btn{padding:5px 12px;font-size:11px;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:var(--sans);transition:all .15s}
+.kv-btn.active{background:var(--bg2);color:var(--text);box-shadow:inset 0 0 0 1px var(--border2)}
+.kanban-filter{padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:11px;font-family:var(--sans);cursor:pointer;transition:all .15s}
+.kanban-filter:hover,.kanban-filter:focus{border-color:var(--accent);color:var(--text);outline:none}
+.kanban-search{padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;font-family:var(--sans);width:160px}
+.kanban-search:focus{outline:none;border-color:var(--accent)}
+.kanban-badge{background:rgba(29,158,117,0.15);border:1px solid rgba(29,158,117,0.3);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;font-family:var(--mono);cursor:pointer}
+.kanban-badge:hover{background:rgba(29,158,117,0.25)}
+.kanban-board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
+.kb-col{background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.kb-col-head{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.kb-col-title{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;font-family:var(--mono)}
+.kb-col-count{font-size:11px;color:var(--text3);background:var(--bg3);border-radius:3px;padding:1px 6px;font-family:var(--mono)}
+.kb-col-urgent .kb-col-head{border-top:2px solid var(--danger)}
+.kb-col-high .kb-col-head{border-top:2px solid var(--warn)}
+.kb-col-medium .kb-col-head{border-top:2px solid var(--info)}
+.kb-col-low .kb-col-head{border-top:2px solid var(--text3)}
+.kb-col-urgent .kb-col-title{color:var(--danger)}
+.kb-col-high .kb-col-title{color:var(--warn)}
+.kb-col-medium .kb-col-title{color:var(--info)}
+.kb-col-low .kb-col-title{color:var(--text3)}
+.kb-cards{padding:8px;min-height:80px;display:flex;flex-direction:column;gap:6px}
+.kb-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:11px 12px;cursor:pointer;transition:all .15s;position:relative}
+.kb-card:hover{border-color:var(--border2);background:rgba(255,255,255,0.04);transform:translateY(-1px)}
+.kb-card-type{font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.kb-card-title{font-size:12px;color:var(--text);font-weight:500;line-height:1.4;margin-bottom:6px}
+.kb-card-meta{display:flex;flex-direction:column;gap:3px}
+.kb-card-row{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.kb-card-remind{font-size:10px;color:var(--accent);background:rgba(29,158,117,0.1);border:1px solid rgba(29,158,117,0.2);border-radius:3px;padding:2px 6px;font-family:var(--mono);margin-top:4px;display:inline-block}
+.kb-empty{padding:20px 12px;text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono)}
+/* List view (table) */
+.task-list-view{display:flex;flex-direction:column;gap:8px}
+.task-list-row{background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:11px 14px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .15s}
+.task-list-row:hover{border-color:var(--border2);background:rgba(255,255,255,0.02)}
+.task-list-row .tl-priority{width:3px;border-radius:2px;flex-shrink:0;align-self:stretch}
+.tl-p-urgent{background:var(--danger)}
+.tl-p-high{background:var(--warn)}
+.tl-p-medium{background:var(--info)}
+.tl-p-low{background:var(--text3)}
+.tl-main{flex:1;min-width:0}
+.tl-title{font-size:13px;color:var(--text);font-weight:500;margin-bottom:3px}
+.tl-meta{font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap}
+.tl-right{flex-shrink:0;text-align:right}
+
+/* ── NOTIFICATION TOAST ──────────────────────────────────────────── */
+.notif-toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1px solid rgba(29,158,117,0.5);border-radius:8px;padding:14px 18px;min-width:280px;max-width:360px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideInToast .3s ease;display:none}
+.notif-toast.show{display:block}
+@keyframes slideInToast{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.notif-toast-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.notif-toast-label{font-size:10px;color:var(--accent);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase}
+.notif-toast-close{cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:2px 4px;border-radius:3px;transition:color .15s}
+.notif-toast-close:hover{color:var(--text)}
+.notif-toast-title{font-size:13px;color:var(--text);font-weight:500;margin-bottom:4px}
+.notif-toast-sub{font-size:11px;color:var(--text3)}
+.notif-toast-progress{height:2px;background:rgba(29,158,117,0.2);border-radius:1px;margin-top:10px;overflow:hidden}
+.notif-toast-bar{height:100%;background:var(--accent);border-radius:1px;animation:progressBar 8s linear forwards}
+@keyframes progressBar{from{width:100%}to{width:0%}}
+
 /* PIPELINE */
 .pipeline{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
 .pipeline-col{min-width:160px;flex-shrink:0}
@@ -389,6 +450,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 </div>
 
 <!-- TASK DETAIL PANEL -->
+<!-- Notification Toast -->
+<div class="notif-toast" id="notif-toast">
+  <div class="notif-toast-header">
+    <span class="notif-toast-label">🔔 IRIS Podsjetnik</span>
+    <span class="notif-toast-close" onclick="dismissToast()">×</span>
+  </div>
+  <div class="notif-toast-title" id="notif-toast-title">—</div>
+  <div class="notif-toast-sub" id="notif-toast-sub"></div>
+  <div class="notif-toast-progress"><div class="notif-toast-bar" id="notif-toast-bar"></div></div>
+</div>
+
 <div class="task-detail-overlay" id="task-detail-overlay" onclick="if(event.target===this)closeTaskDetail()">
   <div class="task-detail-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
@@ -407,6 +479,7 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 async function sbGet(table,qs=''){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?workspace_id=eq.${WS}&${qs}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'count=exact'}});if(!r.ok)return null;return await r.json()}catch{return null}}
 async function sbGetRaw(table,qs=''){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?${qs}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});if(!r.ok)return null;return await r.json()}catch{return null}}
 async function sbPatch(table,filter,body){try{const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});return r.ok}catch{return false}}
+async function sbPostRaw(table,body){try{const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});return r.ok?true:null}catch{return null}}
 let isLive=false
 let currentSection='dashboard'
 let modalCallback=null
@@ -705,85 +778,236 @@ async function renderDeals(){
     </div>`
 }
 
+// ── Kanban state ────────────────────────────────────────────────────
+let taskViewMode='kanban' // 'kanban' | 'list'
+let taskFilterType='all'
+let taskFilterPriority='all'
+let taskFilterSearch=''
+let allRawTasks=[]
+
+function getRemindAt(t){
+  const body=t.body||t.notes||''
+  const m=body.match(/REMIND_AT:([^\n\s|]+)/i)
+  return m?m[1].trim():null
+}
+function fmtRemind(iso){
+  if(!iso)return null
+  const d=new Date(iso)
+  if(isNaN(d))return iso
+  const now=new Date()
+  const diff=d-now
+  if(diff<0)return'⏰ Prošlo'
+  const mins=Math.round(diff/60000)
+  if(mins<60)return`⏰ Za ${mins}m`
+  const hrs=Math.floor(mins/60)
+  if(hrs<24)return`⏰ Za ${hrs}h`
+  const days_bs=['Ned','Pon','Uto','Sri','Čet','Pet','Sub']
+  return`⏰ ${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
+}
+function fmtDue(d){
+  if(!d)return null
+  const dt=new Date(d)
+  const now=new Date()
+  const overdue=dt<now
+  const dd=`${dt.getDate().toString().padStart(2,'0')}.${(dt.getMonth()+1).toString().padStart(2,'0')}`
+  return{text:dd,overdue}
+}
+function typeIcon(tt){return tt==='meeting_proposal'?'⏳':tt==='pending_notification'?'📬':'📋'}
+function typeLabel(tt){return tt==='meeting_proposal'?'Meeting Proposal':tt==='pending_notification'?'Pending Notif':tt==='open_loop'?'Open Task':'Task'}
+
+function applyTaskFilters(tasks){
+  return tasks.filter(t=>{
+    if(taskFilterType!=='all'&&t.task_type!==taskFilterType)return false
+    if(taskFilterPriority!=='all'&&(t.priority||'medium')!==taskFilterPriority)return false
+    if(taskFilterSearch){
+      const s=taskFilterSearch.toLowerCase()
+      if(!((t.title||'').toLowerCase().includes(s)||(t.contact_name||'').toLowerCase().includes(s)||(t.notes||'').toLowerCase().includes(s)))return false
+    }
+    return true
+  })
+}
+
+function renderKanbanCard(t){
+  const remind=getRemindAt(t)
+  const remindFmt=fmtRemind(remind)
+  const due=fmtDue(t.due_date)
+  return`<div class="kb-card" onclick="openTaskDetail('${t.id}')">
+    <div class="kb-card-type">${typeIcon(t.task_type)} <span>${typeLabel(t.task_type)}</span></div>
+    <div class="kb-card-title">${t.title}</div>
+    <div class="kb-card-meta">
+      ${t.contact_name?`<div class="kb-card-row">👤 ${t.contact_name}</div>`:''}
+      ${due?`<div class="kb-card-row" style="color:${due.overdue?'var(--danger)':'var(--text3)'}">📅 ${due.text}${due.overdue?' ⚠️':''}</div>`:''}
+    </div>
+    ${remindFmt?`<div class="kb-card-remind">${remindFmt}</div>`:''}
+  </div>`
+}
+
+function renderListRow(t){
+  const remind=getRemindAt(t)
+  const remindFmt=fmtRemind(remind)
+  const due=fmtDue(t.due_date)
+  const pClass={'urgent':'tl-p-urgent','high':'tl-p-high','medium':'tl-p-medium','low':'tl-p-low'}[t.priority||'medium']||'tl-p-medium'
+  return`<div class="task-list-row" onclick="openTaskDetail('${t.id}')">
+    <div class="tl-priority ${pClass}"></div>
+    <div class="tl-main">
+      <div class="tl-title">${t.title}</div>
+      <div class="tl-meta">
+        <span>${typeIcon(t.task_type)} ${typeLabel(t.task_type)}</span>
+        ${t.contact_name?`<span>👤 ${t.contact_name}</span>`:''}
+        ${due?`<span style="color:${due.overdue?'var(--danger)':'inherit'}">📅 ${due.text}${due.overdue?' ⚠️':''}</span>`:''}
+        ${remindFmt?`<span style="color:var(--accent)">${remindFmt}</span>`:''}
+      </div>
+    </div>
+    <div class="tl-right">
+      <span class="badge badge-${t.priority==='urgent'?'red':t.priority==='high'?'amber':t.priority==='medium'?'blue':'gray'}">${(t.priority||'med').toUpperCase()}</span>
+    </div>
+  </div>`
+}
+
 async function renderTasks(){
-  const data=await api('/api/tasks?workspace_id='+WS)||{tasks:[]}
-  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-primary" onclick="openModal('task')">+ Novi task</button>`
   let rawTasks=[]
-  const sb=await sbGet('iris_tasks','status=neq.done&or=(created_by.neq.iris_signals_main,created_by.is.null)&order=created_at.desc&limit=100&select=id,title,task_type,priority,status,contact_name,notes,body,due_date,created_at,contact_id')
+  const sb=await sbGet('iris_tasks','status=neq.done&status=neq.cancelled&or=(created_by.neq.iris_signals_main,created_by.is.null)&order=priority.asc,created_at.desc&limit=100&select=id,title,task_type,priority,status,contact_name,notes,body,due_date,created_at,contact_id')
   if(sb&&sb.length) rawTasks=sb
-  else if(data.tasks&&data.tasks.length) rawTasks=data.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
   else rawTasks=SIM.tasks.map(t=>({id:t.task_id,title:t.title,task_type:t.task_type||'task',contact_name:null,notes:null,priority:t.priority||'medium',status:t.status||'open',due_date:t.due_date}))
 
-  const proposals=rawTasks.filter(t=>t.task_type==='meeting_proposal')
-  const notifications=rawTasks.filter(t=>t.task_type==='pending_notification')
-  const regular=rawTasks.filter(t=>!['meeting_proposal','pending_notification'].includes(t.task_type))
-  const active=rawTasks.filter(t=>t.status!=='done'&&t.status!=='cancelled')
-
-  // Store all tasks globally for detail view
+  allRawTasks=rawTasks
   taskDetailData={}
   rawTasks.forEach(t=>{taskDetailData[t.id]=t})
 
-  const pBadge=(p)=>p==='urgent'?'<span class="badge badge-red">URGENT</span>':p==='high'?'<span class="badge badge-amber">HIGH</span>':p==='medium'?'<span class="badge badge-blue">MED</span>':'<span class="badge badge-gray">LOW</span>'
-  const clickStyle='cursor:pointer;transition:background .15s'
-  const hoverRow='onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'"'
+  // Count reminders
+  const nowT=Date.now()
+  const remindCount=rawTasks.filter(t=>{const r=getRemindAt(t);if(!r)return false;const d=new Date(r);return d-nowT>0}).length
 
-  const proposalHtml = proposals.length ? `
-    <div class="card" style="border-left:3px solid var(--warn)">
-      <div class="card-title" style="color:var(--warn)">⏳ Meeting Proposals — čekaju odluku (${proposals.length})</div>
-      ${proposals.map(t=>{
-        const note=t.notes||t.body||''
-        const proposed=note.match(/Proposed time:\s*([^\n]+)/i)?.[1]||note.match(/proposed[_\s]?time[:\s]+([^\n|]+)/i)?.[1]||''
-        const current=note.match(/Current meeting:\s*([^\n]+)/i)?.[1]||''
-        return `<div style="padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;${clickStyle}" ${hoverRow} onclick="openTaskDetail('${t.id}')">
-          <div style="flex:1">
-            <div style="font-weight:600;font-size:13px;margin-bottom:4px">${t.title}</div>
-            ${t.contact_name?`<div style="font-size:11px;color:var(--text3);margin-bottom:3px">Od: <b>${t.contact_name}</b></div>`:''}
-            ${proposed?`<div style="font-size:12px;color:var(--accent)">Prijedlog: <b>${proposed}</b></div>`:''}
-            ${current?`<div style="font-size:11px;color:var(--text3)">Sastanak: ${current}</div>`:''}
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-            ${pBadge(t.priority||'medium')}
-            <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${(t.created_at||'').slice(0,10)}</span>
-            <span style="font-size:11px;color:var(--text3)">›</span>
-          </div>
-        </div>`
-      }).join('')}
-    </div>` : ''
+  // Topbar
+  const typeOptions=['all','meeting_proposal','pending_notification','open_loop','task'].map(v=>`<option value="${v}"${taskFilterType===v?' selected':''}>${v==='all'?'Sve vrste':v==='meeting_proposal'?'⏳ Prijedlozi':v==='pending_notification'?'📬 Notifikacije':v==='open_loop'?'📋 Open tasks':'Task'}</option>`).join('')
+  const priorityOptions=['all','urgent','high','medium','low'].map(v=>`<option value="${v}"${taskFilterPriority===v?' selected':''}>${v==='all'?'Svi prioriteti':v.charAt(0).toUpperCase()+v.slice(1)}</option>`).join('')
 
-  const notifHtml = notifications.length ? `
-    <div class="card" style="border-left:3px solid var(--info)">
-      <div class="card-title" style="color:var(--info)">📬 Čekaju obavijest (${notifications.length})</div>
-      ${notifications.map(t=>`<div style="padding:10px 12px;border-bottom:1px solid var(--border);${clickStyle}" ${hoverRow} onclick="openTaskDetail('${t.id}')">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-          <div>
-            <div style="font-weight:500;font-size:13px">${t.title}</div>
-            ${t.contact_name?`<div style="font-size:11px;color:var(--text3)">Kontakt: <b>${t.contact_name}</b></div>`:''}
-            ${t.notes?`<div style="font-size:12px;color:var(--text2);margin-top:4px;font-style:italic">"${t.notes.slice(0,120)}${t.notes.length>120?'…':''}"</div>`:''}
-          </div>
-          <span style="font-size:11px;color:var(--text3);flex-shrink:0">›</span>
+  document.getElementById('topbar-actions').innerHTML=`
+    <div class="kanban-toolbar" style="margin-bottom:0">
+      <div class="kanban-view-toggle">
+        <button class="kv-btn${taskViewMode==='kanban'?' active':''}" onclick="setTaskView('kanban')">⊞ Kanban</button>
+        <button class="kv-btn${taskViewMode==='list'?' active':''}" onclick="setTaskView('list')">≡ Lista</button>
+      </div>
+      <select class="kanban-filter" onchange="taskFilterType=this.value;renderTaskBoard()">${typeOptions}</select>
+      <select class="kanban-filter" onchange="taskFilterPriority=this.value;renderTaskBoard()">${priorityOptions}</select>
+      <input class="kanban-search" placeholder="Pretraži..." value="${taskFilterSearch}" oninput="taskFilterSearch=this.value;renderTaskBoard()">
+      ${remindCount>0?`<div class="kanban-badge" onclick="scrollToReminders()">🔔 ${remindCount} podsjetnik${remindCount>1?'a':''}</div>`:''}
+      <button class="btn btn-primary" onclick="openNewTaskModal()">+ Novi task</button>
+    </div>`
+
+  renderTaskBoard()
+}
+
+function setTaskView(mode){
+  taskViewMode=mode
+  renderTasks()
+}
+
+function renderTaskBoard(){
+  const filtered=applyTaskFilters(allRawTasks)
+  const urgent=filtered.filter(t=>(t.priority||'medium')==='urgent')
+  const high=filtered.filter(t=>(t.priority||'medium')==='high')
+  const medium=filtered.filter(t=>(t.priority||'medium')==='medium')
+  const low=filtered.filter(t=>(t.priority||'medium')==='low')
+
+  if(taskViewMode==='kanban'){
+    const col=(title,cls,items)=>`
+      <div class="kb-col ${cls}">
+        <div class="kb-col-head">
+          <span class="kb-col-title">${title}</span>
+          <span class="kb-col-count">${items.length}</span>
         </div>
-      </div>`).join('')}
-    </div>` : ''
+        <div class="kb-cards">
+          ${items.length?items.map(renderKanbanCard).join(''):`<div class="kb-empty">Nema taskova</div>`}
+        </div>
+      </div>`
+    document.getElementById('main-content').innerHTML=`
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">${filtered.length} aktivnih · ${allRawTasks.length} ukupno</div>
+      <div class="kanban-board">
+        ${col('🔴 Urgent','kb-col-urgent',urgent)}
+        ${col('🟡 High','kb-col-high',high)}
+        ${col('🔵 Medium','kb-col-medium',medium)}
+        ${col('⚫ Low','kb-col-low',low)}
+      </div>`
+  } else {
+    document.getElementById('main-content').innerHTML=`
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">${filtered.length} aktivnih · ${allRawTasks.length} ukupno</div>
+      <div class="task-list-view">
+        ${filtered.length?filtered.map(renderListRow).join(''):`<div class="card"><div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Nema taskova koji odgovaraju filteru</div></div></div>`}
+      </div>`
+  }
+}
 
-  const regularHtml = regular.length ? `
-    <div class="card">
-      <div class="card-title">📋 Open Tasks (${regular.length})</div>
-      <table class="tbl">
-        <thead><tr><th>Task</th><th>Kontakt</th><th>Prioritet</th><th>Rok</th><th></th></tr></thead>
-        <tbody>${regular.map(t=>`<tr onclick="openTaskDetail('${t.id}')" style="${clickStyle}">
-          <td style="font-weight:500;max-width:240px">${t.title}</td>
-          <td style="font-size:11px;color:var(--text3)">${t.contact_name||'—'}</td>
-          <td>${pBadge(t.priority||'medium')}</td>
-          <td style="font-family:var(--mono);font-size:11px;color:${t.due_date&&new Date(t.due_date)<new Date()?'var(--danger)':'var(--text3)'}">${t.due_date||'—'}</td>
-          <td style="font-size:11px;color:var(--text3)">›</td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>` : ''
+function scrollToReminders(){
+  // Switch to list view filtered to tasks with reminders
+  taskFilterSearch=''
+  taskViewMode='list'
+  renderTasks()
+}
 
-  document.getElementById('main-content').innerHTML=`
-    <div style="margin-bottom:8px;font-size:12px;color:var(--text3)">${active.length} aktivnih taskova · ${proposals.length} prijedloga čekaju odluku</div>
-    ${proposalHtml}${notifHtml}${regularHtml}
-    ${!active.length?'<div class="card"><div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Nema otvorenih taskova</div></div></div>':''}`
+function openNewTaskModal(){
+  const today=new Date().toISOString().slice(0,10)
+  const tmr=new Date(Date.now()+86400000).toISOString().slice(0,10)
+  document.getElementById('modal-title').textContent='Novi task'
+  document.getElementById('modal-body').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="ntask-title" placeholder="Naziv taska *" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <select id="ntask-priority" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px">
+          <option value="medium">Medium</option>
+          <option value="urgent">🔴 Urgent</option>
+          <option value="high">🟡 High</option>
+          <option value="low">⚫ Low</option>
+        </select>
+        <select id="ntask-type" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px">
+          <option value="open_loop">📋 Open task</option>
+          <option value="meeting_proposal">⏳ Meeting proposal</option>
+          <option value="pending_notification">📬 Notification</option>
+        </select>
+      </div>
+      <input id="ntask-contact" placeholder="Kontakt (opcionalno)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Rok (due date)</div>
+          <input type="date" id="ntask-due" value="${today}" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">🔔 Podsjetnik (opcionalno)</div>
+          <input type="datetime-local" id="ntask-remind" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%">
+        </div>
+      </div>
+      <textarea id="ntask-notes" placeholder="Napomene / kontekst (opcionalno)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;width:100%;height:70px;resize:vertical"></textarea>
+      <button class="btn btn-primary" style="width:100%;padding:9px" onclick="submitNewTask()">Kreiraj task →</button>
+    </div>`
+  document.getElementById('modal').classList.add('open')
+}
+
+async function submitNewTask(){
+  const title=document.getElementById('ntask-title').value.trim()
+  if(!title){alert('Upiši naziv taska');return}
+  const priority=document.getElementById('ntask-priority').value
+  const taskType=document.getElementById('ntask-type').value
+  const contact=document.getElementById('ntask-contact').value.trim()
+  const due=document.getElementById('ntask-due').value||null
+  const remind=document.getElementById('ntask-remind').value||null
+  const notes=document.getElementById('ntask-notes').value.trim()
+
+  let body=title
+  if(remind) body+=`\nREMIND_AT:${remind.replace('T',' ').slice(0,16)}`
+
+  const uuid=crypto.randomUUID?crypto.randomUUID():('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)}))
+  const ok=await sbPostRaw('iris_tasks',{
+    id:uuid,workspace_id:WS,title,task_type:taskType,status:'open',
+    priority,source:'dashboard',created_by:'ajdin',
+    contact_name:contact||null,notes:notes||null,body,due_date:due||null
+  })
+  if(ok!==null){
+    closeModal()
+    renderTasks()
+    if(remind) showToast('🔔 Podsjetnik postavljen',`${title}\n${remind.replace('T',' ')}`)
+  } else {
+    alert('Greška pri kreiranju taska')
+  }
 }
 
 async function renderPatterns(){
@@ -1364,6 +1588,7 @@ function openTaskDetail(id){
     ${t.notes&&t.notes!==bodyText?`<div class="td-section"><div class="td-label">Napomene</div><div class="td-body">${t.notes}</div></div>`:''}
     ${t.notes&&t.notes===bodyText&&t.notes?`<div class="td-section"><div class="td-label">Poruka / Napomene</div><div class="td-body">${t.notes}</div></div>`:''}
     ${t.due_date?`<div class="td-section"><div class="td-label">Rok</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:${new Date(t.due_date)<new Date()?'var(--danger)':'var(--text2)'}">${t.due_date}</div></div>`:''}
+    ${(()=>{const r=getRemindAt(t);if(!r)return'';const rf=fmtRemind(r);return`<div class="td-section"><div class="td-label" style="color:var(--accent)">🔔 Podsjetnik</div><div class="td-value" style="font-family:var(--mono);font-size:12px;color:var(--accent)">${r} <span style="color:var(--text3)">(${rf||''})</span></div></div>`})()
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">${actionsHtml}</div>
   `
   document.getElementById('task-detail-overlay').classList.add('open')
@@ -1422,8 +1647,65 @@ function closeModal(){document.getElementById('modal').classList.remove('open')}
 function modalSubmit(){closeModal()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()})
 
+// ── Notification Toast System ────────────────────────────────────────
+let _toastTimer=null
+let _toastHideTimer=null
+
+function showToast(title,sub,taskId){
+  const el=document.getElementById('notif-toast')
+  document.getElementById('notif-toast-title').textContent=title
+  document.getElementById('notif-toast-sub').textContent=sub||''
+  // Reset animation
+  const bar=document.getElementById('notif-toast-bar')
+  bar.style.animation='none'
+  bar.offsetHeight // reflow
+  bar.style.animation=''
+  el.classList.add('show')
+  el._taskId=taskId
+  if(_toastHideTimer)clearTimeout(_toastHideTimer)
+  _toastHideTimer=setTimeout(()=>dismissToast(),8000)
+  // Request browser notification permission + show if allowed
+  if(Notification&&Notification.permission==='granted'){
+    new Notification('IRIS Podsjetnik',{body:title+(sub?'\n'+sub:''),icon:'',tag:'iris-reminder'})
+  } else if(Notification&&Notification.permission!=='denied'){
+    Notification.requestPermission()
+  }
+}
+
+function dismissToast(){
+  document.getElementById('notif-toast').classList.remove('show')
+  if(_toastHideTimer)clearTimeout(_toastHideTimer)
+}
+
+// ── Reminder Checker (runs every 60s) ──────────────────────────────
+const REMIND_SHOWN_KEY='iris_reminders_shown_v2'
+function getShownReminders(){try{return JSON.parse(localStorage.getItem(REMIND_SHOWN_KEY)||'{}')}catch{return{}}}
+function markReminderShown(id){const s=getShownReminders();s[id]=Date.now();localStorage.setItem(REMIND_SHOWN_KEY,JSON.stringify(s))}
+
+function checkReminders(){
+  if(!allRawTasks.length)return
+  const now=Date.now()
+  const shown=getShownReminders()
+  for(const t of allRawTasks){
+    const remindAt=getRemindAt(t)
+    if(!remindAt)continue
+    if(shown[t.id])continue
+    const remindTime=new Date(remindAt).getTime()
+    if(isNaN(remindTime))continue
+    const diff=now-remindTime // ms since reminder time
+    if(diff>=0&&diff<15*60*1000){ // within past 15 minutes
+      markReminderShown(t.id)
+      const contact=t.contact_name?` · ${t.contact_name}`:''
+      showToast(t.title,`Podsjetnik${contact}`,t.id)
+      break // show one at a time
+    }
+  }
+}
+
 checkConn().then(()=>renderDashboard())
 setInterval(()=>{if(currentSection==='dashboard'||currentSection==='feed')loadSection(currentSection)},30000)
+setInterval(checkReminders,60000)
+// Also check on tasks page load
 </script>
 </body>
 </html>
