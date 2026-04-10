@@ -1112,26 +1112,6 @@ async function renderContacts(){
       channel_primary: sb.channel_primary || 'hubspot',
     }
   })
-  // Add Supabase-only contacts (e.g. Telegram contacts not yet in HubSpot)
-  for(const sb of sbContacts){
-    if(sbIdsUsed.has(sb.id)) continue
-    const nm = sb.display_name || ''
-    if(!nm || nm.length === 0) continue
-    if(/^(test|block1|freshuser|newuser|ctxtest)/i.test(nm)) continue
-    rows.push({
-      id:            sb.id,
-      hs_id:         null,
-      display_name:  nm,
-      email:         sb.email || null,
-      phone:         sb.phone || null,
-      company:       null,
-      role:          null,
-      trust_level:   sb.trust_level || 'stranger',
-      last_seen_at:  sb.last_seen_at || null,
-      channel_primary: sb.channel_primary || 'telegram',
-    })
-  }
-
   // Sort state
   let _sortCol='last_seen_at', _sortDir=-1, _search='', _page=0
   const PER_PAGE=25
