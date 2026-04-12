@@ -3262,6 +3262,8 @@ function _bosRenderBoard(){
 }
 
 // ── IRIS Project Chat ─────────────────────────────────────────────────
+// Note: uses direct fetch (not api()) — Claude responses take 5-15s,
+// api() has a 3s timeout which would abort the request.
 async function _bosChatSend(){
   if(_bosChatLoading) return
   const input=document.getElementById('bos-chat-in')
@@ -3270,9 +3272,25 @@ async function _bosChatSend(){
   if(!text) return
   input.value=''
   _bosChatLoading=true
+
+  // Append user message to DOM directly (no full re-render = input stays intact)
   if(!_bosChatMsgs[_bosDetailId]) _bosChatMsgs[_bosDetailId]=[]
   _bosChatMsgs[_bosDetailId].push({role:'user',text,ts:Date.now()})
-  _bosRenderDetail()
+  _bosChatAppendMsg('user', text)
+
+  // Show typing indicator
+  const typingId='bos-typing-'+Date.now()
+  const chatEl=document.getElementById('bos-chat-msgs')
+  if(chatEl){
+    const t=document.createElement('div')
+    t.id=typingId
+    t.className='bos-chat-msg iris'
+    t.innerHTML='<span class="bos-chat-sender">🤖 IRIS</span><span class="bos-chat-text" style="opacity:.5;font-style:italic">tipka...</span>'
+    chatEl.appendChild(t)
+    chatEl.scrollTop=chatEl.scrollHeight
+  }
+  const btn=document.getElementById('bos-chat-btn')
+  if(btn){btn.disabled=true;btn.textContent='...'}
 
   const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||{}
   const allIssues=(co.issues||[]).filter(i=>i.projectId===_bosDetailId)
@@ -3280,7 +3298,8 @@ async function _bosChatSend(){
   const proj=projMap[_bosDetailId]||{id:_bosDetailId,name:BOS_KNOWN_PROJECTS[_bosDetailId]||'Projekat'}
 
   try{
-    const resp=await api('/api/paperclip/project-chat',{
+    // Direct fetch with 30s timeout — bypasses api() 3s timeout
+    const r=await fetch(BASE+'/api/paperclip/project-chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -3290,19 +3309,69 @@ async function _bosChatSend(){
         workspace_id:'00000000-0000-0000-0001-000000000001',
         message:text,
         issues:allIssues.map(i=>({id:i.id,title:i.title,status:i.status,priority:i.priority,identifier:i.identifier}))
-      })
+      }),
+      signal:AbortSignal.timeout(30000)
     })
-    const irisText=resp?.response||resp?.text||'Nema odgovora.'
+    const resp=r.ok?await r.json():null
+    const irisText=resp?.response||resp?.text||(resp?.error?'Greška: '+resp.error:'Nema odgovora.')
     _bosChatMsgs[_bosDetailId].push({role:'iris',text:irisText,ts:Date.now()})
+
+    // Remove typing indicator, append real response
+    document.getElementById(typingId)?.remove()
+    _bosChatAppendMsg('iris', irisText)
+
+    // If phases were created, silently refresh board data
     if(resp?.actions_taken&&resp.actions_taken.length>0){
       const fresh=await api('/api/paperclip/board')
       if(fresh?.ok) _bosData=fresh
+      // Refresh only kanban columns, not the whole page
+      _bosRefreshKanbanCols()
     }
   }catch(e){
-    _bosChatMsgs[_bosDetailId].push({role:'iris',text:'Greška: '+e.message,ts:Date.now()})
+    document.getElementById(typingId)?.remove()
+    const errText='Greška: '+(e.name==='TimeoutError'?'IRIS nije odgovorio na vrijeme (timeout)':e.message)
+    _bosChatMsgs[_bosDetailId].push({role:'iris',text:errText,ts:Date.now()})
+    _bosChatAppendMsg('iris', errText)
   }
   _bosChatLoading=false
-  _bosRenderDetail()
+  const btn2=document.getElementById('bos-chat-btn')
+  if(btn2){btn2.disabled=false;btn2.textContent='Pošalji →'}
+}
+
+// Append a single chat message to existing DOM (no re-render)
+function _bosChatAppendMsg(role, text){
+  const chatEl=document.getElementById('bos-chat-msgs')
+  if(!chatEl) return
+  // Remove empty state if present
+  const empty=chatEl.querySelector('.bos-chat-empty')
+  if(empty) empty.remove()
+  const div=document.createElement('div')
+  div.className='bos-chat-msg '+role
+  const escaped=(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+  div.innerHTML=`<span class="bos-chat-sender">${role==='iris'?'🤖 IRIS':'👤 Ti'}</span><span class="bos-chat-text">${escaped}</span>`
+  chatEl.appendChild(div)
+  chatEl.scrollTop=chatEl.scrollHeight
+}
+
+// Refresh only kanban columns after phase creation (preserve chat DOM)
+function _bosRefreshKanbanCols(){
+  if(!_bosData||!_bosDetailId) return
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||{}
+  const allIssues=co.issues||[], agents=co.agents||[]
+  const projIssues=allIssues.filter(i=>i.projectId===_bosDetailId)
+  function issueCard(i){
+    const pri=i.priority||'medium'
+    const assignee=agents.find(a=>a.id===i.assigneeAgentId)
+    const isRunning=i.status==='in_progress'&&assignee?.status==='running'
+    const parent=i.parentId?allIssues.find(p=>p.id===i.parentId):null
+    const title=(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    return`<div class="bos-card${isRunning?' running':''}"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px"><span class="bos-id ${pri}">${i.identifier||'—'}</span></div><div class="bos-card-title">${title}</div><div class="bos-card-meta">${assignee?`<b>${assignee.name}</b>${isRunning?' <span style="color:#6c63ff;font-size:9px">● live</span>':''} · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div></div>`
+  }
+  const board=document.querySelector('.bos-board')
+  if(board) board.innerHTML=BOS_STATUSES.map(st=>{
+    const cards=projIssues.filter(i=>i.status===st)
+    return`<div class="bos-col"><div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]}<span style="font-weight:400;opacity:.6;margin-left:6px">${cards.length}</span></div>${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}</div>`
+  }).join('')
 }
 
 // ── Navigation ────────────────────────────────────────────────────────
@@ -3314,7 +3383,16 @@ function _bosAgentSwitch(id){_bosAgent=id;_bosRender()}
 function fmtAge(ts){if(!ts)return'';const d=Math.floor((Date.now()-new Date(ts))/60000);return d<1?'upravo':d<60?d+'m':Math.floor(d/60)+'h'}
 
 checkConn().then(()=>renderDashboard())
-setInterval(()=>{if(['dashboard','feed','buildos'].includes(currentSection))loadSection(currentSection)},30000)
+setInterval(()=>{
+  if(!['dashboard','feed','buildos'].includes(currentSection)) return
+  // When BuildOS detail view is open: silently refresh data only, never touch DOM
+  // (prevents wiping the chat input mid-typing)
+  if(currentSection==='buildos'&&_bosView==='detail'){
+    api('/api/paperclip/board').then(d=>{if(d?.ok){_bosData=d;_bosRefreshKanbanCols()}})
+    return
+  }
+  loadSection(currentSection)
+},30000)
 setInterval(checkReminders,60000)
 // Also check on tasks page load
 </script>
