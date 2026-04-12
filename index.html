@@ -692,7 +692,19 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 .bos-dot.running{background:#22c55e;animation:bosRun 1s infinite}
 .bos-dot.idle{background:var(--text3)}
 .bos-empty{padding:20px;text-align:center;color:var(--text3);font-size:11px}
-.bos-refresh{font-size:10px;color:var(--text3);margin-left:auto}
+.bos-refresh{font-size:10px;color:var(--text3);margin-left:auto;font-family:var(--mono)}
+.bos-filters{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.bos-filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bos-filter-label{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);width:56px;flex-shrink:0}
+.bos-filter-pills{display:flex;flex-wrap:wrap;gap:6px}
+.bos-fpill{padding:3px 10px;border-radius:12px;font-size:11px;cursor:pointer;border:1px solid var(--border2);color:var(--text3);background:transparent;transition:all .15s;white-space:nowrap;user-select:none}
+.bos-fpill:hover{color:var(--text2);border-color:rgba(255,255,255,.25)}
+.bos-fpill.active{background:rgba(108,99,255,.18);color:#a5b4fc;border-color:rgba(108,99,255,.5)}
+.bos-fpill.agent-running{border-color:rgba(34,197,94,.4);color:#4ade80}
+.bos-fpill.agent-running.active{background:rgba(34,197,94,.15)}
+.bos-card-proj{font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;margin-bottom:4px;font-family:var(--mono)}
+.bos-stats{display:flex;gap:12px;margin-bottom:12px}
+.bos-stat{font-size:11px;color:var(--text3)}.bos-stat b{color:var(--text2)}
 
 </style>
 </head>
@@ -2956,7 +2968,7 @@ function checkReminders(){
 
 
 // ── BuildOS / Paperclip Board ──────────────────────────────────────────────
-let _bosCompany='buildOS'
+let _bosCompany='buildOS', _bosProject=null, _bosAgent=null, _bosData=null
 const BOS_COMPANIES=['buildOS','productionOS','SOVP']
 const BOS_STATUSES=['in_progress','blocked','backlog','done']
 const BOS_STATUS_LABELS={in_progress:'In Progress',blocked:'Blocked',backlog:'Backlog',done:'Done'}
@@ -2969,40 +2981,101 @@ async function renderBuildOS(){
     document.getElementById('main-content').innerHTML=`<div style="color:var(--danger);padding:20px;font-size:13px">⚠️ Paperclip board nedostupan: ${data?.error||'IRIS API error'}<br><small style="color:var(--text3);margin-top:8px;display:block">Potrebno: PAPERCLIP_BOARD_KEY env var u IRIS Railway servisu</small></div>`
     return
   }
+  _bosData=data
+  _bosRenderBoard()
+}
+
+function _bosRenderBoard(){
+  if(!_bosData) return
+  const data=_bosData
   const companies=data.companies||[]
-  const tabsHTML=BOS_COMPANIES.map(n=>`<div class="bos-co-tab${_bosCompany===n?' active':''}" onclick="_bosSwitch('${n}')">${n}</div>`).join('')
   const co=companies.find(c=>c.name===_bosCompany)||companies[0]
   if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
-  const issues=co.issues||[]
+  const allIssues=co.issues||[]
   const agents=co.agents||[]
-  // Agent chips
-  const agentsHTML=agents.map(a=>`<div class="bos-agent-chip"><div class="bos-dot ${a.status}"></div><span style="color:${a.status==='running'?'var(--text)':'var(--text3)'}">${a.name}</span>${a.status==='running'?`<span style="font-size:9px;color:#6c63ff;font-family:var(--mono)">● live</span>`:''}</div>`).join('')
-  // Board columns
+  const projects=co.projects||[]
+
+  // Ensure _bosProject still valid for this company
+  if(_bosProject && !projects.find(p=>p.id===_bosProject)) _bosProject=null
+  if(_bosAgent && !agents.find(a=>a.id===_bosAgent)) _bosAgent=null
+
+  // Company tabs
+  const coTabsHTML=BOS_COMPANIES.map(n=>`<div class="bos-co-tab${_bosCompany===n?' active':''}" onclick="_bosCoSwitch('${n}')">${n}</div>`).join('')
+
+  // Project filter pills
+  const projPills=[
+    `<div class="bos-fpill${!_bosProject?' active':''}" onclick="_bosProjSwitch(null)">Svi projekti</div>`,
+    ...projects.map(p=>`<div class="bos-fpill${_bosProject===p.id?' active':''}" onclick="_bosProjSwitch('${p.id}')" title="${p.name}">${p.name}</div>`)
+  ].join('')
+
+  // Agent filter pills
+  const agentPills=[
+    `<div class="bos-fpill${!_bosAgent?' active':''}" onclick="_bosAgentSwitch(null)">Svi agenti</div>`,
+    ...agents.map(a=>{
+      const isRun=a.status==='running'
+      return`<div class="bos-fpill${_bosAgent===a.id?' active':''}${isRun?' agent-running':''}" onclick="_bosAgentSwitch('${a.id}')"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isRun?'#22c55e':'var(--text3)'};margin-right:5px;vertical-align:middle"></span>${a.name}</div>`
+    })
+  ].join('')
+
+  // Filter issues
+  const filtered=allIssues.filter(i=>{
+    if(_bosProject && i.projectId!==_bosProject) return false
+    if(_bosAgent && i.assigneeAgentId!==_bosAgent) return false
+    return true
+  })
+
+  // Stats
+  const inProg=filtered.filter(i=>i.status==='in_progress').length
+  const blocked=filtered.filter(i=>i.status==='blocked').length
+  const backlog=filtered.filter(i=>i.status==='backlog').length
+  const done=filtered.filter(i=>i.status==='done').length
+  const statsHTML=`<div class="bos-stats">
+    <div class="bos-stat"><b style="color:#6c63ff">${inProg}</b> in progress</div>
+    <div class="bos-stat"><b style="color:var(--danger)">${blocked}</b> blocked</div>
+    <div class="bos-stat"><b style="color:var(--text2)">${backlog}</b> backlog</div>
+    <div class="bos-stat"><b style="color:var(--accent)">${done}</b> done</div>
+    <div class="bos-stat" style="margin-left:auto;color:var(--text3)">${filtered.length} / ${allIssues.length} prikazano</div>
+  </div>`
+
+  // Issue card
   function issueCard(i){
     const pri=i.priority||'medium'
     const assignee=agents.find(a=>a.id===i.assigneeAgentId)
     const isRunning=i.status==='in_progress'&&assignee?.status==='running'
-    const parent=i.parentId?issues.find(p=>p.id===i.parentId):null
+    const parent=i.parentId?allIssues.find(p=>p.id===i.parentId):null
+    const proj=projects.find(p=>p.id===i.projectId)
+    const title=(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     return`<div class="bos-card${isRunning?' running':''}">
-      <div><span class="bos-id ${pri}">${i.identifier||'—'}</span></div>
-      <div class="bos-card-title">${(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-      <div class="bos-card-meta">${assignee?`<b>${assignee.name}</b> · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
+        <span class="bos-id ${pri}">${i.identifier||'—'}</span>
+        ${proj&&!_bosProject?`<span class="bos-card-proj">${proj.name}</span>`:''}
+      </div>
+      <div class="bos-card-title">${title}</div>
+      <div class="bos-card-meta">${assignee?`<b>${assignee.name}</b>${isRunning?' <span style="color:#6c63ff;font-size:9px">● live</span>':''} · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div>
     </div>`
   }
+
   const colsHTML=BOS_STATUSES.map(st=>{
-    const cards=issues.filter(i=>i.status===st)
+    const cards=filtered.filter(i=>i.status===st)
     return`<div class="bos-col">
-      <div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]} <span style="font-weight:400;opacity:.6">${cards.length}</span></div>
+      <div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]}<span style="font-weight:400;opacity:.6;margin-left:6px">${cards.length}</span></div>
       ${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}
     </div>`
   }).join('')
+
   const ts=new Date(data.ts).toLocaleTimeString('bs')
   document.getElementById('main-content').innerHTML=`
-    <div class="bos-co-tabs">${tabsHTML}<span class="bos-refresh">Refresh: ${ts}</span></div>
-    <div class="bos-agents-row">${agentsHTML||'<span style="color:var(--text3);font-size:11px">Nema agenata</span>'}</div>
+    <div class="bos-co-tabs">${coTabsHTML}<span class="bos-refresh">↻ ${ts}</span></div>
+    <div class="bos-filters">
+      <div class="bos-filter-row"><span class="bos-filter-label">Projekat</span><div class="bos-filter-pills">${projPills}</div></div>
+      <div class="bos-filter-row"><span class="bos-filter-label">Agent</span><div class="bos-filter-pills">${agentPills}</div></div>
+    </div>
+    ${statsHTML}
     <div class="bos-board">${colsHTML}</div>`
 }
-function _bosSwitch(name){_bosCompany=name;renderBuildOS()}
+function _bosCoSwitch(n){_bosCompany=n;_bosProject=null;_bosAgent=null;renderBuildOS()}
+function _bosProjSwitch(id){_bosProject=id;_bosRenderBoard()}
+function _bosAgentSwitch(id){_bosAgent=id;_bosRenderBoard()}
 function fmtAge(ts){if(!ts)return'';const d=Math.floor((Date.now()-new Date(ts))/60000);return d<1?'upravo':d<60?d+'m':Math.floor(d/60)+'h'}
 
 checkConn().then(()=>renderDashboard())
