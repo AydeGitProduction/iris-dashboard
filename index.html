@@ -662,17 +662,50 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 .ntd-notes{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;min-height:60px}
 
 /* ── BuildOS / Paperclip Board ────────────────────────────────────────────── */
-.bos-co-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+/* ── BuildOS company tabs ── */
+.bos-co-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:12px}
 .bos-co-tab{padding:8px 16px;font-size:12px;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;user-select:none}
 .bos-co-tab:hover{color:var(--text2)}
 .bos-co-tab.active{color:var(--text);border-bottom-color:#6c63ff}
+.bos-refresh{font-size:10px;color:var(--text3);margin-left:auto;font-family:var(--mono);align-self:center;padding-bottom:2px}
+/* ── View toggle ── */
+.bos-view-toggle{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:6px;overflow:hidden;width:fit-content}
+.bos-vtab{padding:5px 14px;font-size:11px;cursor:pointer;color:var(--text3);transition:all .15s;user-select:none}
+.bos-vtab:hover{background:var(--bg3);color:var(--text2)}
+.bos-vtab.active{background:rgba(108,99,255,.15);color:#a5b4fc}
+/* ── Projects grid ── */
+.bos-proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(256px,1fr));gap:14px}
+.bos-proj-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .2s,transform .15s}
+.bos-proj-card:hover{border-color:rgba(108,99,255,.5);transform:translateY(-1px)}
+.bos-proj-card-hd{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+.bos-proj-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.bos-proj-status-label{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.bos-proj-co-tag{margin-left:auto;font-size:9px;color:var(--text3);font-family:var(--mono);background:var(--bg3);padding:2px 5px;border-radius:3px}
+.bos-proj-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px;line-height:1.35}
+.bos-proj-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin-bottom:9px}
+.bos-proj-bar{height:3px;background:#6c63ff;border-radius:2px;transition:width .5s}
+.bos-proj-stats{display:flex;gap:10px;font-size:11px;align-items:center;margin-bottom:8px}
+.bos-proj-links{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.bos-deploy-link{font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid;text-decoration:none;white-space:nowrap;transition:opacity .15s}
+.bos-deploy-link:hover{opacity:.7}
+.bos-deploy-link.rail{color:#e2a330;border-color:rgba(226,163,48,.4)}
+.bos-deploy-link.git{color:#a5b4fc;border-color:rgba(165,180,252,.4)}
+.bos-proj-open-btn{font-size:11px;color:var(--text3);text-align:right;margin-top:2px;opacity:.5}
+.bos-proj-card:hover .bos-proj-open-btn{color:#a5b4fc;opacity:1}
+/* ── Project detail header ── */
+.bos-detail-hd{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.bos-back-btn{background:transparent;border:1px solid var(--border);color:var(--text3);padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.bos-back-btn:hover{color:var(--text2);border-color:var(--text3)}
+.bos-detail-title{font-size:15px;font-weight:600;color:var(--text)}
+.bos-detail-meta{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+.bos-detail-stat{font-size:11px;color:var(--text3);white-space:nowrap}
+.bos-detail-stat.warn{color:#ef4444}.bos-detail-stat.ok{color:#22c55e}
+/* ── Kanban board ── */
 .bos-board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .bos-col{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-height:80px}
 .bos-col-hd{padding:8px 12px;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.bos-col-hd.backlog{color:var(--text3)}
-.bos-col-hd.in_progress{color:#6c63ff}
-.bos-col-hd.blocked{color:var(--danger)}
-.bos-col-hd.done{color:var(--accent)}
+.bos-col-hd.backlog{color:var(--text3)}.bos-col-hd.in_progress{color:#6c63ff}
+.bos-col-hd.blocked{color:var(--danger)}.bos-col-hd.done{color:var(--accent)}
 .bos-card{padding:10px 12px;border-bottom:1px solid var(--border);transition:background .1s}
 .bos-card:last-child{border-bottom:none}
 .bos-card:hover{background:var(--bg3)}
@@ -686,14 +719,12 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 .bos-card-title{font-size:12px;color:var(--text);line-height:1.4;margin-bottom:4px}
 .bos-card-meta{font-size:10px;color:var(--text3)}
 .bos-card-meta b{color:var(--text2);font-weight:500}
-.bos-agents-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-.bos-agent-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:11px}
-.bos-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.bos-dot.running{background:#22c55e;animation:bosRun 1s infinite}
-.bos-dot.idle{background:var(--text3)}
+.bos-card-proj{font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;margin-bottom:4px;font-family:var(--mono)}
 .bos-empty{padding:20px;text-align:center;color:var(--text3);font-size:11px}
-.bos-refresh{font-size:10px;color:var(--text3);margin-left:auto;font-family:var(--mono)}
-.bos-filters{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.bos-stats{display:flex;gap:12px;margin-bottom:12px}
+.bos-stat{font-size:11px;color:var(--text3)}.bos-stat b{color:var(--text2)}
+/* ── Board filter pills ── */
+.bos-filters{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
 .bos-filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bos-filter-label{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);width:56px;flex-shrink:0}
 .bos-filter-pills{display:flex;flex-wrap:wrap;gap:6px}
@@ -702,9 +733,28 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 .bos-fpill.active{background:rgba(108,99,255,.18);color:#a5b4fc;border-color:rgba(108,99,255,.5)}
 .bos-fpill.agent-running{border-color:rgba(34,197,94,.4);color:#4ade80}
 .bos-fpill.agent-running.active{background:rgba(34,197,94,.15)}
-.bos-card-proj{font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;margin-bottom:4px;font-family:var(--mono)}
-.bos-stats{display:flex;gap:12px;margin-bottom:12px}
-.bos-stat{font-size:11px;color:var(--text3)}.bos-stat b{color:var(--text2)}
+.bos-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.bos-dot.running{background:#22c55e;animation:bosRun 1s infinite}
+.bos-dot.idle{background:var(--text3)}
+/* ── IRIS Chat Panel ── */
+.bos-chat-panel{margin-top:18px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.bos-chat-hd{padding:10px 14px;font-size:11px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);letter-spacing:.3px;background:var(--bg3);display:flex;align-items:center;gap:8px}
+.bos-chat-msgs{height:240px;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.bos-chat-empty{color:var(--text3);font-size:12px;font-style:italic;margin:auto;text-align:center;padding:20px 0}
+.bos-chat-msg{display:flex;flex-direction:column;gap:3px;max-width:88%}
+.bos-chat-msg.user{align-self:flex-end}
+.bos-chat-msg.iris{align-self:flex-start}
+.bos-chat-sender{font-size:9px;color:var(--text3);font-weight:600;letter-spacing:.5px}
+.bos-chat-msg.user .bos-chat-sender{text-align:right}
+.bos-chat-text{font-size:12px;line-height:1.5;padding:8px 12px;border-radius:8px;white-space:pre-wrap;word-break:break-word}
+.bos-chat-msg.user .bos-chat-text{background:rgba(108,99,255,.2);color:var(--text);border-bottom-right-radius:2px}
+.bos-chat-msg.iris .bos-chat-text{background:var(--bg3);color:var(--text);border-bottom-left-radius:2px}
+.bos-chat-input-row{display:flex;gap:0;border-top:1px solid var(--border)}
+.bos-chat-input{flex:1;background:transparent;border:none;padding:10px 14px;font-size:12px;color:var(--text);outline:none;font-family:inherit}
+.bos-chat-input::placeholder{color:var(--text3)}
+.bos-chat-send{background:rgba(108,99,255,.2);border:none;border-left:1px solid var(--border);padding:10px 16px;color:#a5b4fc;font-size:12px;cursor:pointer;transition:background .15s;font-weight:500;white-space:nowrap}
+.bos-chat-send:hover{background:rgba(108,99,255,.35)}
+.bos-chat-send:disabled{opacity:.4;cursor:default}
 
 </style>
 </head>
@@ -2968,9 +3018,13 @@ function checkReminders(){
 
 
 // ── BuildOS / Paperclip Board ──────────────────────────────────────────────
-let _bosCompany='buildOS', _bosProject=null, _bosAgent=null, _bosData=null
+// ══════════════════════════════════════════════════════════════════════
+// BuildOS — Paperclip Integration v2
+// Views: projects grid | project detail (kanban + IRIS chat) | board
+// ══════════════════════════════════════════════════════════════════════
+let _bosCompany='buildOS', _bosView='projects', _bosDetailId=null
+let _bosAgent=null, _bosData=null, _bosChatMsgs={}, _bosChatLoading=false
 const BOS_COMPANIES=['buildOS','productionOS','SOVP']
-// Fallback project names (used if API doesn't return projects)
 const BOS_KNOWN_PROJECTS={
   'fd7c8f5e-61b5-4d08-bc2a-3e6c2aea6ae1':'Onboarding',
   'e8caf9c7-71a4-43c1-858b-2c4f080ee998':'Viber Outreach Dashboard',
@@ -2982,86 +3036,210 @@ const BOS_KNOWN_PROJECTS={
 const BOS_STATUSES=['in_progress','blocked','backlog','done']
 const BOS_STATUS_LABELS={in_progress:'In Progress',blocked:'Blocked',backlog:'Backlog',done:'Done'}
 
+// ── Entry point ───────────────────────────────────────────────────────
 async function renderBuildOS(){
   document.getElementById('topbar-actions').innerHTML=`<button class="btn" onclick="renderBuildOS()" style="font-size:11px">↻ Refresh</button>`
   document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam Paperclip board...</div>'
   const data=await api('/api/paperclip/board')
   if(!data||!data.ok){
-    document.getElementById('main-content').innerHTML=`<div style="color:var(--danger);padding:20px;font-size:13px">⚠️ Paperclip board nedostupan: ${data?.error||'IRIS API error'}<br><small style="color:var(--text3);margin-top:8px;display:block">Potrebno: PAPERCLIP_BOARD_KEY env var u IRIS Railway servisu</small></div>`
+    document.getElementById('main-content').innerHTML=`<div style="color:var(--danger);padding:20px;font-size:13px">⚠️ Paperclip board nedostupan: ${data?.error||'IRIS API error'}</div>`
     return
   }
   _bosData=data
-  _bosRenderBoard()
+  _bosRender()
 }
 
-function _bosRenderBoard(){
+// ── Router ────────────────────────────────────────────────────────────
+function _bosRender(){
   if(!_bosData) return
-  const data=_bosData
-  const companies=data.companies||[]
-  const co=companies.find(c=>c.name===_bosCompany)||companies[0]
-  if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
+  if(_bosView==='detail'&&_bosDetailId) _bosRenderDetail()
+  else if(_bosView==='board') _bosRenderBoard()
+  else _bosRenderProjects()
+}
+
+// ── Helper: extract deploy URLs from issues ───────────────────────────
+function _bosExtractLinks(issues){
+  const rRx=/https?:\/\/[^\s<>"')]+railway\.app[^\s<>"')>]*/gi
+  const gRx=/https?:\/\/github\.com\/[^\s<>"')>]*/gi
+  let railway=null,github=null
+  for(const i of issues){
+    const d=i.description||''
+    if(!railway){const m=d.match(rRx);if(m)railway=m[0].replace(/[)>"']+$/,'')}
+    if(!github) {const m=d.match(gRx); if(m)github =m[0].replace(/[)>"']+$/,'')}
+    if(railway&&github) break
+  }
+  return{railway,github}
+}
+
+// ── Helper: build project map for a company ───────────────────────────
+function _bosProjectMap(co){
   const allIssues=co.issues||[]
-  const agents=co.agents||[]
-  // Use API projects if available, otherwise build from known names + unique projectIds in issues
   const apiProjects=co.projects||[]
-  const uniqueProjIds=[...new Set(allIssues.map(i=>i.projectId).filter(Boolean))]
-  const projects=apiProjects.length?apiProjects:uniqueProjIds.map(id=>({id,name:BOS_KNOWN_PROJECTS[id]||id.slice(0,8)+'…'}))
+  const map={}
+  for(const p of apiProjects) map[p.id]={id:p.id,name:p.name||BOS_KNOWN_PROJECTS[p.id]||p.id.slice(0,8)+'…',description:p.description||'',url:p.url||null}
+  for(const i of allIssues) if(i.projectId&&!map[i.projectId]) map[i.projectId]={id:i.projectId,name:BOS_KNOWN_PROJECTS[i.projectId]||i.projectId.slice(0,8)+'…',description:'',url:null}
+  return map
+}
 
-  // Ensure _bosProject still valid for this company
-  if(_bosProject && !projects.find(p=>p.id===_bosProject)) _bosProject=null
-  if(_bosAgent && !agents.find(a=>a.id===_bosAgent)) _bosAgent=null
+// ── VIEW: Projects grid ───────────────────────────────────────────────
+function _bosRenderProjects(){
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||(_bosData.companies||[])[0]
+  if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
+  const allIssues=co.issues||[], agents=co.agents||[]
+  const projMap=_bosProjectMap(co)
+  const projects=Object.values(projMap)
+  const noProj=allIssues.filter(i=>!i.projectId)
+  const ts=new Date(_bosData.ts).toLocaleTimeString('bs')
+  const prefix=co.prefix||(co.name.slice(0,3).toUpperCase())
 
-  // Company tabs
   const coTabsHTML=BOS_COMPANIES.map(n=>`<div class="bos-co-tab${_bosCompany===n?' active':''}" onclick="_bosCoSwitch('${n}')">${n}</div>`).join('')
+  const viewToggle=`<div class="bos-view-toggle"><span class="bos-vtab active">📦 Projekti</span><span class="bos-vtab" onclick="_bosSetView('board')">📋 Board</span></div>`
 
-  // Project filter pills
-  const projPills=[
-    `<div class="bos-fpill${!_bosProject?' active':''}" onclick="_bosProjSwitch(null)">Svi projekti</div>`,
-    ...projects.map(p=>`<div class="bos-fpill${_bosProject===p.id?' active':''}" onclick="_bosProjSwitch('${p.id}')" title="${p.name}">${p.name}</div>`)
-  ].join('')
+  function projCard(proj){
+    const issues=allIssues.filter(i=>i.projectId===proj.id)
+    const inProg=issues.filter(i=>i.status==='in_progress').length
+    const blocked=issues.filter(i=>i.status==='blocked').length
+    const backlog=issues.filter(i=>i.status==='backlog').length
+    const done=issues.filter(i=>i.status==='done').length
+    const total=issues.length
+    let dot='#64748b',lbl='Nema taskova'
+    if(blocked>0){dot='#ef4444';lbl='Blokiran'}
+    else if(inProg>0){dot='#6c63ff';lbl='U toku'}
+    else if(done===total&&total>0){dot='#22c55e';lbl='Završen'}
+    else if(backlog>0){dot='#f59e0b';lbl='Planiranje'}
+    const pct=total>0?Math.round(done/total*100):0
+    const{railway,github}=_bosExtractLinks(issues)
+    const linksHTML=[
+      railway?`<a href="${railway}" target="_blank" class="bos-deploy-link rail" onclick="event.stopPropagation()">🚂 Railway</a>`:'',
+      github ?`<a href="${github}"  target="_blank" class="bos-deploy-link git"  onclick="event.stopPropagation()">🐙 GitHub</a>`:'',
+    ].filter(Boolean).join('')
+    const name=(proj.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    return`<div class="bos-proj-card" onclick="_bosOpenDetail('${proj.id}')">
+      <div class="bos-proj-card-hd"><span class="bos-proj-status-dot" style="background:${dot}"></span><span class="bos-proj-status-label">${lbl}</span><span class="bos-proj-co-tag">${prefix}</span></div>
+      <div class="bos-proj-name">${name}</div>
+      <div class="bos-proj-bar-wrap"><div class="bos-proj-bar" style="width:${pct}%"></div></div>
+      <div class="bos-proj-stats"><span style="color:#6c63ff">● ${inProg}</span><span style="color:#ef4444">⚠ ${blocked}</span><span style="color:#f59e0b">□ ${backlog}</span><span style="color:#22c55e">✓ ${done}</span><span style="margin-left:auto;font-size:10px;color:var(--text3)">${pct}% done</span></div>
+      ${linksHTML?`<div class="bos-proj-links">${linksHTML}</div>`:''}
+      <div class="bos-proj-open-btn">Otvori projekt →</div>
+    </div>`
+  }
 
-  // Agent filter pills
-  const agentPills=[
-    `<div class="bos-fpill${!_bosAgent?' active':''}" onclick="_bosAgentSwitch(null)">Svi agenti</div>`,
-    ...agents.map(a=>{
-      const isRun=a.status==='running'
-      return`<div class="bos-fpill${_bosAgent===a.id?' active':''}${isRun?' agent-running':''}" onclick="_bosAgentSwitch('${a.id}')"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isRun?'#22c55e':'var(--text3)'};margin-right:5px;vertical-align:middle"></span>${a.name}</div>`
-    })
-  ].join('')
+  const noProjCard=noProj.length?`<div class="bos-proj-card" onclick="_bosSetView('board')">
+    <div class="bos-proj-card-hd"><span class="bos-proj-status-dot" style="background:#64748b"></span><span class="bos-proj-status-label">Nezavisni taskovi</span></div>
+    <div class="bos-proj-name">Bez projekta</div>
+    <div class="bos-proj-stats"><span style="color:var(--text3)">${noProj.length} issue${noProj.length===1?'':'a'}</span></div>
+    <div class="bos-proj-open-btn">Otvori board →</div>
+  </div>`:''
 
-  // Filter issues
-  const filtered=allIssues.filter(i=>{
-    if(_bosProject && i.projectId!==_bosProject) return false
-    if(_bosAgent && i.assigneeAgentId!==_bosAgent) return false
-    return true
-  })
+  const cardsHTML=projects.length?projects.map(projCard).join('')+noProjCard:`<div style="color:var(--text3);padding:20px;font-size:13px">Nema projekata u ${_bosCompany}.</div>`
 
-  // Stats
-  const inProg=filtered.filter(i=>i.status==='in_progress').length
-  const blocked=filtered.filter(i=>i.status==='blocked').length
-  const backlog=filtered.filter(i=>i.status==='backlog').length
-  const done=filtered.filter(i=>i.status==='done').length
-  const statsHTML=`<div class="bos-stats">
-    <div class="bos-stat"><b style="color:#6c63ff">${inProg}</b> in progress</div>
-    <div class="bos-stat"><b style="color:var(--danger)">${blocked}</b> blocked</div>
-    <div class="bos-stat"><b style="color:var(--text2)">${backlog}</b> backlog</div>
-    <div class="bos-stat"><b style="color:var(--accent)">${done}</b> done</div>
-    <div class="bos-stat" style="margin-left:auto;color:var(--text3)">${filtered.length} / ${allIssues.length} prikazano</div>
-  </div>`
+  document.getElementById('main-content').innerHTML=`
+    <div class="bos-co-tabs">${coTabsHTML}<span class="bos-refresh">↻ ${ts}</span></div>
+    ${viewToggle}
+    <div class="bos-proj-grid">${cardsHTML}</div>`
+}
 
-  // Issue card
+// ── VIEW: Project detail (kanban + IRIS chat) ─────────────────────────
+function _bosRenderDetail(){
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||(_bosData.companies||[])[0]
+  if(!co) return
+  const allIssues=co.issues||[], agents=co.agents||[]
+  const projMap=_bosProjectMap(co)
+  const proj=projMap[_bosDetailId]||{id:_bosDetailId,name:BOS_KNOWN_PROJECTS[_bosDetailId]||'Projekat'}
+  const projIssues=allIssues.filter(i=>i.projectId===_bosDetailId)
+  const{railway,github}=_bosExtractLinks(projIssues)
+  const inProg=projIssues.filter(i=>i.status==='in_progress').length
+  const blocked=projIssues.filter(i=>i.status==='blocked').length
+  const done=projIssues.filter(i=>i.status==='done').length
+  const total=projIssues.length
+  const pct=total>0?Math.round(done/total*100):0
+
   function issueCard(i){
     const pri=i.priority||'medium'
     const assignee=agents.find(a=>a.id===i.assigneeAgentId)
     const isRunning=i.status==='in_progress'&&assignee?.status==='running'
     const parent=i.parentId?allIssues.find(p=>p.id===i.parentId):null
-    const proj=projects.find(p=>p.id===i.projectId)
     const title=(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     return`<div class="bos-card${isRunning?' running':''}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
-        <span class="bos-id ${pri}">${i.identifier||'—'}</span>
-        ${proj&&!_bosProject?`<span class="bos-card-proj">${proj.name}</span>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px"><span class="bos-id ${pri}">${i.identifier||'—'}</span></div>
+      <div class="bos-card-title">${title}</div>
+      <div class="bos-card-meta">${assignee?`<b>${assignee.name}</b>${isRunning?' <span style="color:#6c63ff;font-size:9px">● live</span>':''} · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div>
+    </div>`
+  }
+
+  const colsHTML=BOS_STATUSES.map(st=>{
+    const cards=projIssues.filter(i=>i.status===st)
+    return`<div class="bos-col"><div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]}<span style="font-weight:400;opacity:.6;margin-left:6px">${cards.length}</span></div>${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}</div>`
+  }).join('')
+
+  const msgs=_bosChatMsgs[_bosDetailId]||[]
+  const chatMsgsHTML=msgs.length===0
+    ?`<div class="bos-chat-empty">Pitaj IRIS o projektu, novim fazama ili fejčerima...</div>`
+    :msgs.map(m=>`<div class="bos-chat-msg ${m.role}">
+        <span class="bos-chat-sender">${m.role==='iris'?'🤖 IRIS':'👤 Ti'}</span>
+        <span class="bos-chat-text">${(m.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</span>
+      </div>`).join('')
+
+  const projName=(proj.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+
+  document.getElementById('main-content').innerHTML=`
+    <div class="bos-detail-hd">
+      <button class="bos-back-btn" onclick="_bosGoBack()">← Projekti</button>
+      <div class="bos-detail-title">${projName}</div>
+      <div class="bos-detail-meta">
+        <span class="bos-detail-stat">${inProg} in progress</span>
+        <span class="bos-detail-stat warn">${blocked} blocked</span>
+        <span class="bos-detail-stat ok">${pct}% done</span>
+        ${railway?`<a href="${railway}" target="_blank" class="bos-deploy-link rail">🚂 Railway</a>`:''}
+        ${github ?`<a href="${github}"  target="_blank" class="bos-deploy-link git">🐙 GitHub</a>` :''}
       </div>
+    </div>
+    <div class="bos-board">${colsHTML}</div>
+    <div class="bos-chat-panel">
+      <div class="bos-chat-hd">💬 IRIS Project Assistant<span style="font-weight:400;opacity:.6;margin-left:6px;font-size:10px">${projName}</span></div>
+      <div class="bos-chat-msgs" id="bos-chat-msgs">${chatMsgsHTML}</div>
+      <div class="bos-chat-input-row">
+        <input class="bos-chat-input" id="bos-chat-in" placeholder="Pitaj IRIS o statusu, kreiraj novu fazu, traži update..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();_bosChatSend()}">
+        <button class="bos-chat-send" id="bos-chat-btn" onclick="_bosChatSend()">${_bosChatLoading?'...' :'Pošalji →'}</button>
+      </div>
+    </div>`
+
+  const chatEl=document.getElementById('bos-chat-msgs')
+  if(chatEl) chatEl.scrollTop=chatEl.scrollHeight
+  if(_bosChatLoading){const btn=document.getElementById('bos-chat-btn');if(btn){btn.disabled=true;btn.textContent='...'}}
+}
+
+// ── VIEW: Board (flat all issues) ─────────────────────────────────────
+function _bosRenderBoard(){
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||(_bosData.companies||[])[0]
+  if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
+  const allIssues=co.issues||[], agents=co.agents||[]
+  const projMap=_bosProjectMap(co)
+  const projects=Object.values(projMap)
+  if(_bosAgent&&!agents.find(a=>a.id===_bosAgent)) _bosAgent=null
+
+  const coTabsHTML=BOS_COMPANIES.map(n=>`<div class="bos-co-tab${_bosCompany===n?' active':''}" onclick="_bosCoSwitch('${n}')">${n}</div>`).join('')
+  const viewToggle=`<div class="bos-view-toggle"><span class="bos-vtab" onclick="_bosSetView('projects')">📦 Projekti</span><span class="bos-vtab active">📋 Board</span></div>`
+  const agentPills=[
+    `<div class="bos-fpill${!_bosAgent?' active':''}" onclick="_bosAgentSwitch(null)">Svi agenti</div>`,
+    ...agents.map(a=>{const isRun=a.status==='running';return`<div class="bos-fpill${_bosAgent===a.id?' active':''}${isRun?' agent-running':''}" onclick="_bosAgentSwitch('${a.id}')"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isRun?'#22c55e':'var(--text3)'};margin-right:5px;vertical-align:middle"></span>${a.name}</div>`})
+  ].join('')
+
+  const filtered=allIssues.filter(i=>!_bosAgent||i.assigneeAgentId===_bosAgent)
+  const inProg=filtered.filter(i=>i.status==='in_progress').length
+  const blocked=filtered.filter(i=>i.status==='blocked').length
+  const backlog=filtered.filter(i=>i.status==='backlog').length
+  const done=filtered.filter(i=>i.status==='done').length
+
+  function issueCard(i){
+    const pri=i.priority||'medium'
+    const assignee=agents.find(a=>a.id===i.assigneeAgentId)
+    const isRunning=i.status==='in_progress'&&assignee?.status==='running'
+    const parent=i.parentId?allIssues.find(p=>p.id===i.parentId):null
+    const proj=projMap[i.projectId]
+    const title=(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    return`<div class="bos-card${isRunning?' running':''}" ${proj?`onclick="_bosOpenDetail('${i.projectId}')" style="cursor:pointer"`:''}>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px"><span class="bos-id ${pri}">${i.identifier||'—'}</span>${proj?`<span class="bos-card-proj">${proj.name}</span>`:''}</div>
       <div class="bos-card-title">${title}</div>
       <div class="bos-card-meta">${assignee?`<b>${assignee.name}</b>${isRunning?' <span style="color:#6c63ff;font-size:9px">● live</span>':''} · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div>
     </div>`
@@ -3069,25 +3247,70 @@ function _bosRenderBoard(){
 
   const colsHTML=BOS_STATUSES.map(st=>{
     const cards=filtered.filter(i=>i.status===st)
-    return`<div class="bos-col">
-      <div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]}<span style="font-weight:400;opacity:.6;margin-left:6px">${cards.length}</span></div>
-      ${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}
-    </div>`
+    return`<div class="bos-col"><div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]}<span style="font-weight:400;opacity:.6;margin-left:6px">${cards.length}</span></div>${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}</div>`
   }).join('')
 
-  const ts=new Date(data.ts).toLocaleTimeString('bs')
+  const statsHTML=`<div class="bos-stats"><div class="bos-stat"><b style="color:#6c63ff">${inProg}</b> in progress</div><div class="bos-stat"><b style="color:var(--danger)">${blocked}</b> blocked</div><div class="bos-stat"><b style="color:var(--text2)">${backlog}</b> backlog</div><div class="bos-stat"><b style="color:var(--accent)">${done}</b> done</div><div class="bos-stat" style="margin-left:auto;color:var(--text3)">${filtered.length}/${allIssues.length}</div></div>`
+  const ts=new Date(_bosData.ts).toLocaleTimeString('bs')
+
   document.getElementById('main-content').innerHTML=`
     <div class="bos-co-tabs">${coTabsHTML}<span class="bos-refresh">↻ ${ts}</span></div>
-    <div class="bos-filters">
-      <div class="bos-filter-row"><span class="bos-filter-label">Projekat</span><div class="bos-filter-pills">${projPills}</div></div>
-      <div class="bos-filter-row"><span class="bos-filter-label">Agent</span><div class="bos-filter-pills">${agentPills}</div></div>
-    </div>
+    ${viewToggle}
+    <div class="bos-filters"><div class="bos-filter-row"><span class="bos-filter-label">Agent</span><div class="bos-filter-pills">${agentPills}</div></div></div>
     ${statsHTML}
     <div class="bos-board">${colsHTML}</div>`
 }
-function _bosCoSwitch(n){_bosCompany=n;_bosProject=null;_bosAgent=null;renderBuildOS()}
-function _bosProjSwitch(id){_bosProject=id;_bosRenderBoard()}
-function _bosAgentSwitch(id){_bosAgent=id;_bosRenderBoard()}
+
+// ── IRIS Project Chat ─────────────────────────────────────────────────
+async function _bosChatSend(){
+  if(_bosChatLoading) return
+  const input=document.getElementById('bos-chat-in')
+  if(!input) return
+  const text=input.value.trim()
+  if(!text) return
+  input.value=''
+  _bosChatLoading=true
+  if(!_bosChatMsgs[_bosDetailId]) _bosChatMsgs[_bosDetailId]=[]
+  _bosChatMsgs[_bosDetailId].push({role:'user',text,ts:Date.now()})
+  _bosRenderDetail()
+
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||{}
+  const allIssues=(co.issues||[]).filter(i=>i.projectId===_bosDetailId)
+  const projMap=_bosProjectMap(co)
+  const proj=projMap[_bosDetailId]||{id:_bosDetailId,name:BOS_KNOWN_PROJECTS[_bosDetailId]||'Projekat'}
+
+  try{
+    const resp=await api('/api/paperclip/project-chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        project_id:_bosDetailId,
+        project_name:proj.name,
+        company:_bosCompany,
+        workspace_id:'00000000-0000-0000-0001-000000000001',
+        message:text,
+        issues:allIssues.map(i=>({id:i.id,title:i.title,status:i.status,priority:i.priority,identifier:i.identifier}))
+      })
+    })
+    const irisText=resp?.response||resp?.text||'Nema odgovora.'
+    _bosChatMsgs[_bosDetailId].push({role:'iris',text:irisText,ts:Date.now()})
+    if(resp?.actions_taken&&resp.actions_taken.length>0){
+      const fresh=await api('/api/paperclip/board')
+      if(fresh?.ok) _bosData=fresh
+    }
+  }catch(e){
+    _bosChatMsgs[_bosDetailId].push({role:'iris',text:'Greška: '+e.message,ts:Date.now()})
+  }
+  _bosChatLoading=false
+  _bosRenderDetail()
+}
+
+// ── Navigation ────────────────────────────────────────────────────────
+function _bosCoSwitch(n){_bosCompany=n;_bosDetailId=null;_bosView='projects';renderBuildOS()}
+function _bosSetView(v){_bosView=v;_bosRender()}
+function _bosOpenDetail(id){_bosDetailId=id;_bosView='detail';_bosRender()}
+function _bosGoBack(){_bosView='projects';_bosDetailId=null;_bosRender()}
+function _bosAgentSwitch(id){_bosAgent=id;_bosRender()}
 function fmtAge(ts){if(!ts)return'';const d=Math.floor((Date.now()-new Date(ts))/60000);return d<1?'upravo':d<60?d+'m':Math.floor(d/60)+'h'}
 
 checkConn().then(()=>renderDashboard())
