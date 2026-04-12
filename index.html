@@ -2970,6 +2970,15 @@ function checkReminders(){
 // ── BuildOS / Paperclip Board ──────────────────────────────────────────────
 let _bosCompany='buildOS', _bosProject=null, _bosAgent=null, _bosData=null
 const BOS_COMPANIES=['buildOS','productionOS','SOVP']
+// Fallback project names (used if API doesn't return projects)
+const BOS_KNOWN_PROJECTS={
+  'fd7c8f5e-61b5-4d08-bc2a-3e6c2aea6ae1':'Onboarding',
+  'e8caf9c7-71a4-43c1-858b-2c4f080ee998':'Viber Outreach Dashboard',
+  '24c705be-4c05-453a-ad30-49d9ac742bcc':'AI Newsletter Platform',
+  '01c193f1-74fa-47e6-9957-ef45833c7c4c':'AI WhatsApp Outreach',
+  'eb9ad15c-3ebd-44fe-b4dd-4b26fe6ee597':'IRIS → Paperclip Integration',
+  '47fe6d6e-3d75-4ceb-afb5-caf53a0e3956':'IRIS Paperclip Dashboard'
+}
 const BOS_STATUSES=['in_progress','blocked','backlog','done']
 const BOS_STATUS_LABELS={in_progress:'In Progress',blocked:'Blocked',backlog:'Backlog',done:'Done'}
 
@@ -2993,7 +3002,10 @@ function _bosRenderBoard(){
   if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
   const allIssues=co.issues||[]
   const agents=co.agents||[]
-  const projects=co.projects||[]
+  // Use API projects if available, otherwise build from known names + unique projectIds in issues
+  const apiProjects=co.projects||[]
+  const uniqueProjIds=[...new Set(allIssues.map(i=>i.projectId).filter(Boolean))]
+  const projects=apiProjects.length?apiProjects:uniqueProjIds.map(id=>({id,name:BOS_KNOWN_PROJECTS[id]||id.slice(0,8)+'…'}))
 
   // Ensure _bosProject still valid for this company
   if(_bosProject && !projects.find(p=>p.id===_bosProject)) _bosProject=null
