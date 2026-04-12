@@ -660,6 +660,40 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 .ntd-prop-select:hover,.ntd-prop-select:focus{background:rgba(255,255,255,.07);outline:none}
 .ntd-notes-label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;font-family:var(--mono);margin-bottom:6px}
 .ntd-notes{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;min-height:60px}
+
+/* ── BuildOS / Paperclip Board ────────────────────────────────────────────── */
+.bos-co-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.bos-co-tab{padding:8px 16px;font-size:12px;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;user-select:none}
+.bos-co-tab:hover{color:var(--text2)}
+.bos-co-tab.active{color:var(--text);border-bottom-color:#6c63ff}
+.bos-board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.bos-col{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-height:80px}
+.bos-col-hd{padding:8px 12px;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.bos-col-hd.backlog{color:var(--text3)}
+.bos-col-hd.in_progress{color:#6c63ff}
+.bos-col-hd.blocked{color:var(--danger)}
+.bos-col-hd.done{color:var(--accent)}
+.bos-card{padding:10px 12px;border-bottom:1px solid var(--border);transition:background .1s}
+.bos-card:last-child{border-bottom:none}
+.bos-card:hover{background:var(--bg3)}
+.bos-card.running{border-left:3px solid #6c63ff}
+@keyframes bosRun{0%,100%{opacity:1}50%{opacity:.5}}
+.bos-id{font-size:10px;font-family:var(--mono);padding:2px 5px;border-radius:3px;display:inline-block;margin-bottom:5px}
+.bos-id.critical{background:rgba(239,68,68,.15);color:#ef4444}
+.bos-id.high{background:rgba(251,146,60,.15);color:#fb923c}
+.bos-id.medium{background:rgba(108,99,255,.15);color:#a5b4fc}
+.bos-id.low{background:rgba(100,116,139,.12);color:var(--text3)}
+.bos-card-title{font-size:12px;color:var(--text);line-height:1.4;margin-bottom:4px}
+.bos-card-meta{font-size:10px;color:var(--text3)}
+.bos-card-meta b{color:var(--text2);font-weight:500}
+.bos-agents-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.bos-agent-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:11px}
+.bos-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.bos-dot.running{background:#22c55e;animation:bosRun 1s infinite}
+.bos-dot.idle{background:var(--text3)}
+.bos-empty{padding:20px;text-align:center;color:var(--text3);font-size:11px}
+.bos-refresh{font-size:10px;color:var(--text3);margin-left:auto}
+
 </style>
 </head>
 <body>
@@ -751,6 +785,14 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
     <div class="nav-item" onclick="nav('settings',this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M8 1V3M8 13V15M1 8H3M13 8H15M3 3L4.4 4.4M11.6 11.6L13 13M3 13L4.4 11.6M11.6 4.4L13 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       Settings
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Build</div>
+    <div class="nav-item" onclick="nav('buildos',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M1 3H15M1 3V13H15V3M1 3L8 8L15 3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      BuildOS
     </div>
   </div>
 
@@ -925,14 +967,14 @@ function nav(section,el){
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'))
   if(el)el.classList.add('active')
   currentSection=section
-  const titles={dashboard:'Dashboard',holding:'Holding View',feed:'Intelligence Feed',contacts:'Contacts',deals:'Deals',tasks:'Tasks',calendar:"Ajdin's Calendar",patterns:'Pattern Recognition',autopilot:'Autopilot',content:'Content Calendar',production:'Production',registry:'Block Registry',channels:'Channels',saas:'SaaS Tenants',settings:'Settings'}
+  const titles={dashboard:'Dashboard',holding:'Holding View',feed:'Intelligence Feed',contacts:'Contacts',deals:'Deals',tasks:'Tasks',calendar:"Ajdin's Calendar",patterns:'Pattern Recognition',autopilot:'Autopilot',content:'Content Calendar',production:'Production',registry:'Block Registry',channels:'Channels',saas:'SaaS Tenants',settings:'Settings',buildos:'BuildOS — Paperclip'}
   document.getElementById('page-title').textContent=titles[section]||section
   loadSection(section)
 }
 
 function loadCurrent(){checkConn().then(()=>loadSection(currentSection))}
 function loadSection(s){
-  const fns={dashboard:renderDashboard,holding:renderHolding,feed:renderFeed,contacts:renderContacts,deals:renderDeals,tasks:renderTasks,calendar:renderCalendar,patterns:renderPatterns,autopilot:renderAutopilot,content:renderContent,production:renderProduction,registry:renderRegistry,channels:renderChannels,saas:renderSaaS,settings:renderSettings}
+  const fns={dashboard:renderDashboard,holding:renderHolding,feed:renderFeed,contacts:renderContacts,deals:renderDeals,tasks:renderTasks,calendar:renderCalendar,patterns:renderPatterns,autopilot:renderAutopilot,content:renderContent,production:renderProduction,registry:renderRegistry,channels:renderChannels,saas:renderSaaS,settings:renderSettings,buildos:renderBuildOS}
   document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam...</div>'
   if(fns[s])fns[s]()
 }
@@ -2912,8 +2954,59 @@ function checkReminders(){
   }
 }
 
+
+// ── BuildOS / Paperclip Board ──────────────────────────────────────────────
+let _bosCompany='buildOS'
+const BOS_COMPANIES=['buildOS','productionOS','SOVP']
+const BOS_STATUSES=['in_progress','blocked','backlog','done']
+const BOS_STATUS_LABELS={in_progress:'In Progress',blocked:'Blocked',backlog:'Backlog',done:'Done'}
+
+async function renderBuildOS(){
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn" onclick="renderBuildOS()" style="font-size:11px">↻ Refresh</button>`
+  document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam Paperclip board...</div>'
+  const data=await api('/api/paperclip/board')
+  if(!data||!data.ok){
+    document.getElementById('main-content').innerHTML=`<div style="color:var(--danger);padding:20px;font-size:13px">⚠️ Paperclip board nedostupan: ${data?.error||'IRIS API error'}<br><small style="color:var(--text3);margin-top:8px;display:block">Potrebno: PAPERCLIP_BOARD_KEY env var u IRIS Railway servisu</small></div>`
+    return
+  }
+  const companies=data.companies||[]
+  const tabsHTML=BOS_COMPANIES.map(n=>`<div class="bos-co-tab${_bosCompany===n?' active':''}" onclick="_bosSwitch('${n}')">${n}</div>`).join('')
+  const co=companies.find(c=>c.name===_bosCompany)||companies[0]
+  if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
+  const issues=co.issues||[]
+  const agents=co.agents||[]
+  // Agent chips
+  const agentsHTML=agents.map(a=>`<div class="bos-agent-chip"><div class="bos-dot ${a.status}"></div><span style="color:${a.status==='running'?'var(--text)':'var(--text3)'}">${a.name}</span>${a.status==='running'?`<span style="font-size:9px;color:#6c63ff;font-family:var(--mono)">● live</span>`:''}</div>`).join('')
+  // Board columns
+  function issueCard(i){
+    const pri=i.priority||'medium'
+    const assignee=agents.find(a=>a.id===i.assigneeAgentId)
+    const isRunning=i.status==='in_progress'&&assignee?.status==='running'
+    const parent=i.parentId?issues.find(p=>p.id===i.parentId):null
+    return`<div class="bos-card${isRunning?' running':''}">
+      <div><span class="bos-id ${pri}">${i.identifier||'—'}</span></div>
+      <div class="bos-card-title">${escHtml(i.title||'')}</div>
+      <div class="bos-card-meta">${assignee?`<b>${assignee.name}</b> · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div>
+    </div>`
+  }
+  const colsHTML=BOS_STATUSES.map(st=>{
+    const cards=issues.filter(i=>i.status===st)
+    return`<div class="bos-col">
+      <div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]} <span style="font-weight:400;opacity:.6">${cards.length}</span></div>
+      ${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}
+    </div>`
+  }).join('')
+  const ts=new Date(data.ts).toLocaleTimeString('bs')
+  document.getElementById('main-content').innerHTML=`
+    <div class="bos-co-tabs">${tabsHTML}<span class="bos-refresh">Refresh: ${ts}</span></div>
+    <div class="bos-agents-row">${agentsHTML||'<span style="color:var(--text3);font-size:11px">Nema agenata</span>'}</div>
+    <div class="bos-board">${colsHTML}</div>`
+}
+function _bosSwitch(name){_bosCompany=name;renderBuildOS()}
+function fmtAge(ts){if(!ts)return'';const d=Math.floor((Date.now()-new Date(ts))/60000);return d<1?'upravo':d<60?d+'m':Math.floor(d/60)+'h'}
+
 checkConn().then(()=>renderDashboard())
-setInterval(()=>{if(currentSection==='dashboard'||currentSection==='feed')loadSection(currentSection)},30000)
+setInterval(()=>{if(['dashboard','feed','buildos'].includes(currentSection))loadSection(currentSection)},30000)
 setInterval(checkReminders,60000)
 // Also check on tasks page load
 </script>
