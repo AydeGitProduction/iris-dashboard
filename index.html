@@ -3038,8 +3038,22 @@ const BOS_STATUS_LABELS={in_progress:'In Progress',blocked:'Blocked',backlog:'Ba
 
 // ── Entry point ───────────────────────────────────────────────────────
 async function renderBuildOS(){
-  document.getElementById('topbar-actions').innerHTML=`<button class="btn" onclick="renderBuildOS()" style="font-size:11px">↻ Refresh</button>`
+  // Refresh button always force-fetches fresh data
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn" onclick="_bosForceFetch()" style="font-size:11px">↻ Refresh</button>`
+  // If we already have data: render instantly from cache — NO loading flash, NO DOM wipe
+  if(_bosData){ _bosRender(); return }
+  // First load only
   document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam Paperclip board...</div>'
+  await _bosFetchAndRender()
+}
+
+async function _bosForceFetch(){
+  // Manual refresh: show loading, re-fetch, re-render current view
+  document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam Paperclip board...</div>'
+  await _bosFetchAndRender()
+}
+
+async function _bosFetchAndRender(){
   const data=await api('/api/paperclip/board')
   if(!data||!data.ok){
     document.getElementById('main-content').innerHTML=`<div style="color:var(--danger);padding:20px;font-size:13px">⚠️ Paperclip board nedostupan: ${data?.error||'IRIS API error'}</div>`
