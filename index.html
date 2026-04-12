@@ -3322,7 +3322,7 @@ async function _bosChatSend(){
         company:_bosCompany,
         workspace_id:'00000000-0000-0000-0001-000000000001',
         message:text,
-        issues:allIssues.map(i=>({id:i.id,title:i.title,status:i.status,priority:i.priority,identifier:i.identifier}))
+        issues:allIssues.map(i=>({id:i.id,title:i.title,status:i.status,priority:i.priority,identifier:i.identifier,description:(i.description||'').slice(0,500),assignee:(co.agents||[]).find(a=>a.id===i.assigneeAgentId)?.name||null,updatedAt:i.updatedAt||i.createdAt||null}))
       }),
       signal:AbortSignal.timeout(30000)
     })
