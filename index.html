@@ -2985,7 +2985,7 @@ async function renderBuildOS(){
     const parent=i.parentId?issues.find(p=>p.id===i.parentId):null
     return`<div class="bos-card${isRunning?' running':''}">
       <div><span class="bos-id ${pri}">${i.identifier||'—'}</span></div>
-      <div class="bos-card-title">${escHtml(i.title||'')}</div>
+      <div class="bos-card-title">${(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
       <div class="bos-card-meta">${assignee?`<b>${assignee.name}</b> · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div>
     </div>`
   }
