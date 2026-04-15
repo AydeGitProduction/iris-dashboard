@@ -2115,7 +2115,10 @@ function _bosRenderDetail(){
   const projMap=_bosProjectMap(co)
   const proj=projMap[_bosDetailId]||{id:_bosDetailId,name:BOS_KNOWN_PROJECTS[_bosDetailId]||'Projekat'}
   const projIssues=allIssues.filter(i=>i.projectId===_bosDetailId)
-  const{railway,github}=_bosExtractLinks(projIssues)
+  const _extLinks=_bosExtractLinks(projIssues)
+  const _knownLinks=(typeof BOS_PROJ_LINKS!=='undefined'?BOS_PROJ_LINKS:{})[proj.name]||{}
+  const railway=_extLinks.railway||_knownLinks.railway||null
+  const github=_extLinks.github||_knownLinks.github||null
   const inProg=projIssues.filter(i=>i.status==='in_progress').length
   const blocked=projIssues.filter(i=>i.status==='blocked').length
   const done=projIssues.filter(i=>i.status==='done').length
