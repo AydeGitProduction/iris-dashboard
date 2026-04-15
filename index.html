@@ -734,7 +734,7 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
     </div>
     <div class="nav-item" onclick="nav('buildos',this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
-      BuildOS Tasks
+      BuildOS
     </div>
   </div>
 
@@ -929,7 +929,7 @@ function nav(section,el){
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'))
   if(el)el.classList.add('active')
   currentSection=section
-  const titles={dashboard:'Dashboard',holding:'Holding View',feed:'Intelligence Feed',contacts:'Contacts',deals:'Deals',tasks:'Tasks',calendar:"Ajdin's Calendar",patterns:'Pattern Recognition',autopilot:'Autopilot',content:'Content Calendar',production:'Production',buildos:'BuildOS — Live Tasks',registry:'Block Registry',channels:'Channels',saas:'SaaS Tenants',settings:'Settings'}
+  const titles={dashboard:'Dashboard',holding:'Holding View',feed:'Intelligence Feed',contacts:'Contacts',deals:'Deals',tasks:'Tasks',calendar:"Ajdin's Calendar",patterns:'Pattern Recognition',autopilot:'Autopilot',content:'Content Calendar',production:'Production',buildos:'BuildOS — Paperclip',registry:'Block Registry',channels:'Channels',saas:'SaaS Tenants',settings:'Settings'}
   document.getElementById('page-title').textContent=titles[section]||section
   loadSection(section)
 }
@@ -1798,85 +1798,393 @@ async function renderProduction(){
     </div>`
 }
 
-// ── BuildOS Live Tasks ────────────────────────────────────────────────────────
-let _buildosRefreshTimer = null;
-async function renderBuildOS(){
-  document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-ghost" onclick="renderBuildOS()">↻ Refresh</button>`
-  document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam Paperclip taskove...</div>'
+// ── BuildOS / Paperclip Board ──────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+// BuildOS — Paperclip Integration v2
+// Views: projects grid | project detail (kanban + IRIS chat) | board
+// ══════════════════════════════════════════════════════════════════
+let _bosCompany='buildOS', _bosView='projects', _bosDetailId=null
+let _bosAgent=null, _bosData=null, _bosChatMsgs={}, _bosChatLoading=false
+let _bosEvents=[], _bosEventsTs=0
 
-  const STATUS_COLOR = {todo:'#6b7280',in_progress:'#3b82f6',in_review:'#f59e0b',blocked:'#ef4444',done:'#22c55e',cancelled:'#6b7280'}
-  const STATUS_LABEL = {todo:'Todo',in_progress:'In Progress',in_review:'In Review',blocked:'Blocked',done:'Done',cancelled:'Cancelled'}
-  const STATUS_ORDER = ['in_progress','in_review','blocked','todo','done','cancelled']
+// ── Event feed helpers ────────────────────────────────────────────────
+async function _bosFetchEvents(projectId){
+  const now=Date.now()
+  if(now-_bosEventsTs<30000) return // cache 30s
+  try{
+    const params=projectId?`project_id=${encodeURIComponent(projectId)}&limit=30`:`limit=40`
+    const d=await fetch(`${BASE}/api/events?company=${encodeURIComponent(_bosCompany)}&${params}`).then(r=>r.json())
+    if(d?.ok){_bosEvents=d.events||[];_bosEventsTs=now}
+  }catch(_){}
+}
 
-  // Fetch live issues from all companies
-  const [buildRes, eventsRes] = await Promise.allSettled([
-    fetch(BASE+'/api/paperclip/live-issues?company=buildOS&limit=80').then(r=>r.ok?r.json():null).catch(()=>null),
-    fetch(BASE+'/api/events?limit=30').then(r=>r.ok?r.json():null).catch(()=>null),
-  ])
-  const buildData  = buildRes.status==='fulfilled'  ? buildRes.value  : null
-  const eventsData = eventsRes.status==='fulfilled' ? eventsRes.value : null
-  const issues  = buildData?.issues  || []
-  const events  = eventsData?.events || []
-
-  // Group issues by status
-  const grouped = {}
-  STATUS_ORDER.forEach(s => grouped[s]=[])
-  issues.forEach(i => { const s=i.status||'todo'; if(!grouped[s])grouped[s]=[]; grouped[s].push(i) })
-
-  // Recent event feed
-  const recentFeed = events.slice(0,15).map(e=>{
-    const age = Math.floor((Date.now()-new Date(e.created_at).getTime())/60000)
-    const ageStr = age<60?`${age}m ago`:`${Math.floor(age/60)}h ago`
-    const identifier = e.issue_identifier?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">[${e.issue_identifier}]</span> `:''
-    const arrow = e.status_from&&e.status_to?` <span style="color:var(--text3);font-size:10px">${e.status_from}→${e.status_to}</span>`:''
-    const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${STATUS_COLOR[e.status_to]||'#6b7280'};margin-right:6px;flex-shrink:0"></span>`
-    return `<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--border)">
-      ${dot}<span style="flex:1;font-size:11px;color:var(--text)">${identifier}${e.title||e.event_type}${arrow}</span>
-      <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${ageStr}</span>
+function _bosRenderEventFeed(projectId){
+  const events=projectId?_bosEvents.filter(e=>!e.project_id||e.project_id===projectId):_bosEvents
+  if(!events.length) return`<div class="bos-ev-empty">Nema nedavnih događaja. Aktivnost će se prikazati čim Paperclip pošalje webhook ili IRIS agent uradi nešto.</div>`
+  return events.slice(0,15).map(e=>{
+    const type=e.event_type||'activity'
+    let dotClass='default'
+    if(type.includes('creat')) dotClass='created'
+    else if(type.includes('done')||type.includes('complet')) dotClass='done'
+    else if(type.includes('block')) dotClass='blocked'
+    else if(type.includes('updat')||type.includes('status')) dotClass='updated'
+    const identifier=e.issue_identifier?`<b>[${e.issue_identifier}]</b> `:''
+    const title=e.title?e.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0,60):type
+    const statusChg=e.status_from&&e.status_to?` <span style="color:var(--text3)">${e.status_from}→${e.status_to}</span>`:''
+    const age=e.created_at?fmtAge(e.created_at):''
+    const actor=e.actor?` · ${e.actor}`:''
+    return`<div class="bos-ev-item">
+      <div class="bos-ev-dot ${dotClass}"></div>
+      <div class="bos-ev-body">
+        <div class="bos-ev-title">${identifier}${title}${statusChg}</div>
+        <div class="bos-ev-meta">${type}${actor} · ${age}</div>
+      </div>
     </div>`
   }).join('')
+}
 
-  // Issue rows
-  const issueRows = STATUS_ORDER.filter(s=>grouped[s].length>0).map(status=>{
-    const color = STATUS_COLOR[status]||'#6b7280'
-    const label = STATUS_LABEL[status]||status
-    const rows = grouped[status].map(i=>`
-      <div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border)">
-        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap">${i.identifier||'—'}</span>
-        <span style="font-size:12px;color:var(--text)">${i.title||'—'}</span>
-        <span style="font-size:10px;color:var(--text3);white-space:nowrap">${i.assigneeAgentId?'assigned':'—'}</span>
-        <span style="font-size:10px;background:${color}22;color:${color};border:1px solid ${color}44;border-radius:3px;padding:1px 7px;white-space:nowrap">${label}</span>
-      </div>`).join('')
-    return `<div style="margin-bottom:12px">
-      <div style="padding:6px 12px;background:${color}11;border-left:2px solid ${color};display:flex;align-items:center;gap:8px">
-        <span style="font-size:11px;font-weight:600;color:${color}">${label}</span>
-        <span style="font-size:10px;color:var(--text3)">${grouped[status].length} issue${grouped[status].length!==1?'s':''}</span>
-      </div>${rows}</div>`
-  }).join('') || '<div style="color:var(--text3);font-size:12px;padding:16px">Nema aktivnih taskova.</div>'
+function _bosEventFeedHTML(projectId){
+  return`<div class="bos-events-panel">
+    <div class="bos-events-hd">⚡ Nedavna aktivnost<span style="font-weight:400;opacity:.6;margin-left:6px;font-size:10px">Paperclip webhooks + activity sync</span></div>
+    <div class="bos-events-list" id="bos-ev-list">${_bosRenderEventFeed(projectId)}</div>
+  </div>`
+}
+const BOS_COMPANIES=['buildOS','productionOS','SOVP']
+const BOS_KNOWN_PROJECTS={
+  'fd7c8f5e-61b5-4d08-bc2a-3e6c2aea6ae1':'Onboarding',
+  'e8caf9c7-71a4-43c1-858b-2c4f080ee998':'Viber Outreach Dashboard',
+  '24c705be-4c05-453a-ad30-49d9ac742bcc':'AI Newsletter Platform',
+  '01c193f1-74fa-47e6-9957-ef45833c7c4c':'AI WhatsApp Outreach',
+  'eb9ad15c-3ebd-44fe-b4dd-4b26fe6ee597':'IRIS → Paperclip Integration',
+  '47fe6d6e-3d75-4ceb-afb5-caf53a0e3956':'IRIS Paperclip Dashboard'
+}
+const BOS_STATUSES=['in_progress','blocked','backlog','done']
+const BOS_STATUS_LABELS={in_progress:'In Progress',blocked:'Blocked',backlog:'Backlog',done:'Done'}
+
+// ── Entry point ───────────────────────────────────────────────────────
+async function renderBuildOS(){
+  document.getElementById('topbar-actions').innerHTML=`<button class="btn" onclick="_bosForceFetch()" style="font-size:11px">↻ Refresh</button>`
+  if(_bosData){ _bosRender(); return }
+  document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam Paperclip board...</div>'
+  await _bosFetchAndRender()
+}
+
+async function _bosForceFetch(){
+  document.getElementById('main-content').innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Učitavam Paperclip board...</div>'
+  await _bosFetchAndRender()
+}
+
+async function _bosFetchAndRender(){
+  const data=await api('/api/paperclip/board')
+  if(!data||!data.ok){
+    document.getElementById('main-content').innerHTML=`<div style="color:var(--danger);padding:20px;font-size:13px">⚠️ Paperclip board nedostupan: ${data?.error||'IRIS API error'}</div>`
+    return
+  }
+  _bosData=data
+  _bosFetchEvents(null).catch(()=>{})
+  _bosRender()
+}
+
+function _bosRender(){
+  if(!_bosData) return
+  if(_bosView==='detail'&&_bosDetailId) _bosRenderDetail()
+  else if(_bosView==='board') _bosRenderBoard()
+  else _bosRenderProjects()
+}
+
+function _bosExtractLinks(issues){
+  const rRx=/https?:\/\/[^\s<>"')]+railway\.app[^\s<>"')>]*/gi
+  const gRx=/https?:\/\/github\.com\/[^\s<>"')>]*/gi
+  let railway=null,github=null
+  for(const i of issues){
+    const d=i.description||''
+    if(!railway){const m=d.match(rRx);if(m)railway=m[0].replace(/[)>"']+$/,'')}
+    if(!github) {const m=d.match(gRx); if(m)github =m[0].replace(/[)>"']+$/,'')}
+    if(railway&&github) break
+  }
+  return{railway,github}
+}
+
+function _bosProjectMap(co){
+  const allIssues=co.issues||[]
+  const apiProjects=co.projects||[]
+  const map={}
+  for(const p of apiProjects) map[p.id]={id:p.id,name:p.name||BOS_KNOWN_PROJECTS[p.id]||p.id.slice(0,8)+'…',description:p.description||'',url:p.url||null}
+  for(const i of allIssues) if(i.projectId&&!map[i.projectId]) map[i.projectId]={id:i.projectId,name:BOS_KNOWN_PROJECTS[i.projectId]||i.projectId.slice(0,8)+'…',description:'',url:null}
+  return map
+}
+
+function _bosRenderProjects(){
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||(_bosData.companies||[])[0]
+  if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
+  const allIssues=co.issues||[], agents=co.agents||[]
+  const projMap=_bosProjectMap(co)
+  const projects=Object.values(projMap)
+  const noProj=allIssues.filter(i=>!i.projectId)
+  const ts=new Date(_bosData.ts).toLocaleTimeString('bs')
+  const prefix=co.prefix||(co.name.slice(0,3).toUpperCase())
+
+  const coTabsHTML=BOS_COMPANIES.map(n=>`<div class="bos-co-tab${_bosCompany===n?' active':''}" onclick="_bosCoSwitch('${n}')">${n}</div>`).join('')
+  const viewToggle=`<div class="bos-view-toggle"><span class="bos-vtab active">📦 Projekti</span><span class="bos-vtab" onclick="_bosSetView('board')">📋 Board</span></div>`
+
+  function projCard(proj){
+    const issues=allIssues.filter(i=>i.projectId===proj.id)
+    const inProg=issues.filter(i=>i.status==='in_progress').length
+    const blocked=issues.filter(i=>i.status==='blocked').length
+    const backlog=issues.filter(i=>i.status==='backlog').length
+    const done=issues.filter(i=>i.status==='done').length
+    const total=issues.length
+    let dot='#64748b',lbl='Nema taskova'
+    if(blocked>0){dot='#ef4444';lbl='Blokiran'}
+    else if(inProg>0){dot='#6c63ff';lbl='U toku'}
+    else if(done===total&&total>0){dot='#22c55e';lbl='Završen'}
+    else if(backlog>0){dot='#f59e0b';lbl='Planiranje'}
+    const pct=total>0?Math.round(done/total*100):0
+    const{railway,github}=_bosExtractLinks(issues)
+    const linksHTML=[
+      railway?`<a href="${railway}" target="_blank" class="bos-deploy-link rail" onclick="event.stopPropagation()">🚂 Railway</a>`:'',
+      github ?`<a href="${github}"  target="_blank" class="bos-deploy-link git"  onclick="event.stopPropagation()">🐙 GitHub</a>`:'',
+    ].filter(Boolean).join('')
+    const name=(proj.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    return`<div class="bos-proj-card" onclick="_bosOpenDetail('${proj.id}')">
+      <div class="bos-proj-card-hd"><span class="bos-proj-status-dot" style="background:${dot}"></span><span class="bos-proj-status-label">${lbl}</span><span class="bos-proj-co-tag">${prefix}</span></div>
+      <div class="bos-proj-name">${name}</div>
+      <div class="bos-proj-bar-wrap"><div class="bos-proj-bar" style="width:${pct}%"></div></div>
+      <div class="bos-proj-stats"><span style="color:#6c63ff">● ${inProg}</span><span style="color:#ef4444">⚠ ${blocked}</span><span style="color:#f59e0b">□ ${backlog}</span><span style="color:#22c55e">✓ ${done}</span><span style="margin-left:auto;font-size:10px;color:var(--text3)">${pct}% done</span></div>
+      ${linksHTML?`<div class="bos-proj-links">${linksHTML}</div>`:''}
+      <div class="bos-proj-open-btn">Otvori projekt →</div>
+    </div>`
+  }
+
+  const noProjCard=noProj.length?`<div class="bos-proj-card" onclick="_bosSetView('board')">
+    <div class="bos-proj-card-hd"><span class="bos-proj-status-dot" style="background:#64748b"></span><span class="bos-proj-status-label">Nezavisni taskovi</span></div>
+    <div class="bos-proj-name">Bez projekta</div>
+    <div class="bos-proj-stats"><span style="color:var(--text3)">${noProj.length} issue${noProj.length===1?'':'a'}</span></div>
+    <div class="bos-proj-open-btn">Otvori board →</div>
+  </div>`:''
+
+  const cardsHTML=projects.length?projects.map(projCard).join('')+noProjCard:`<div style="color:var(--text3);padding:20px;font-size:13px">Nema projekata u ${_bosCompany}.</div>`
+
+  _bosFetchEvents(null).then(()=>{
+    const el=document.getElementById('bos-ev-list')
+    if(el) el.innerHTML=_bosRenderEventFeed(null)
+  }).catch(()=>{})
 
   document.getElementById('main-content').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start">
-      <div>
-        <div class="card" style="padding:0;overflow:hidden">
-          <div class="card-title" style="padding:14px 16px;border-bottom:1px solid var(--border);margin:0;display:flex;justify-content:space-between;align-items:center">
-            <span>BuildOS — Issues Live</span>
-            <span style="font-size:11px;color:var(--text3)">${issues.length} total</span>
-          </div>
-          ${issueRows}
-        </div>
+    <div class="bos-co-tabs">${coTabsHTML}<span class="bos-refresh">↻ ${ts}</span></div>
+    ${viewToggle}
+    <div class="bos-proj-grid">${cardsHTML}</div>
+    ${_bosEventFeedHTML(null)}`
+}
+
+function _bosRenderDetail(){
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||(_bosData.companies||[])[0]
+  if(!co) return
+  const allIssues=co.issues||[], agents=co.agents||[]
+  const projMap=_bosProjectMap(co)
+  const proj=projMap[_bosDetailId]||{id:_bosDetailId,name:BOS_KNOWN_PROJECTS[_bosDetailId]||'Projekat'}
+  const projIssues=allIssues.filter(i=>i.projectId===_bosDetailId)
+  const{railway,github}=_bosExtractLinks(projIssues)
+  const inProg=projIssues.filter(i=>i.status==='in_progress').length
+  const blocked=projIssues.filter(i=>i.status==='blocked').length
+  const done=projIssues.filter(i=>i.status==='done').length
+  const total=projIssues.length
+  const pct=total>0?Math.round(done/total*100):0
+
+  function issueCard(i){
+    const pri=i.priority||'medium'
+    const assignee=agents.find(a=>a.id===i.assigneeAgentId)
+    const isRunning=i.status==='in_progress'&&assignee?.status==='running'
+    const parent=i.parentId?allIssues.find(p=>p.id===i.parentId):null
+    const title=(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    return`<div class="bos-card${isRunning?' running':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px"><span class="bos-id ${pri}">${i.identifier||'—'}</span></div>
+      <div class="bos-card-title">${title}</div>
+      <div class="bos-card-meta">${assignee?`<b>${assignee.name}</b>${isRunning?' <span style="color:#6c63ff;font-size:9px">● live</span>':''} · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div>
+    </div>`
+  }
+
+  const colsHTML=BOS_STATUSES.map(st=>{
+    const cards=projIssues.filter(i=>i.status===st)
+    return`<div class="bos-col"><div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]}<span style="font-weight:400;opacity:.6;margin-left:6px">${cards.length}</span></div>${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}</div>`
+  }).join('')
+
+  const msgs=_bosChatMsgs[_bosDetailId]||[]
+  const chatMsgsHTML=msgs.length===0
+    ?`<div class="bos-chat-empty">Pitaj IRIS o projektu, novim fazama ili fejčerima...</div>`
+    :msgs.map(m=>`<div class="bos-chat-msg ${m.role}">
+        <span class="bos-chat-sender">${m.role==='iris'?'🤖 IRIS':'👤 Ti'}</span>
+        <span class="bos-chat-text">${(m.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</span>
+      </div>`).join('')
+
+  const projName=(proj.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+
+  _bosFetchEvents(_bosDetailId).then(()=>{
+    const el=document.getElementById('bos-ev-list')
+    if(el) el.innerHTML=_bosRenderEventFeed(_bosDetailId)
+  }).catch(()=>{})
+
+  document.getElementById('main-content').innerHTML=`
+    <div class="bos-detail-hd">
+      <button class="bos-back-btn" onclick="_bosGoBack()">← Projekti</button>
+      <div class="bos-detail-title">${projName}</div>
+      <div class="bos-detail-meta">
+        <span class="bos-detail-stat">${inProg} in progress</span>
+        <span class="bos-detail-stat warn">${blocked} blocked</span>
+        <span class="bos-detail-stat ok">${pct}% done</span>
+        ${railway?`<a href="${railway}" target="_blank" class="bos-deploy-link rail">🚂 Railway</a>`:''}
+        ${github ?`<a href="${github}"  target="_blank" class="bos-deploy-link git">🐙 GitHub</a>` :''}
       </div>
-      <div>
-        <div class="card" style="padding:0;overflow:hidden">
-          <div class="card-title" style="padding:14px 16px;border-bottom:1px solid var(--border);margin:0">Paperclip Events</div>
-          ${recentFeed||'<div style="padding:12px;color:var(--text3);font-size:12px">Nema nedavnih evenata.</div>'}
-        </div>
+    </div>
+    ${_bosEventFeedHTML(_bosDetailId)}
+    <div class="bos-board">${colsHTML}</div>
+    <div class="bos-chat-panel">
+      <div class="bos-chat-hd">💬 IRIS Project Assistant<span style="font-weight:400;opacity:.6;margin-left:6px;font-size:10px">${projName}</span></div>
+      <div class="bos-chat-msgs" id="bos-chat-msgs">${chatMsgsHTML}</div>
+      <div class="bos-chat-input-row">
+        <input class="bos-chat-input" id="bos-chat-in" placeholder="Pitaj IRIS o statusu, kreiraj novu fazu, traži update..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();_bosChatSend()}">
+        <button class="bos-chat-send" id="bos-chat-btn" onclick="_bosChatSend()">${_bosChatLoading?'...' :'Pošalji →'}</button>
       </div>
     </div>`
 
-  // Auto-refresh every 30s while on this section
-  if(_buildosRefreshTimer) clearTimeout(_buildosRefreshTimer)
-  _buildosRefreshTimer = setTimeout(()=>{ if(currentSection==='buildos') renderBuildOS() }, 30000)
+  const chatEl=document.getElementById('bos-chat-msgs')
+  if(chatEl) chatEl.scrollTop=chatEl.scrollHeight
+  if(_bosChatLoading){const btn=document.getElementById('bos-chat-btn');if(btn){btn.disabled=true;btn.textContent='...'}}
 }
+
+function _bosRenderBoard(){
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||(_bosData.companies||[])[0]
+  if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
+  const allIssues=co.issues||[], agents=co.agents||[]
+  const projMap=_bosProjectMap(co)
+  if(_bosAgent&&!agents.find(a=>a.id===_bosAgent)) _bosAgent=null
+
+  const coTabsHTML=BOS_COMPANIES.map(n=>`<div class="bos-co-tab${_bosCompany===n?' active':''}" onclick="_bosCoSwitch('${n}')">${n}</div>`).join('')
+  const viewToggle=`<div class="bos-view-toggle"><span class="bos-vtab" onclick="_bosSetView('projects')">📦 Projekti</span><span class="bos-vtab active">📋 Board</span></div>`
+  const agentPills=[
+    `<div class="bos-fpill${!_bosAgent?' active':''}" onclick="_bosAgentSwitch(null)">Svi agenti</div>`,
+    ...agents.map(a=>{const isRun=a.status==='running';return`<div class="bos-fpill${_bosAgent===a.id?' active':''}${isRun?' agent-running':''}" onclick="_bosAgentSwitch('${a.id}')"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isRun?'#22c55e':'var(--text3)'};margin-right:5px;vertical-align:middle"></span>${a.name}</div>`})
+  ].join('')
+
+  const filtered=allIssues.filter(i=>!_bosAgent||i.assigneeAgentId===_bosAgent)
+  const inProg=filtered.filter(i=>i.status==='in_progress').length
+  const blocked=filtered.filter(i=>i.status==='blocked').length
+  const backlog=filtered.filter(i=>i.status==='backlog').length
+  const done=filtered.filter(i=>i.status==='done').length
+
+  function issueCard(i){
+    const pri=i.priority||'medium'
+    const assignee=agents.find(a=>a.id===i.assigneeAgentId)
+    const isRunning=i.status==='in_progress'&&assignee?.status==='running'
+    const parent=i.parentId?allIssues.find(p=>p.id===i.parentId):null
+    const proj=projMap[i.projectId]
+    const title=(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    return`<div class="bos-card${isRunning?' running':''}" ${proj?`onclick="_bosOpenDetail('${i.projectId}')" style="cursor:pointer"`:''}>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px"><span class="bos-id ${pri}">${i.identifier||'—'}</span>${proj?`<span class="bos-card-proj">${proj.name}</span>`:''}</div>
+      <div class="bos-card-title">${title}</div>
+      <div class="bos-card-meta">${assignee?`<b>${assignee.name}</b>${isRunning?' <span style="color:#6c63ff;font-size:9px">● live</span>':''} · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div>
+    </div>`
+  }
+
+  const colsHTML=BOS_STATUSES.map(st=>{
+    const cards=filtered.filter(i=>i.status===st)
+    return`<div class="bos-col"><div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]}<span style="font-weight:400;opacity:.6;margin-left:6px">${cards.length}</span></div>${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}</div>`
+  }).join('')
+
+  const statsHTML=`<div class="bos-stats"><div class="bos-stat"><b style="color:#6c63ff">${inProg}</b> in progress</div><div class="bos-stat"><b style="color:var(--danger)">${blocked}</b> blocked</div><div class="bos-stat"><b style="color:var(--text2)">${backlog}</b> backlog</div><div class="bos-stat"><b style="color:var(--accent)">${done}</b> done</div><div class="bos-stat" style="margin-left:auto;color:var(--text3)">${filtered.length}/${allIssues.length}</div></div>`
+  const ts=new Date(_bosData.ts).toLocaleTimeString('bs')
+
+  document.getElementById('main-content').innerHTML=`
+    <div class="bos-co-tabs">${coTabsHTML}<span class="bos-refresh">↻ ${ts}</span></div>
+    ${viewToggle}
+    <div class="bos-filters"><div class="bos-filter-row"><span class="bos-filter-label">Agent</span><div class="bos-filter-pills">${agentPills}</div></div></div>
+    ${statsHTML}
+    <div class="bos-board">${colsHTML}</div>`
+}
+
+async function _bosChatSend(){
+  if(_bosChatLoading) return
+  const input=document.getElementById('bos-chat-in')
+  if(!input) return
+  const text=input.value.trim()
+  if(!text) return
+  input.value=''
+  _bosChatLoading=true
+  if(!_bosChatMsgs[_bosDetailId]) _bosChatMsgs[_bosDetailId]=[]
+  _bosChatMsgs[_bosDetailId].push({role:'user',text,ts:Date.now()})
+  _bosChatAppendMsg('user', text)
+  const typingId='bos-typing-'+Date.now()
+  const chatEl=document.getElementById('bos-chat-msgs')
+  if(chatEl){
+    const t=document.createElement('div')
+    t.id=typingId;t.className='bos-chat-msg iris'
+    t.innerHTML='<span class="bos-chat-sender">🤖 IRIS</span><span class="bos-chat-text" style="opacity:.5;font-style:italic">tipka...</span>'
+    chatEl.appendChild(t);chatEl.scrollTop=chatEl.scrollHeight
+  }
+  const btn=document.getElementById('bos-chat-btn')
+  if(btn){btn.disabled=true;btn.textContent='...'}
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||{}
+  const allIssues=(co.issues||[]).filter(i=>i.projectId===_bosDetailId)
+  const projMap=_bosProjectMap(co)
+  const proj=projMap[_bosDetailId]||{id:_bosDetailId,name:BOS_KNOWN_PROJECTS[_bosDetailId]||'Projekat'}
+  try{
+    const r=await fetch(BASE+'/api/paperclip/project-chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({project_id:_bosDetailId,project_name:proj.name,company:_bosCompany,workspace_id:'00000000-0000-0000-0001-000000000001',message:text,issues:allIssues.map(i=>({id:i.id,title:i.title,status:i.status,priority:i.priority,identifier:i.identifier,description:(i.description||'').slice(0,500),assignee:(co.agents||[]).find(a=>a.id===i.assigneeAgentId)?.name||null,updatedAt:i.updatedAt||i.createdAt||null}))}),
+      signal:AbortSignal.timeout(30000)
+    })
+    const resp=r.ok?await r.json():null
+    const irisText=resp?.response||resp?.text||(resp?.error?'Greška: '+resp.error:'Nema odgovora.')
+    _bosChatMsgs[_bosDetailId].push({role:'iris',text:irisText,ts:Date.now()})
+    document.getElementById(typingId)?.remove()
+    _bosChatAppendMsg('iris', irisText)
+    if(resp?.actions_taken&&resp.actions_taken.length>0){
+      const fresh=await api('/api/paperclip/board')
+      if(fresh?.ok) _bosData=fresh
+      _bosRefreshKanbanCols()
+    }
+  }catch(e){
+    document.getElementById(typingId)?.remove()
+    const errText='Greška: '+(e.name==='TimeoutError'?'IRIS nije odgovorio na vrijeme (timeout)':e.message)
+    _bosChatMsgs[_bosDetailId].push({role:'iris',text:errText,ts:Date.now()})
+    _bosChatAppendMsg('iris', errText)
+  }
+  _bosChatLoading=false
+  const btn2=document.getElementById('bos-chat-btn')
+  if(btn2){btn2.disabled=false;btn2.textContent='Pošalji →'}
+}
+
+function _bosChatAppendMsg(role, text){
+  const chatEl=document.getElementById('bos-chat-msgs')
+  if(!chatEl) return
+  const empty=chatEl.querySelector('.bos-chat-empty')
+  if(empty) empty.remove()
+  const div=document.createElement('div')
+  div.className='bos-chat-msg '+role
+  const escaped=(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+  div.innerHTML=`<span class="bos-chat-sender">${role==='iris'?'🤖 IRIS':'👤 Ti'}</span><span class="bos-chat-text">${escaped}</span>`
+  chatEl.appendChild(div);chatEl.scrollTop=chatEl.scrollHeight
+}
+
+function _bosRefreshKanbanCols(){
+  if(!_bosData||!_bosDetailId) return
+  const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||{}
+  const allIssues=co.issues||[], agents=co.agents||[]
+  const projIssues=allIssues.filter(i=>i.projectId===_bosDetailId)
+  function issueCard(i){
+    const pri=i.priority||'medium';const assignee=agents.find(a=>a.id===i.assigneeAgentId);const isRunning=i.status==='in_progress'&&assignee?.status==='running';const parent=i.parentId?allIssues.find(p=>p.id===i.parentId):null;const title=(i.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    return`<div class="bos-card${isRunning?' running':''}"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px"><span class="bos-id ${pri}">${i.identifier||'—'}</span></div><div class="bos-card-title">${title}</div><div class="bos-card-meta">${assignee?`<b>${assignee.name}</b>${isRunning?' <span style="color:#6c63ff;font-size:9px">● live</span>':''} · `:''}${parent?`↳ ${parent.identifier} · `:''}${fmtAge(i.updatedAt||i.createdAt)}</div></div>`
+  }
+  const board=document.querySelector('.bos-board')
+  if(board) board.innerHTML=BOS_STATUSES.map(st=>{const cards=projIssues.filter(i=>i.status===st);return`<div class="bos-col"><div class="bos-col-hd ${st}">${BOS_STATUS_LABELS[st]}<span style="font-weight:400;opacity:.6;margin-left:6px">${cards.length}</span></div>${cards.length?cards.map(issueCard).join(''):'<div class="bos-empty">—</div>'}</div>`}).join('')
+}
+
+function _bosCoSwitch(n){_bosCompany=n;_bosDetailId=null;_bosView='projects';renderBuildOS()}
+function _bosSetView(v){_bosView=v;_bosRender()}
+function _bosOpenDetail(id){_bosDetailId=id;_bosView='detail';_bosRender()}
+function _bosGoBack(){_bosView='projects';_bosDetailId=null;_bosRender()}
+function _bosAgentSwitch(id){_bosAgent=id;_bosRender()}
+function fmtAge(ts){if(!ts)return'';const d=Math.floor((Date.now()-new Date(ts))/60000);return d<1?'upravo':d<60?d+'m':Math.floor(d/60)+'h'}
 
 async function renderRegistry(){
   const data=await api('/api/registry/summary')||SIM.registry
