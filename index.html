@@ -2013,6 +2013,18 @@ function _bosProjectMap(co){
   return map
 }
 
+// Known project links (Railway / GitHub) — supplement what's in issue descriptions
+const BOS_PROJ_LINKS={
+  'Onboarding':{},
+  'Viber Outreach Dashboard':{railway:'https://viber-outreach-production.up.railway.app'},
+  'AI Newsletter Platform':{railway:'https://newsletter-platform-production.up.railway.app',github:'https://github.com/AydeGitProduction/newsletter-platform'},
+  'AI WhatsApp Outreach Platform':{railway:'https://web-production-3f28.up.railway.app'},
+  'IRIS → Paperclip Integration':{railway:'https://iris-api-production-bd20.up.railway.app',github:'https://github.com/AydeGitProduction/iris-api'},
+  'IRIS Paperclip Dashboard':{railway:'https://iris-api-production-bd20.up.railway.app',github:'https://github.com/AydeGitProduction/iris-dashboard'},
+  'AI Viber Outreach Platform v2':{github:'https://github.com/AydeGitProduction/viber-platform-v2'},
+  'Office Food Ordering Platform':{github:'https://github.com/AydeGitProduction/office-food-platform'},
+}
+
 function _bosRenderProjects(){
   const co=(_bosData.companies||[]).find(c=>c.name===_bosCompany)||(_bosData.companies||[])[0]
   if(!co){document.getElementById('main-content').innerHTML='<div style="color:var(--text3);padding:20px">Nema podataka.</div>';return}
@@ -2025,6 +2037,17 @@ function _bosRenderProjects(){
 
   const coTabsHTML=BOS_COMPANIES.map(n=>`<div class="bos-co-tab${_bosCompany===n?' active':''}" onclick="_bosCoSwitch('${n}')">${n}</div>`).join('')
   const viewToggle=`<div class="bos-view-toggle"><span class="bos-vtab active">📦 Projekti</span><span class="bos-vtab" onclick="_bosSetView('board')">📋 Board</span></div>`
+
+  // Global blocked banner — shows ALL blocked issues (incl. those with no project)
+  const allBlocked=allIssues.filter(i=>i.status==='blocked')
+  const blockedBanner=allBlocked.length?`<div style="margin:10px 24px 0;padding:10px 14px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:6px;display:flex;flex-direction:column;gap:6px">
+    <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#ef4444">⚠ ${allBlocked.length} Blokirano</div>
+    <div style="display:flex;flex-direction:column;gap:4px">${allBlocked.map(i=>{
+      const proj=i.projectId?projMap[i.projectId]:null
+      const projLabel=proj?` <span style="color:var(--text3);font-size:9px">[${proj.name}]</span>`:''
+      return`<div style="font-size:11px;color:var(--text2)"><b style="color:#ef4444;font-family:var(--mono)">${i.identifier}</b> ${(i.title||'').slice(0,55)}${projLabel}</div>`
+    }).join('')}</div>
+  </div>`:''
 
   function projCard(proj){
     const issues=allIssues.filter(i=>i.projectId===proj.id)
@@ -2039,7 +2062,11 @@ function _bosRenderProjects(){
     else if(done===total&&total>0){dot='#22c55e';lbl='Završen'}
     else if(backlog>0){dot='#f59e0b';lbl='Planiranje'}
     const pct=total>0?Math.round(done/total*100):0
-    const{railway,github}=_bosExtractLinks(issues)
+    // Merge extracted links with known static links
+    const extracted=_bosExtractLinks(issues)
+    const known=BOS_PROJ_LINKS[proj.name]||{}
+    const railway=extracted.railway||known.railway||null
+    const github=extracted.github||known.github||null
     const linksHTML=[
       railway?`<a href="${railway}" target="_blank" class="bos-deploy-link rail" onclick="event.stopPropagation()">🚂 Railway</a>`:'',
       github ?`<a href="${github}"  target="_blank" class="bos-deploy-link git"  onclick="event.stopPropagation()">🐙 GitHub</a>`:'',
@@ -2055,10 +2082,14 @@ function _bosRenderProjects(){
     </div>`
   }
 
+  // "Bez projekta" card — show blocked count prominently
+  const noProjBlocked=noProj.filter(i=>i.status==='blocked').length
+  const noProjDot=noProjBlocked>0?'#ef4444':'#64748b'
+  const noProjLbl=noProjBlocked>0?`⚠ ${noProjBlocked} blokirano`:'Nezavisni taskovi'
   const noProjCard=noProj.length?`<div class="bos-proj-card" onclick="_bosSetView('board')">
-    <div class="bos-proj-card-hd"><span class="bos-proj-status-dot" style="background:#64748b"></span><span class="bos-proj-status-label">Nezavisni taskovi</span></div>
+    <div class="bos-proj-card-hd"><span class="bos-proj-status-dot" style="background:${noProjDot}"></span><span class="bos-proj-status-label" style="color:${noProjBlocked?'#ef4444':''}">Nezavisni taskovi</span></div>
     <div class="bos-proj-name">Bez projekta</div>
-    <div class="bos-proj-stats"><span style="color:var(--text3)">${noProj.length} issue${noProj.length===1?'':'a'}</span></div>
+    <div class="bos-proj-stats"><span style="color:#ef4444">⚠ ${noProjBlocked}</span><span style="color:var(--text3)">${noProj.length} issue${noProj.length===1?'':'a'}</span></div>
     <div class="bos-proj-open-btn">Otvori board →</div>
   </div>`:''
 
@@ -2072,6 +2103,7 @@ function _bosRenderProjects(){
   document.getElementById('main-content').innerHTML=`
     <div class="bos-co-tabs">${coTabsHTML}<span class="bos-refresh">↻ ${ts}</span></div>
     ${viewToggle}
+    ${blockedBanner}
     <div class="bos-proj-grid">${cardsHTML}</div>
     ${_bosEventFeedHTML(null)}`
 }
