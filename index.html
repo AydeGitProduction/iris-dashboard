@@ -1875,7 +1875,12 @@ async function _bosForceFetch(){
 }
 
 async function _bosFetchAndRender(){
-  const data=await api('/api/paperclip/board')
+  // Use 45s timeout for board (server-side cache warms after first hit, then <1s)
+  let data=null
+  try{
+    const r=await fetch(BASE+'/api/paperclip/board',{signal:AbortSignal.timeout(45000)})
+    if(r.ok) data=await r.json()
+  }catch(e){data=null}
   if(!data||!data.ok){
     document.getElementById('main-content').innerHTML=`<div style="color:var(--danger);padding:20px;font-size:13px">⚠️ Paperclip board nedostupan: ${data?.error||'IRIS API error'}</div>`
     return
@@ -3301,7 +3306,11 @@ function checkReminders(){
   }
 }
 
-checkConn().then(()=>renderDashboard())
+checkConn().then(()=>{
+  renderDashboard()
+  // Warm up board cache in background so BuildOS loads instantly on first click
+  setTimeout(()=>fetch(BASE+'/api/paperclip/board',{signal:AbortSignal.timeout(60000)}).then(r=>r.json()).then(d=>{if(d?.ok)_bosData=d}).catch(()=>{}),2000)
+})
 setInterval(()=>{if(currentSection==='dashboard'||currentSection==='feed')loadSection(currentSection)},30000)
 setInterval(checkReminders,60000)
 // Also check on tasks page load
