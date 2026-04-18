@@ -1172,9 +1172,9 @@ async function renderContacts(){
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje kontakata…</div></div>'
 
   // Primary source: HubSpot via Railway proxy
-  const saasResp = await fetch(BASE+'/api/contacts?workspace_id='+WS+'&limit=100').then(r=>r.ok?r.json():null).catch(()=>null)
+  const saasResp = await fetch(BASE+'/api/saas/contacts?limit=100').then(r=>r.ok?r.json():null).catch(()=>null)
   let hsContacts = (saasResp?.contacts || []).filter(c => {
-    const nm = (c.display_name||c.name)||''
+    const nm = c.name||''
     if(/^test\b/i.test(nm)) return false
     if(/^(Block1|FreshUser|NewUser|CtxTest|T[0-9]Test|T[0-9]Memory|TestUser)/i.test(nm)) return false
     if(['test','ctxtest'].includes(nm.toLowerCase())) return false
@@ -1192,12 +1192,11 @@ async function renderContacts(){
 
   // Merge HubSpot + Supabase rows
   const rows = hsContacts.map(c => {
-    const _hsId = c.hs_id || c.metadata?.hs_contact_id;
-    const sb = (_hsId ? sbByHsId[String(_hsId)] : null) || (c.email ? sbByEmail[c.email.toLowerCase()] : null) || {}
+    const sb = sbByHsId[String(c.hs_id)] || (c.email ? sbByEmail[c.email.toLowerCase()] : null) || {}
     return {
-      id:            sb.id || c.id || null,
+      id:            sb.id || null,
       hs_id:         c.hs_id,
-      display_name:  c.display_name||c.name || sb.display_name || '—',
+      display_name:  c.name || sb.display_name || '—',
       email:         c.email || sb.email || null,
       phone:         c.phone || sb.phone || null,
       company:       c.company || null,
@@ -1209,14 +1208,17 @@ async function renderContacts(){
   })
 
   // --- Separate webchat contacts from sbContacts ---
+  // Anonymous visitors: name starts with "Posjetilac " or metadata.anonymous = true
   const anonVisitors = sbContacts.filter(c => {
     const nm = c.display_name || ''
     return nm.startsWith('Posjetilac ') || c.metadata?.anonymous === true
   })
+  // Identified webchat contacts: website channel but NOT anonymous
   const identifiedWebchat = sbContacts.filter(c => {
     if ((c.display_name||'').startsWith('Posjetilac ') || c.metadata?.anonymous) return false
     return c.channel_primary === 'website' || c.metadata?.source === 'webchat_ayde_bot'
   })
+  // Add identified webchat contacts to main rows (if not already merged via HubSpot)
   const rowIdSet = new Set(rows.map(r => r.id).filter(Boolean))
   const rowEmailSet = new Set(rows.map(r => r.email?.toLowerCase()).filter(Boolean))
   for(const c of identifiedWebchat){
@@ -1239,9 +1241,8 @@ async function renderContacts(){
   function render(){
     const q=_search.toLowerCase()
     let filtered=rows.filter(c=>{
-      const nm=c.display_name||''
-      if(nm.startsWith('Posjetilac ')) return false
       if(!q) return true
+      const nm=c.display_name||''
       return nm.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)
     })
     filtered=filtered.slice().sort((a,b)=>{
@@ -1280,6 +1281,9 @@ async function renderContacts(){
       </tr>`
     }).join('')
 
+    // Always rebuild full HTML — preserve search value + restore focus
+    const wasFocused = document.activeElement?.id === 'hs-search-input'
+
     // Build visitors HTML (anonymous webchat)
     const vq=_search.toLowerCase()
     const vFiltered=anonVisitors.filter(c=>{
@@ -1290,6 +1294,7 @@ async function renderContacts(){
       const nm=c.display_name||'—', ini=initials(nm), col=avatarColor(nm)
       const sid=c.metadata?.session_id||''
       const rowClick=c.id?`data-cid="${c.id}" data-cnm="${nm.replace(/"/g,'&quot;')}"`:''
+      const msgCount=c.metadata?.msg_count||''
       return `<tr class="${c.id?'hs-clickable':''}" ${rowClick}>
         <td class="hs-td">
           <div class="hs-name-cell">
@@ -1306,18 +1311,23 @@ async function renderContacts(){
       </tr>`
     }).join('')
 
-    // Always rebuild full HTML — preserve search value + restore focus
-    const wasFocused = document.activeElement?.id === 'hs-search-input'
+    // Update page title with split counts based on active tab
+    if(_tab==='contacts'){
+      document.getElementById('page-title').textContent=`Contacts · ${rows.length} kontakata`
+    } else {
+      document.getElementById('page-title').textContent=`Contacts · ${anonVisitors.length} posjetilaca`
+    }
 
     document.getElementById('main-content').innerHTML=`
       <div class="hs-wrap">
-        <div style="display:flex;gap:0;margin-bottom:0;border-bottom:1px solid var(--border)">
-          <button id="tab-contacts" style="background:none;border:none;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid ${_tab==='contacts'?'var(--accent)':'transparent'};color:${_tab==='contacts'?'var(--accent)':'var(--text2)'};margin-bottom:-1px">
-            Kontakti <span style="background:var(--card2);padding:1px 7px;border-radius:10px;font-size:11px;margin-left:4px">${rows.length}</span>
+        <div style="display:flex;gap:0;margin-bottom:0;border-bottom:1px solid var(--border);align-items:center">
+          <button id="tab-contacts" onclick="" style="background:none;border:none;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid ${_tab==='contacts'?'var(--accent)':'transparent'};color:${_tab==='contacts'?'var(--accent)':'var(--text2)'};margin-bottom:-1px">
+            Kontakti <span style="background:${_tab==='contacts'?'rgba(29,158,117,0.2)':'var(--bg3)'};color:${_tab==='contacts'?'var(--accent)':'var(--text3)'};padding:1px 7px;border-radius:10px;font-size:11px;margin-left:4px;font-family:var(--mono)">${rows.length}</span>
           </button>
-          <button id="tab-visitors" style="background:none;border:none;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid ${_tab==='visitors'?'var(--accent)':'transparent'};color:${_tab==='visitors'?'var(--accent)':'var(--text2)'};margin-bottom:-1px">
-            Posjetilaci sa weba <span style="background:var(--card2);padding:1px 7px;border-radius:10px;font-size:11px;margin-left:4px">${anonVisitors.length}</span>
+          <button id="tab-visitors" onclick="" style="background:none;border:none;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid ${_tab==='visitors'?'var(--accent)':'transparent'};color:${_tab==='visitors'?'var(--accent)':'var(--text2)'};margin-bottom:-1px">
+            Posjetilaci sa weba <span style="background:${_tab==='visitors'?'rgba(74,158,255,0.2)':'var(--bg3)'};color:${_tab==='visitors'?'#4a9eff':'var(--text3)'};padding:1px 7px;border-radius:10px;font-size:11px;margin-left:4px;font-family:var(--mono)">${anonVisitors.length}</span>
           </button>
+          <span style="margin-left:auto;margin-right:16px;font-size:11px;color:var(--text3);font-family:var(--mono)">${rows.length} kontakata · ${anonVisitors.length} posjetilaca</span>
         </div>
         <div class="hs-toolbar" style="margin-top:12px">
           <input class="hs-search" id="hs-search-input" placeholder="${_tab==='visitors'?'Pretraži posjetioce…':'Pretraži kontakte…'}"
@@ -1376,6 +1386,7 @@ async function renderContacts(){
 
     if(_tab==='contacts'){
       document.getElementById('hs-create-btn')?.addEventListener('click',()=>openNewContactModal())
+      // Sort + pagination + row clicks — all via delegation
       document.getElementById('hs-contacts-table').addEventListener('click',e=>{
         if(e.target.closest('[data-stop]')) return
         const sortTh=e.target.closest('th[data-sort]')
@@ -1387,6 +1398,7 @@ async function renderContacts(){
         const btn=e.target.closest('[data-pg]');if(btn){_page=+btn.dataset.pg;render()}
       })
     } else {
+      // Visitors table row clicks
       document.getElementById('hs-visitors-table')?.addEventListener('click',e=>{
         const sortTh=e.target.closest('th[data-sort]')
         if(sortTh){const col=sortTh.dataset.sort;if(_sortCol===col)_sortDir*=-1;else{_sortCol=col;_sortDir=-1};render();return}
