@@ -3061,15 +3061,21 @@ async function renderContactDetail(contactId, contactName){
     ).then(r=>Array.isArray(r)?r.reverse():[])
   }
 
+  // Fetch webchat messages from iris_messages (ayde.bot wizard conversations)
+  const webchatMessages = await sbGetRaw('iris_messages',
+    `workspace_id=eq.${WS}&contact_id=eq.${contactId}&order=created_at.asc&limit=100&select=role,content,created_at,session_id`
+  ).then(r=>Array.isArray(r)?r:[])
+
   const c = contactArr[0] || {}
   const fullName = c.display_name || c.name || [c.first_name,c.last_name].filter(Boolean).join(' ') || contactName || '?'
   const initials = fullName.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()
   const avColor = (()=>{const p=['#e8643c','#c0392b','#8e44ad','#2980b9','#27ae60','#d35400','#16a085'];let h=0;for(let i=0;i<fullName.length;i++)h=(h*31+fullName.charCodeAt(i))&0xffffffff;return p[Math.abs(h)%p.length]})()
 
-  // Build unified activity feed
+  // Build unified activity feed (Telegram + webchat + memories + calendar)
   const activities = [
     ...memories.map(m=>({type:'memory',date:m.created_at,title:m.memory_type==='meeting'?'Sastanak zabilježen':m.memory_type==='email'?'Email poslan':'IRIS zabilješka',note:m.content,icon:'🧠'})),
     ...chatMessages.filter(m=>(m.content_text||'').trim()).map(m=>({type:'chat',date:m.created_at,title:(m.role==='user'||m.direction==='inbound')?fullName+' poslao/la poruku':'IRIS odgovorila',note:m.content_text,icon:m.role==='user'||m.direction==='inbound'?'💬':'🤖'})),
+    ...webchatMessages.filter(m=>(m.content||'').trim()).map(m=>({type:'chat',date:m.created_at,title:m.role==='user'?fullName+' (web)':'IRIS odgovorila (web)',note:m.content,icon:m.role==='user'?'💬':'🤖'})),
     ...calEvents.map(ev=>({type:'event',date:ev.start_time,title:'Sastanak: '+(ev.title||'Bez naslova'),note:ev.description||null,icon:'📅'}))
   ].filter(a=>a.date).sort((a,b)=>new Date(b.date)-new Date(a.date))
 
