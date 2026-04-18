@@ -1208,8 +1208,25 @@ async function renderContacts(){
     }
   })
 
+  // --- Separate webchat contacts from sbContacts ---
+  const anonVisitors = sbContacts.filter(c => {
+    const nm = c.display_name || ''
+    return nm.startsWith('Posjetilac ') || c.metadata?.anonymous === true
+  })
+  const identifiedWebchat = sbContacts.filter(c => {
+    if ((c.display_name||'').startsWith('Posjetilac ') || c.metadata?.anonymous) return false
+    return c.channel_primary === 'website' || c.metadata?.source === 'webchat_ayde_bot'
+  })
+  const rowIdSet = new Set(rows.map(r => r.id).filter(Boolean))
+  const rowEmailSet = new Set(rows.map(r => r.email?.toLowerCase()).filter(Boolean))
+  for(const c of identifiedWebchat){
+    if(rowIdSet.has(c.id)) continue
+    if(c.email && rowEmailSet.has(c.email.toLowerCase())) continue
+    rows.push({ id:c.id, hs_id:null, display_name:c.display_name||'—', email:c.email||null, phone:c.phone||null, company:null, role:null, trust_level:c.trust_level||'stranger', last_seen_at:c.last_seen_at||null, channel_primary:'website' })
+  }
+
   // Sort state
-  let _sortCol='last_seen_at', _sortDir=-1, _search='', _page=0
+  let _sortCol='last_seen_at', _sortDir=-1, _search='', _page=0, _tab='contacts'
   const PER_PAGE=25
 
   function initials(nm){ return (nm||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?' }
@@ -1262,18 +1279,53 @@ async function renderContacts(){
       </tr>`
     }).join('')
 
+    // Build visitors HTML (anonymous webchat)
+    const vq=_search.toLowerCase()
+    const vFiltered=anonVisitors.filter(c=>{
+      if(!vq) return true
+      return (c.display_name||'').toLowerCase().includes(vq)||(c.metadata?.session_id||'').toLowerCase().includes(vq)
+    })
+    const vRowsHtml=vFiltered.slice(0,100).map(c=>{
+      const nm=c.display_name||'—', ini=initials(nm), col=avatarColor(nm)
+      const sid=c.metadata?.session_id||''
+      const rowClick=c.id?`data-cid="${c.id}" data-cnm="${nm.replace(/"/g,'&quot;')}"`:''
+      return `<tr class="${c.id?'hs-clickable':''}" ${rowClick}>
+        <td class="hs-td">
+          <div class="hs-name-cell">
+            <div class="hs-avatar" style="background:${col};font-size:11px">${ini}</div>
+            <div>
+              <div class="hs-name-text">${nm}</div>
+              ${sid?`<div class="hs-sub" style="font-size:10px;color:var(--text3);font-family:monospace">${sid.slice(0,8)}…</div>`:''}
+            </div>
+          </div>
+        </td>
+        <td class="hs-td" style="color:var(--text3)">Anoniman posjetilac</td>
+        <td class="hs-td" style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
+        <td class="hs-td"><span style="background:rgba(99,130,255,0.15);color:#6382ff;font-size:10px;padding:2px 8px;border-radius:20px">web chat</span></td>
+      </tr>`
+    }).join('')
+
     // Always rebuild full HTML — preserve search value + restore focus
     const wasFocused = document.activeElement?.id === 'hs-search-input'
 
     document.getElementById('main-content').innerHTML=`
       <div class="hs-wrap">
-        <div class="hs-toolbar">
-          <input class="hs-search" id="hs-search-input" placeholder="Pretraži kontakte…"
+        <div style="display:flex;gap:0;margin-bottom:0;border-bottom:1px solid var(--border)">
+          <button id="tab-contacts" style="background:none;border:none;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid ${_tab==='contacts'?'var(--accent)':'transparent'};color:${_tab==='contacts'?'var(--accent)':'var(--text2)'};margin-bottom:-1px">
+            Kontakti <span style="background:var(--card2);padding:1px 7px;border-radius:10px;font-size:11px;margin-left:4px">${rows.length}</span>
+          </button>
+          <button id="tab-visitors" style="background:none;border:none;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid ${_tab==='visitors'?'var(--accent)':'transparent'};color:${_tab==='visitors'?'var(--accent)':'var(--text2)'};margin-bottom:-1px">
+            Posjetilaci sa weba <span style="background:var(--card2);padding:1px 7px;border-radius:10px;font-size:11px;margin-left:4px">${anonVisitors.length}</span>
+          </button>
+        </div>
+        <div class="hs-toolbar" style="margin-top:12px">
+          <input class="hs-search" id="hs-search-input" placeholder="${_tab==='visitors'?'Pretraži posjetioce…':'Pretraži kontakte…'}"
             autocomplete="off" spellcheck="false"
             value="${_search.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}">
           <button class="hs-filter-btn">☰ Filter</button>
-          <button class="hs-create-btn" id="hs-create-btn">+ Kreiraj kontakt</button>
+          ${_tab==='contacts'?`<button class="hs-create-btn" id="hs-create-btn">+ Kreiraj kontakt</button>`:''}
         </div>
+        ${_tab==='contacts'?`
         <div class="hs-table-wrap">
           <table class="hs-table" id="hs-contacts-table">
             <thead><tr>
@@ -1295,8 +1347,24 @@ async function renderContacts(){
               ${_page<pages-1?`<button class="hs-page-btn" data-pg="${_page+1}">›</button>`:''}
             </div>
           </div>
-        </div>
+        </div>`:`
+        <div class="hs-table-wrap">
+          <table class="hs-table" id="hs-visitors-table">
+            <thead><tr>
+              ${thH('display_name','Posjetilac')}
+              <th>Tip</th>
+              ${thH('last_seen_at','Zadnji posjet')}
+              <th>Kanal</th>
+            </tr></thead>
+            <tbody>${vRowsHtml||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--text3)">Nema anonimnih posjetilaca</td></tr>'}</tbody>
+          </table>
+          <div class="hs-footer"><span>${vFiltered.length} posjetilaca</span></div>
+        </div>`}
       </div>`
+
+    // Tab buttons
+    document.getElementById('tab-contacts')?.addEventListener('click',()=>{ _tab='contacts'; _page=0; render() })
+    document.getElementById('tab-visitors')?.addEventListener('click',()=>{ _tab='visitors'; _page=0; render() })
 
     // Search input — direct event listener
     const si = document.getElementById('hs-search-input')
@@ -1305,19 +1373,26 @@ async function renderContacts(){
     // Restore focus after rebuild so user can keep typing
     if(wasFocused){ si.focus(); const l=si.value.length; si.setSelectionRange(l,l) }
 
-    document.getElementById('hs-create-btn').addEventListener('click',()=>openNewContactModal())
-
-    // Sort + pagination + row clicks — all via delegation
-    document.getElementById('hs-contacts-table').addEventListener('click',e=>{
-      if(e.target.closest('[data-stop]')) return
-      const sortTh=e.target.closest('th[data-sort]')
-      if(sortTh){const col=sortTh.dataset.sort;if(_sortCol===col)_sortDir*=-1;else{_sortCol=col;_sortDir=-1};render();return}
-      const tr=e.target.closest('tr.hs-clickable')
-      if(tr&&tr.dataset.cid) renderContactDetail(tr.dataset.cid,tr.dataset.cnm)
-    })
-    document.querySelector('.hs-page-btns')?.addEventListener('click',e=>{
-      const btn=e.target.closest('[data-pg]');if(btn){_page=+btn.dataset.pg;render()}
-    })
+    if(_tab==='contacts'){
+      document.getElementById('hs-create-btn')?.addEventListener('click',()=>openNewContactModal())
+      document.getElementById('hs-contacts-table').addEventListener('click',e=>{
+        if(e.target.closest('[data-stop]')) return
+        const sortTh=e.target.closest('th[data-sort]')
+        if(sortTh){const col=sortTh.dataset.sort;if(_sortCol===col)_sortDir*=-1;else{_sortCol=col;_sortDir=-1};render();return}
+        const tr=e.target.closest('tr.hs-clickable')
+        if(tr&&tr.dataset.cid) renderContactDetail(tr.dataset.cid,tr.dataset.cnm)
+      })
+      document.querySelector('.hs-page-btns')?.addEventListener('click',e=>{
+        const btn=e.target.closest('[data-pg]');if(btn){_page=+btn.dataset.pg;render()}
+      })
+    } else {
+      document.getElementById('hs-visitors-table')?.addEventListener('click',e=>{
+        const sortTh=e.target.closest('th[data-sort]')
+        if(sortTh){const col=sortTh.dataset.sort;if(_sortCol===col)_sortDir*=-1;else{_sortCol=col;_sortDir=-1};render();return}
+        const tr=e.target.closest('tr.hs-clickable')
+        if(tr&&tr.dataset.cid) renderContactDetail(tr.dataset.cid,tr.dataset.cnm)
+      })
+    }
   }
 
   render()
