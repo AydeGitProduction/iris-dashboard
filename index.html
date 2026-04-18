@@ -1174,7 +1174,7 @@ async function renderContacts(){
   // Primary source: HubSpot via Railway proxy
   const saasResp = await fetch(BASE+'/api/contacts?workspace_id='+WS+'&limit=100').then(r=>r.ok?r.json():null).catch(()=>null)
   let hsContacts = (saasResp?.contacts || []).filter(c => {
-    const nm = c.name||''
+    const nm = (c.display_name||c.name)||''
     if(/^test\b/i.test(nm)) return false
     if(/^(Block1|FreshUser|NewUser|CtxTest|T[0-9]Test|T[0-9]Memory|TestUser)/i.test(nm)) return false
     if(['test','ctxtest'].includes(nm.toLowerCase())) return false
@@ -1196,7 +1196,7 @@ async function renderContacts(){
     return {
       id:            sb.id || null,
       hs_id:         c.hs_id,
-      display_name:  c.name || sb.display_name || '—',
+      display_name:  c.display_name||c.name || sb.display_name || '—',
       email:         c.email || sb.email || null,
       phone:         c.phone || sb.phone || null,
       company:       c.company || null,
