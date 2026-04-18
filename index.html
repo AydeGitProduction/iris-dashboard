@@ -1239,8 +1239,9 @@ async function renderContacts(){
   function render(){
     const q=_search.toLowerCase()
     let filtered=rows.filter(c=>{
-      if(!q) return true
       const nm=c.display_name||''
+      if(nm.startsWith('Posjetilac ')) return false
+      if(!q) return true
       return nm.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)
     })
     filtered=filtered.slice().sort((a,b)=>{
