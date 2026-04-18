@@ -1192,9 +1192,10 @@ async function renderContacts(){
 
   // Merge HubSpot + Supabase rows
   const rows = hsContacts.map(c => {
-    const sb = sbByHsId[String(c.hs_id)] || (c.email ? sbByEmail[c.email.toLowerCase()] : null) || {}
+    const _hsId = c.hs_id || c.metadata?.hs_contact_id;
+    const sb = (_hsId ? sbByHsId[String(_hsId)] : null) || (c.email ? sbByEmail[c.email.toLowerCase()] : null) || {}
     return {
-      id:            sb.id || null,
+      id:            sb.id || c.id || null,
       hs_id:         c.hs_id,
       display_name:  c.display_name||c.name || sb.display_name || '—',
       email:         c.email || sb.email || null,
