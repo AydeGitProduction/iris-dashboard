@@ -1175,9 +1175,13 @@ async function renderContacts(){
   const saasResp = await fetch(BASE+'/api/saas/contacts?limit=100').then(r=>r.ok?r.json():null).catch(()=>null)
   let hsContacts = (saasResp?.contacts || []).filter(c => {
     const nm = c.name||''
+    // Exclude test contacts
     if(/^test\b/i.test(nm)) return false
     if(/^(Block1|FreshUser|NewUser|CtxTest|T[0-9]Test|T[0-9]Memory|TestUser)/i.test(nm)) return false
     if(['test','ctxtest'].includes(nm.toLowerCase())) return false
+    // Exclude anonymous HubSpot tracking contacts (created by pixel, not identified)
+    if(/^website visitor$/i.test(nm.trim())) return false
+    if(!nm.trim() && !c.email) return false   // no name AND no email = anonymous
     return nm.length > 0
   })
 
