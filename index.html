@@ -1167,12 +1167,12 @@ async function renderHubSpotContacts(){
     </div>`
 }
 
-async function renderContacts(){
+async async function renderContacts(){
   document.getElementById('topbar-actions').innerHTML=''
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje kontakata…</div></div>'
 
   // Primary source: HubSpot via Railway proxy
-  const saasResp = await fetch(BASE+'/api/saas/contacts?limit=100').then(r=>r.ok?r.json():null).catch(()=>null)
+  const saasResp = await fetch(BASE+'/api/contacts?workspace_id='+WS+'&limit=100').then(r=>r.ok?r.json():null).catch(()=>null)
   let hsContacts = (saasResp?.contacts || []).filter(c => {
     const nm = c.name||''
     if(/^test\b/i.test(nm)) return false
