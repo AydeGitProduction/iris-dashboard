@@ -1187,16 +1187,25 @@ async function renderContacts(){
 
   // Supplement: Supabase for trust_level, last_seen_at, telegram_id, IRIS id
   const sbContacts = await sbGet('iris_contacts','order=last_seen_at.desc.nullslast&limit=500&select=id,display_name,email,phone,trust_level,last_seen_at,channel_primary,metadata') || []
-  const sbByEmail = {}; const sbByHsId = {}
+  const sbByEmail = {}; const sbByHsId = {}; const sbByName = {}
   for(const sb of sbContacts){
     if(sb.email) sbByEmail[sb.email.toLowerCase()] = sb
     const hsId = sb.metadata?.hs_contact_id
     if(hsId) sbByHsId[String(hsId)] = sb
+    // Name lookup — only index non-anonymous contacts with a real name
+    const nm = (sb.display_name||'').trim()
+    if(nm && !nm.startsWith('Posjetilac ')) {
+      const key = nm.toLowerCase()
+      // Keep whichever has email (more reliable), or the first found
+      if(!sbByName[key] || (!sbByName[key].email && sb.email)) sbByName[key] = sb
+    }
   }
 
   // Merge HubSpot + Supabase rows
   const rows = hsContacts.map(c => {
-    const sb = sbByHsId[String(c.hs_id)] || (c.email ? sbByEmail[c.email.toLowerCase()] : null) || {}
+    // Lookup order: by hs_contact_id in metadata → by email → by name (last resort for legacy contacts)
+    const nm = c.name || ''
+    const sb = sbByHsId[String(c.hs_id)] || (c.email ? sbByEmail[c.email.toLowerCase()] : null) || (nm ? sbByName[nm.toLowerCase()] : null) || {}
     return {
       id:            sb.id || null,
       hs_id:         c.hs_id,
@@ -1212,14 +1221,17 @@ async function renderContacts(){
   })
 
   // --- Separate webchat contacts from sbContacts ---
-  // Anonymous visitors: name starts with "Posjetilac " or metadata.anonymous = true
+  // Anonymous visitors: name still has the "Posjetilac XXXXXX" placeholder (never identified)
+  // NOTE: do NOT use metadata.anonymous here — it may still be true even after the contact
+  // gave their name (old contacts before the server fix). Use the name prefix as source of truth.
   const anonVisitors = sbContacts.filter(c => {
-    const nm = c.display_name || ''
-    return nm.startsWith('Posjetilac ') || c.metadata?.anonymous === true
+    const nm = (c.display_name || '').trim()
+    return nm.startsWith('Posjetilac ')
   })
-  // Identified webchat contacts: website channel but NOT anonymous
+  // Identified webchat contacts: came via website/webchat AND have a real name
   const identifiedWebchat = sbContacts.filter(c => {
-    if ((c.display_name||'').startsWith('Posjetilac ') || c.metadata?.anonymous) return false
+    const nm = (c.display_name || '').trim()
+    if (nm.startsWith('Posjetilac ') || !nm) return false   // skip anonymous / no-name
     return c.channel_primary === 'website' || c.metadata?.source === 'webchat_ayde_bot'
   })
   // Add identified webchat contacts to main rows (if not already merged via HubSpot)
@@ -1229,6 +1241,31 @@ async function renderContacts(){
     if(rowIdSet.has(c.id)) continue
     if(c.email && rowEmailSet.has(c.email.toLowerCase())) continue
     rows.push({ id:c.id, hs_id:null, display_name:c.display_name||'—', email:c.email||null, phone:c.phone||null, company:null, role:null, trust_level:c.trust_level||'stranger', last_seen_at:c.last_seen_at||null, channel_primary:'website' })
+  }
+
+  // Dedup rows by display_name — collapses multiple HubSpot entries for same person
+  // (happens when same visitor gave name in multiple sessions without providing email)
+  // Keep: entry with Supabase id (clickable) > entry with email > first found
+  {
+    const seen = {}
+    const deduped = []
+    for(const r of rows){
+      const key = (r.display_name||'').toLowerCase().trim()
+      if(!key || key === '—') { deduped.push(r); continue }
+      if(!seen[key]){
+        seen[key] = r; deduped.push(r)
+      } else {
+        const prev = seen[key]
+        // Replace if current is "better": has Supabase id when prev doesn't, or has email when prev doesn't
+        const currBetter = (!prev.id && r.id) || (!prev.email && r.email)
+        if(currBetter){
+          seen[key] = r
+          const idx = deduped.findIndex(x => (x.display_name||'').toLowerCase().trim() === key)
+          if(idx >= 0) deduped[idx] = r
+        }
+      }
+    }
+    rows.length = 0; rows.push(...deduped)
   }
 
   // Sort state
