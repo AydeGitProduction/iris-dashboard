@@ -2610,7 +2610,11 @@ function renderSettings(){
   document.getElementById('topbar-actions').innerHTML=`<button class="btn btn-ghost" onclick="nav('integrations',this)">🔌 Integracije</button>`
   document.getElementById('main-content').innerHTML=`
 
-    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px">🔌 SaaS Integracije</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">🤖 IRIS Webchat Settings</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Promjene se primjenjuju odmah — bez deployanja. Cache se resetuje automatski.</div>
+    <div id="iris-settings-panel"><div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje settings…</div></div></div>
+
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin:28px 0 16px">🔌 SaaS Integracije</div>
     <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Kada uneseš API ključeve, IRIS automatski kreira/ažurira kontakte u HubSpotu, evente u Google Calendaru i taskove u Notionu — paralelno sa lokalnom bazom. Supabase ostaje kao primarni cache za dashboard.</div>
 
     <div class="integration-grid">
@@ -2713,6 +2717,9 @@ function renderSettings(){
       </div>
     </div>`
 
+  // Load IRIS settings panel async
+  setTimeout(_loadIrisSettingsPanel, 0)
+
   // If HubSpot is connected, show live count
   if (hs) {
     setTimeout(async () => {
@@ -2723,6 +2730,84 @@ function renderSettings(){
         if (el) el.textContent = r.total
       }
     }, 0)
+  }
+}
+
+async function _loadIrisSettingsPanel() {
+  const panel = document.getElementById('iris-settings-panel')
+  if (!panel) return
+  try {
+    const resp = await fetch(`${BASE}/api/settings?workspace_id=${WS}`)
+    const data = await resp.json()
+    const s = data.settings || {}
+
+    const labelMap = {
+      webchat_max_tokens: { label: 'Max tokens po odgovoru', hint: 'Više = duži odgovori ali sporiji (preporučeno: 700)', type: 'number' },
+      webchat_model:      { label: 'Claude model', hint: 'haiku = brži/jeftiniji | sonnet = pametniji ali sporiji', type: 'select', options: ['claude-haiku-4-5-20251001','claude-sonnet-4-6'] },
+      webchat_active:     { label: 'Webchat aktivan', hint: 'Ako false, IRIS vraća maintenance poruku', type: 'toggle' },
+      webchat_greeting:   { label: 'Greeting poruka', hint: 'Prva poruka kad se chat otvori (ako frontend podržava)', type: 'text' },
+    }
+
+    const rows = Object.entries(labelMap).map(([key, cfg]) => {
+      const val = s[key] ?? ''
+      let input = ''
+      if (cfg.type === 'toggle') {
+        const checked = (val === 'true' || val === true) ? 'checked' : ''
+        input = `<label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <div class="iris-toggle-wrap">
+            <input type="checkbox" id="iset-${key}" ${checked} style="display:none" onchange="_saveIrisSetting('${key}',this.checked?'true':'false')">
+            <div class="iris-toggle" onclick="var cb=this.previousElementSibling;cb.checked=!cb.checked;_saveIrisSetting('${key}',cb.checked?'true':'false');this.classList.toggle('on',cb.checked);" style="width:38px;height:20px;border-radius:10px;background:${(val==='true')?'var(--accent)':'var(--border)'};cursor:pointer;position:relative;transition:background .2s">
+              <div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:${(val==='true')?'20px':'2px'};transition:left .2s"></div>
+            </div>
+          </div>
+          <span style="font-size:12px;color:var(--text2)">${val === 'true' ? 'Da — webchat radi' : 'Ne — maintenance mode'}</span>
+        </label>`
+      } else if (cfg.type === 'select') {
+        const opts = cfg.options.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')
+        input = `<select class="setting-input" id="iset-${key}" onchange="_saveIrisSetting('${key}',this.value)" style="max-width:300px">${opts}</select>`
+      } else {
+        input = `<input class="setting-input" id="iset-${key}" type="${cfg.type==='number'?'number':'text'}" value="${val}" style="max-width:${cfg.type==='number'?'100px':'400px'}" onblur="_saveIrisSetting('${key}',this.value)">`
+      }
+      return `<div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:4px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+          <div style="font-size:12px;font-weight:500;color:var(--text)">${cfg.label}</div>
+          <div style="font-size:10px;color:var(--text3);background:var(--bg2);padding:2px 7px;border-radius:4px">${key}</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${cfg.hint}</div>
+        ${input}
+      </div>`
+    }).join('')
+
+    panel.innerHTML = `<div class="card" style="padding:0 18px">
+      ${rows}
+      <div style="padding:14px 0;display:flex;align-items:center;gap:10px">
+        <div id="iris-settings-status" style="font-size:11px;color:var(--text3)">Promjene se automatski snimaju pri izmjeni.</div>
+      </div>
+    </div>`
+  } catch(e) {
+    const panel = document.getElementById('iris-settings-panel')
+    if (panel) panel.innerHTML = `<div class="empty"><div class="empty-text" style="color:var(--danger)">Greška pri učitavanju settings: ${e.message}</div></div>`
+  }
+}
+
+async function _saveIrisSetting(key, value) {
+  const statusEl = document.getElementById('iris-settings-status')
+  if (statusEl) { statusEl.textContent = 'Snimam…'; statusEl.style.color = 'var(--accent)' }
+  try {
+    const resp = await fetch(`${BASE}/api/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workspace_id: WS, key, value })
+    })
+    const data = await resp.json()
+    if (data.ok) {
+      if (statusEl) { statusEl.textContent = `✓ Snimljeno: ${key} = ${value}`; statusEl.style.color = 'var(--accent)' }
+      setTimeout(() => { if (statusEl) { statusEl.textContent = 'Promjene se automatski snimaju pri izmjeni.'; statusEl.style.color = 'var(--text3)' } }, 3000)
+    } else {
+      if (statusEl) { statusEl.textContent = `Greška: ${data.error}`; statusEl.style.color = 'var(--danger)' }
+    }
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = `Greška: ${e.message}`; statusEl.style.color = 'var(--danger)' }
   }
 }
 
