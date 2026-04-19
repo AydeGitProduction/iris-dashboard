@@ -2614,6 +2614,14 @@ function renderSettings(){
     <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Promjene se primjenjuju odmah — bez deployanja. Cache se resetuje automatski.</div>
     <div id="iris-settings-panel"><div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje settings…</div></div></div>
 
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin:28px 0 6px">📚 Q&A Bank</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">IRIS koristi ove odgovore kada dobije pitanje koje odgovara situaciji. Dodaj situacije i idealne odgovore — IRIS ih ugradjuje u razgovor.</div>
+    <div id="iris-qa-panel"><div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje Q&A…</div></div></div>
+
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin:28px 0 6px">🗺️ Routing Rules</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Kako IRIS klasifikuje posjetioce i kuda ih šalje. Read-only prikaz trenutne logike.</div>
+    <div id="iris-routing-panel"></div>
+
     <div style="font-size:15px;font-weight:600;color:var(--text);margin:28px 0 16px">🔌 SaaS Integracije</div>
     <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Kada uneseš API ključeve, IRIS automatski kreira/ažurira kontakte u HubSpotu, evente u Google Calendaru i taskove u Notionu — paralelno sa lokalnom bazom. Supabase ostaje kao primarni cache za dashboard.</div>
 
@@ -2717,8 +2725,10 @@ function renderSettings(){
       </div>
     </div>`
 
-  // Load IRIS settings panel async
+  // Load IRIS settings panels async
   setTimeout(_loadIrisSettingsPanel, 0)
+  setTimeout(_loadIrisQAPanel, 0)
+  setTimeout(_renderRoutingRules, 0)
 
   // If HubSpot is connected, show live count
   if (hs) {
@@ -2812,6 +2822,137 @@ async function _saveIrisSetting(key, value) {
 }
 
 function toggleSettings(){nav('settings',document.querySelector('.nav-item:last-child'))}
+
+// ── Q&A BANK ──────────────────────────────────────────────────────────────────
+let _qaBank = []
+
+async function _loadIrisQAPanel() {
+  const panel = document.getElementById('iris-qa-panel')
+  if (!panel) return
+  try {
+    const resp = await fetch(`${BASE}/api/settings?workspace_id=${WS}`)
+    const data = await resp.json()
+    const raw = data.settings?.qa_bank
+    _qaBank = Array.isArray(raw) ? raw : (raw ? JSON.parse(raw) : [])
+  } catch(e) { _qaBank = [] }
+  _renderQAPanel()
+}
+
+function _renderQAPanel() {
+  const panel = document.getElementById('iris-qa-panel')
+  if (!panel) return
+  const items = _qaBank.map((item, i) => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;background:var(--bg2)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Situacija</div>
+          <div style="font-size:12px;color:var(--text);margin-bottom:8px;line-height:1.5" id="qa-sit-${i}">${_escHtml(item.situation)}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Odgovor IRIS-a</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5" id="qa-ans-${i}">${_escHtml(item.answer)}</div>
+        </div>
+        <button onclick="_deleteQA(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 4px;flex-shrink:0" title="Obriši">✕</button>
+      </div>
+    </div>`).join('')
+
+  panel.innerHTML = `
+    <div class="card" style="padding:16px 18px">
+      ${_qaBank.length === 0 ? `<div style="font-size:12px;color:var(--text3);padding:8px 0 16px">Nema Q&A parova. Dodaj prvi ispod.</div>` : items}
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:${_qaBank.length?'4px':'0'}">
+        <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:10px">+ Dodaj novi Q&A par</div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Situacija (kada IRIS treba koristiti ovaj odgovor)</div>
+          <textarea id="qa-new-sit" placeholder="npr. Kada pitaju za Ajdinov broj / kada sumnjiče da je prevara..." style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--text);resize:vertical;min-height:60px;font-family:inherit"></textarea>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Odgovor koji IRIS treba dati</div>
+          <textarea id="qa-new-ans" placeholder="npr. Nisam u mogućnosti dijeliti lični kontakt, ali mogu zabilježiti tvoje..." style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--text);resize:vertical;min-height:80px;font-family:inherit"></textarea>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-primary" style="font-size:11px;padding:7px 16px" onclick="_addQA()">Dodaj u Q&A Bank</button>
+          <div id="qa-status" style="font-size:11px;color:var(--text3)"></div>
+        </div>
+      </div>
+    </div>`
+}
+
+async function _addQA() {
+  const sit = document.getElementById('qa-new-sit')?.value?.trim()
+  const ans = document.getElementById('qa-new-ans')?.value?.trim()
+  const statusEl = document.getElementById('qa-status')
+  if (!sit || !ans) { if(statusEl) { statusEl.textContent = 'Popuni oba polja.'; statusEl.style.color='var(--danger)' } return }
+  _qaBank.push({ situation: sit, answer: ans })
+  await _saveQABank(statusEl)
+}
+
+async function _deleteQA(i) {
+  if (!confirm('Obrisati ovaj Q&A par?')) return
+  _qaBank.splice(i, 1)
+  await _saveQABank(null)
+}
+
+async function _saveQABank(statusEl) {
+  if (statusEl) { statusEl.textContent = 'Snimam…'; statusEl.style.color = 'var(--accent)' }
+  try {
+    const resp = await fetch(`${BASE}/api/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workspace_id: WS, key: 'qa_bank', value: null, value_json: _qaBank })
+    })
+    const data = await resp.json()
+    _renderQAPanel()
+    if (statusEl && data.ok) { statusEl.textContent = '✓ Snimljeno'; statusEl.style.color = 'var(--accent)'; setTimeout(()=>{ if(statusEl){statusEl.textContent='';} },3000) }
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = `Greška: ${e.message}`; statusEl.style.color = 'var(--danger)' }
+  }
+}
+
+function _escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+// ── ROUTING RULES DISPLAY ─────────────────────────────────────────────────────
+function _renderRoutingRules() {
+  const panel = document.getElementById('iris-routing-panel')
+  if (!panel) return
+  const rules = [
+    { type: 'collaborator', emoji: '🤝', label: 'Saradnik / Biznismen', color: '#1d9e75',
+      signals: 'Ima firmu, govori o prihodu/timu/industriji, traži tech/marketing/consulting/partnerstvo',
+      routes: [
+        { tag: 'borean_capital', label: 'Borean Capital', condition: 'Firma sa potencijalom, tehnologija može optimizirati' },
+        { tag: 'medius360', label: 'Medius360', condition: 'Mali/srednji lokalni biznis (kafić, salon, retail...)' },
+        { tag: 'shape9', label: 'Shape9 & Robotics', condition: 'Velika firma, treba custom SaaS/ERP/robotizacija' },
+        { tag: 'kvalifikacija', label: 'Kvalifikacija', condition: 'Nejasno — prikupi više info prije routinga' },
+      ]},
+    { type: 'job_seeker', emoji: '💼', label: 'Tražilac posla', color: '#6366f1',
+      signals: 'Pita za posao, aplicira, traži ulogu u timu',
+      routes: [{ tag: 'akademija', label: 'AI Akademija', condition: 'Uvijek — Akademija je put do saradnje' }]},
+    { type: 'fan', emoji: '⭐', label: 'Fan / Pratilac', color: '#f59e0b',
+      signals: 'Prati Ajdina, inspiriran je, želi biti dio ekosistema',
+      routes: [{ tag: 'akademija', label: 'AI Akademija', condition: 'Early access registracija' }]},
+    { type: 'curious', emoji: '🔍', label: 'Radoznali posjetilac', color: '#8b5cf6',
+      signals: 'Naletio na stranicu, želi znati ko je Ajdin i šta radi',
+      routes: [{ tag: 'akademija', label: 'AI Akademija', condition: 'Lagana introdukcija → Akademija kao prirodni sljedeći korak' }]},
+    { type: 'skeptic', emoji: '🤨', label: 'Skeptik', color: '#ef4444',
+      signals: 'Sumnja u tvrdnje, optužuje za prevaru, traži dokaze',
+      routes: [{ tag: 'none', label: 'Transparentnost', condition: 'Uputi na javne registre firmi, ne brani agresivno' }]},
+  ]
+
+  panel.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">${
+    rules.map(r => `<div style="border:1px solid ${r.color}33;border-radius:10px;padding:14px 16px;background:${r.color}08">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:18px">${r.emoji}</span>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text)">${r.label}</div>
+          <div style="font-size:10px;color:${r.color};font-weight:500;letter-spacing:.4px;text-transform:uppercase">${r.type}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;border-left:2px solid ${r.color}44;padding-left:8px">${r.signals}</div>
+      <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Routing →</div>
+      ${r.routes.map(rt => `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px">
+        <span style="background:${r.color}22;color:${r.color};font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap">${rt.label}</span>
+        <span style="font-size:11px;color:var(--text3);line-height:1.4">${rt.condition}</span>
+      </div>`).join('')}
+    </div>`).join('')
+  }</div>`
+}
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
