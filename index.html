@@ -413,6 +413,35 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 .hs-sub{font-size:11px;color:var(--text3);margin-top:1px}
 .hs-pill-hs{display:inline-flex;align-items:center;gap:3px;background:rgba(232,100,60,.15);border:1px solid rgba(232,100,60,.3);color:#e8643c;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;text-decoration:none;margin-left:6px;cursor:pointer}
 .hs-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);background:var(--bg3)}
+
+/* ── IRIS ROUTING BADGES ──────────────────────────────── */
+.iris-routing-pill{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:1px 6px;border-radius:10px;font-family:var(--mono);font-weight:600;letter-spacing:.3px;cursor:default;white-space:nowrap;margin-right:2px}
+.irt-bc{background:rgba(74,158,255,0.12);color:#4a9eff;border:1px solid rgba(74,158,255,0.25)}
+.irt-m360{background:rgba(29,158,117,0.12);color:var(--accent);border:1px solid rgba(29,158,117,0.25)}
+.irt-s9{background:rgba(160,100,240,0.12);color:#b07fe0;border:1px solid rgba(160,100,240,0.25)}
+.irt-akad{background:rgba(240,160,48,0.12);color:var(--warn);border:1px solid rgba(240,160,48,0.25)}
+.irt-kval{background:rgba(255,255,255,0.06);color:var(--text3);border:1px solid var(--border)}
+.irt-task{font-size:9px;background:rgba(29,158,117,0.15);color:var(--accent);border:1px solid rgba(29,158,117,0.3);padding:1px 5px;border-radius:10px;font-family:var(--mono)}
+.irt-vt-collab{background:rgba(74,158,255,0.1);color:#4a9eff;border:1px solid rgba(74,158,255,0.2)}
+.irt-vt-job{background:rgba(240,160,48,0.1);color:var(--warn);border:1px solid rgba(240,160,48,0.2)}
+.irt-vt-fan{background:rgba(29,158,117,0.1);color:var(--accent);border:1px solid rgba(29,158,117,0.2)}
+.irt-vt-skeptic{background:rgba(226,75,74,0.1);color:var(--danger);border:1px solid rgba(226,75,74,0.2)}
+.irt-vt-curious{background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid var(--border)}
+
+/* IRIS Leads section in Tasks / Contacts */
+.iris-leads-block{margin-top:14px;background:var(--bg2);border:1px solid rgba(29,158,117,.2);border-radius:8px;overflow:hidden}
+.iris-leads-head{padding:11px 16px;background:rgba(29,158,117,.06);border-bottom:1px solid rgba(29,158,117,.14);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.iris-leads-title{font-size:12px;font-weight:700;color:var(--accent);font-family:var(--mono);letter-spacing:.5px}
+.iris-leads-table{width:100%;border-collapse:collapse}
+.iris-leads-table th{padding:7px 12px;font-size:10px;color:var(--text3);font-weight:500;text-align:left;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.iris-leads-table td{padding:9px 12px;font-size:12px;color:var(--text);border-bottom:1px solid var(--border);vertical-align:middle}
+.iris-leads-table tr:last-child td{border-bottom:none}
+.iris-leads-table tbody tr{cursor:pointer;transition:background .1s}
+.iris-leads-table tbody tr:hover{background:rgba(255,255,255,.025)}
+.iris-rfilter-row{display:flex;gap:5px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid rgba(29,158,117,.1)}
+.irf-pill{padding:3px 10px;border-radius:20px;font-size:10px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:var(--mono);transition:all .15s}
+.irf-pill:hover{border-color:var(--accent);color:var(--accent)}
+.irf-pill.active{border-color:var(--accent);color:var(--accent);background:rgba(29,158,117,.08)}
 .hs-page-btns{display:flex;align-items:center;gap:4px}
 .hs-page-btn{padding:3px 8px;background:transparent;border:1px solid var(--border2);border-radius:3px;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans)}
 .hs-page-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -925,6 +954,9 @@ let isLive=false
 let currentSection='dashboard'
 let modalCallback=null
 let taskDetailData={}
+let allIrisLeads=[]
+let irisLeadsData={}
+let irisLeadsRouteFilter='all'
 
 const SIM={
   health:{status:'ok',services_loaded:0,mode:'simulation'},
@@ -1201,22 +1233,51 @@ async function renderContacts(){
     }
   }
 
+  // Fetch IRIS leads (iris_tasks from webchat) to show routing badges + task count
+  const _irisLeadsRaw = await sbGet('iris_tasks','select=id,contact_id,routing,visitor_type,status,title&limit=500') || []
+  const _irisLeadsByContact = {}
+  for(const lt of _irisLeadsRaw){
+    if(!lt.contact_id) continue
+    if(!_irisLeadsByContact[lt.contact_id]) _irisLeadsByContact[lt.contact_id] = []
+    _irisLeadsByContact[lt.contact_id].push(lt)
+  }
+  // Routing filter state (local to contacts view)
+  let _contactRouteFilter = 'all'
+
+  // Helpers for routing/visitor_type badges
+  function _routingBadgeHtml(routing){
+    const map={borean_capital:{cls:'irt-bc',lbl:'BC',title:'Borean Capital'},medius360:{cls:'irt-m360',lbl:'M360',title:'Medius360'},shape9:{cls:'irt-s9',lbl:'S9',title:'Shape9'},akademija:{cls:'irt-akad',lbl:'AI Akad',title:'AI Akademija'},kvalifikacija:{cls:'irt-kval',lbl:'Kval.',title:'Kvalifikacija'}}
+    const r=map[routing]; if(!r) return ''
+    return `<span class="iris-routing-pill ${r.cls}" title="${r.title}">${r.lbl}</span>`
+  }
+  function _visitorTypeBadgeHtml(vt){
+    const map={collaborator:{cls:'irt-vt-collab',lbl:'🤝 Biznis'},job_seeker:{cls:'irt-vt-job',lbl:'💼 Job'},fan:{cls:'irt-vt-fan',lbl:'⭐ Fan'},skeptic:{cls:'irt-vt-skeptic',lbl:'🤔 Skeptik'},curious:{cls:'irt-vt-curious',lbl:'👀 Radoznao'}}
+    const v=map[vt]; if(!v) return ''
+    return `<span class="iris-routing-pill ${v.cls}">${v.lbl}</span>`
+  }
+
   // Merge HubSpot + Supabase rows
   const rows = hsContacts.map(c => {
     // Lookup order: by hs_contact_id in metadata → by email → by name (last resort for legacy contacts)
     const nm = c.name || ''
     const sb = sbByHsId[String(c.hs_id)] || (c.email ? sbByEmail[c.email.toLowerCase()] : null) || (nm ? sbByName[nm.toLowerCase()] : null) || {}
+    const sbId = sb.id || null
+    const _leads = sbId ? (_irisLeadsByContact[sbId] || []) : []
+    const _activeLeads = _leads.filter(l => l.status !== 'resolved')
     return {
-      id:            sb.id || null,
-      hs_id:         c.hs_id,
-      display_name:  c.name || sb.display_name || '—',
-      email:         c.email || sb.email || null,
-      phone:         c.phone || sb.phone || null,
-      company:       c.company || null,
-      role:          c.role || null,
-      trust_level:   sb.trust_level || 'stranger',
-      last_seen_at:  sb.last_seen_at || c.updated_at || null,
+      id:              sbId,
+      hs_id:           c.hs_id,
+      display_name:    c.name || sb.display_name || '—',
+      email:           c.email || sb.email || null,
+      phone:           c.phone || sb.phone || null,
+      company:         c.company || null,
+      role:            c.role || null,
+      trust_level:     sb.trust_level || 'stranger',
+      last_seen_at:    sb.last_seen_at || c.updated_at || null,
       channel_primary: sb.channel_primary || 'hubspot',
+      routing:         _activeLeads[0]?.routing || sb.metadata?.routing || null,
+      visitor_type:    _activeLeads[0]?.visitor_type || sb.metadata?.visitor_type || null,
+      iris_task_count: _activeLeads.length,
     }
   })
 
@@ -1240,7 +1301,8 @@ async function renderContacts(){
   for(const c of identifiedWebchat){
     if(rowIdSet.has(c.id)) continue
     if(c.email && rowEmailSet.has(c.email.toLowerCase())) continue
-    rows.push({ id:c.id, hs_id:null, display_name:c.display_name||'—', email:c.email||null, phone:c.phone||null, company:null, role:null, trust_level:c.trust_level||'stranger', last_seen_at:c.last_seen_at||null, channel_primary:'website' })
+    const _wLeads = (_irisLeadsByContact[c.id] || []).filter(l=>l.status!=='resolved')
+    rows.push({ id:c.id, hs_id:null, display_name:c.display_name||'—', email:c.email||null, phone:c.phone||null, company:null, role:null, trust_level:c.trust_level||'stranger', last_seen_at:c.last_seen_at||null, channel_primary:'website', routing:_wLeads[0]?.routing||c.metadata?.routing||null, visitor_type:_wLeads[0]?.visitor_type||c.metadata?.visitor_type||null, iris_task_count:_wLeads.length })
   }
 
   // Dedup rows by display_name — collapses multiple HubSpot entries for same person
@@ -1279,12 +1341,17 @@ async function renderContacts(){
     return p[Math.abs(h)%p.length]
   }
 
+  const ROUTING_FILTERS = ['all','borean_capital','medius360','shape9','akademija','kvalifikacija']
+  const ROUTING_FILTER_LABELS = {all:'Sve',borean_capital:'BC',medius360:'M360',shape9:'S9',akademija:'AI Akad',kvalifikacija:'Kval.'}
+
   function render(){
     const q=_search.toLowerCase()
     let filtered=rows.filter(c=>{
-      if(!q) return true
+      if(!q && _contactRouteFilter==='all') return true
       const nm=c.display_name||''
-      return nm.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)
+      const matchQ = !q || nm.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)
+      const matchR = _contactRouteFilter==='all' || c.routing===_contactRouteFilter
+      return matchQ && matchR
     })
     filtered=filtered.slice().sort((a,b)=>{
       let av=a[_sortCol]||'', bv=b[_sortCol]||''
@@ -1298,10 +1365,23 @@ async function renderContacts(){
     const arrow=col=>`<span class="sort-arrow">${_sortCol===col?(_sortDir===-1?'↓':'↑'):'↕'}</span>`
     const thH=(col,lbl)=>`<th class="${_sortCol===col?'sorted':''}" data-sort="${col}" style="cursor:pointer">${lbl}${arrow(col)}</th>`
 
+    // Routing filter pills — only show if there are any contacts with routing
+    const hasRouting = rows.some(r=>r.routing)
+    const routingFilterHtml = hasRouting ? `
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-right:2px">Routing:</span>
+        ${ROUTING_FILTERS.map(r=>`<button class="irf-pill${_contactRouteFilter===r?' active':''}" data-route="${r}">${ROUTING_FILTER_LABELS[r]||r}</button>`).join('')}
+      </div>` : ''
+
     const rowsHtml = slice.map(c=>{
       const nm=c.display_name||'—', ini=initials(nm), col=avatarColor(nm)
       const hsLink=c.hs_id?`<a class="hs-pill-hs" href="https://app-eu1.hubspot.com/contacts/148227401/contact/${c.hs_id}" target="_blank" data-stop="1">H</a>`:''
       const rowClick=c.id?`data-cid="${c.id}" data-cnm="${nm.replace(/"/g,'&quot;')}"`:''
+      const irisBadges = (c.routing||c.visitor_type||c.iris_task_count>0) ? `
+        <div style="display:flex;align-items:center;gap:3px;margin-top:3px;flex-wrap:wrap">
+          ${c.routing ? _routingBadgeHtml(c.routing) : (c.visitor_type ? _visitorTypeBadgeHtml(c.visitor_type) : '')}
+          ${c.iris_task_count>0 ? `<span class="irt-task">🤖 ${c.iris_task_count} lead${c.iris_task_count>1?'s':''}</span>` : ''}
+        </div>` : ''
       return `<tr class="${c.id?'hs-clickable':''}" ${rowClick}>
         <td class="hs-cb-cell" data-stop="1"><input type="checkbox" class="hs-cb"></td>
         <td class="hs-td">
@@ -1310,6 +1390,7 @@ async function renderContacts(){
             <div>
               <div class="hs-name-text">${nm}${hsLink}</div>
               ${c.role?`<div class="hs-sub">${c.role}</div>`:''}
+              ${irisBadges}
             </div>
           </div>
         </td>
@@ -1335,7 +1416,15 @@ async function renderContacts(){
       const nm=c.display_name||'—', ini=initials(nm), col=avatarColor(nm)
       const sid=c.metadata?.session_id||''
       const rowClick=c.id?`data-cid="${c.id}" data-cnm="${nm.replace(/"/g,'&quot;')}"`:''
-      const msgCount=c.metadata?.msg_count||''
+      const vLeads = c.id ? (_irisLeadsByContact[c.id]||[]) : []
+      const vRouting = vLeads[0]?.routing || c.metadata?.routing || null
+      const vType = vLeads[0]?.visitor_type || c.metadata?.visitor_type || null
+      const vTaskCount = vLeads.filter(l=>l.status!=='resolved').length
+      const vIrisBadges = (vRouting||vType||vTaskCount>0) ? `
+        <div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap">
+          ${vRouting ? _routingBadgeHtml(vRouting) : (vType ? _visitorTypeBadgeHtml(vType) : '')}
+          ${vTaskCount>0 ? `<span class="irt-task">🤖 ${vTaskCount}</span>` : ''}
+        </div>` : ''
       return `<tr class="${c.id?'hs-clickable':''}" ${rowClick}>
         <td class="hs-td">
           <div class="hs-name-cell">
@@ -1343,10 +1432,11 @@ async function renderContacts(){
             <div>
               <div class="hs-name-text">${nm}</div>
               ${sid?`<div class="hs-sub" style="font-size:10px;color:var(--text3);font-family:monospace">${sid.slice(0,8)}…</div>`:''}
+              ${vIrisBadges}
             </div>
           </div>
         </td>
-        <td class="hs-td" style="color:var(--text3)">Anoniman posjetilac</td>
+        <td class="hs-td" style="color:var(--text3)">${vType?_visitorTypeBadgeHtml(vType):'Anoniman posjetilac'}</td>
         <td class="hs-td" style="color:var(--text3);font-size:11px">${timeAgo(c.last_seen_at)}</td>
         <td class="hs-td"><span style="background:rgba(99,130,255,0.15);color:#6382ff;font-size:10px;padding:2px 8px;border-radius:20px">web chat</span></td>
       </tr>`
@@ -1377,6 +1467,7 @@ async function renderContacts(){
           <button class="hs-filter-btn">☰ Filter</button>
           ${_tab==='contacts'?`<button class="hs-create-btn" id="hs-create-btn">+ Kreiraj kontakt</button>`:''}
         </div>
+        ${_tab==='contacts'&&hasRouting?routingFilterHtml:''}
         ${_tab==='contacts'?`
         <div class="hs-table-wrap">
           <table class="hs-table" id="hs-contacts-table">
@@ -1417,6 +1508,11 @@ async function renderContacts(){
     // Tab buttons
     document.getElementById('tab-contacts')?.addEventListener('click',()=>{ _tab='contacts'; _page=0; render() })
     document.getElementById('tab-visitors')?.addEventListener('click',()=>{ _tab='visitors'; _page=0; render() })
+
+    // Routing filter pills
+    document.querySelectorAll('.irf-pill[data-route]').forEach(btn=>{
+      btn.addEventListener('click',()=>{ _contactRouteFilter=btn.dataset.route; _page=0; render() })
+    })
 
     // Search input — direct event listener
     const si = document.getElementById('hs-search-input')
@@ -1596,6 +1692,19 @@ async function renderTasks(){
   allIrisTasks = rawTasks.filter(t => t.created_by === 'iris_ai')
   allRawTasks = rawTasks.filter(t => t.created_by !== 'iris_ai')
   taskDetailData={}
+
+  // Fetch IRIS webchat leads from Supabase iris_tasks table (separate from Notion tasks)
+  const _sbLeads = await sbGet('iris_tasks','select=id,contact_id,title,description,routing,visitor_type,status,created_at,metadata&order=created_at.desc&limit=300') || []
+  // Fetch contact names for leads that have a contact_id
+  const _leadCids = [...new Set(_sbLeads.map(l=>l.contact_id).filter(Boolean))]
+  const _leadContacts = {}
+  if(_leadCids.length){
+    const _cr = await sbGetRaw('iris_contacts',`id=in.(${_leadCids.slice(0,50).join(',')})&select=id,display_name,email`)
+    if(Array.isArray(_cr)) for(const c of _cr) _leadContacts[c.id]=c
+  }
+  allIrisLeads = _sbLeads.map(l=>({...l, contact_name:_leadContacts[l.contact_id]?.display_name||null, contact_email:_leadContacts[l.contact_id]?.email||null}))
+  irisLeadsData={}
+  allIrisLeads.forEach(l=>{irisLeadsData[l.id]=l})
   rawTasks.forEach(t=>{taskDetailData[t.id]=t})
 
   // Count reminders
@@ -1681,10 +1790,11 @@ function renderTaskBoard(){
     </div>`
   }
 
+  // Old Notion IRIS tasks section (meeting proposals / pending notifications)
   const irisSection = allIrisTasks.length>0 ? `
     <div class="notion-iris-block">
       <div class="notion-iris-head">
-        <span>🤖</span><span>IRIS Taskovi</span>
+        <span>🤖</span><span>IRIS Taskovi (Notion)</span>
         <span class="nboard-col-count">${allIrisTasks.length}</span>
         <span style="font-size:10px;color:var(--text3);margin-left:4px;font-weight:400">· čeka tvoj odgovor</span>
       </div>
@@ -1699,6 +1809,58 @@ function renderTaskBoard(){
       </div>
       ${allIrisTasks.map(t=>dbRow(t,true)).join('')}
     </div>` : ''
+
+  // New IRIS Webchat Leads section (from Supabase iris_tasks)
+  const RMAP={borean_capital:{cls:'irt-bc',lbl:'Borean Capital'},medius360:{cls:'irt-m360',lbl:'Medius360'},shape9:{cls:'irt-s9',lbl:'Shape9'},akademija:{cls:'irt-akad',lbl:'AI Akademija'},kvalifikacija:{cls:'irt-kval',lbl:'Kval.'}}
+  const VTMAP={collaborator:'🤝 Biznis',job_seeker:'💼 Job',fan:'⭐ Fan',skeptic:'🤔 Skeptik',curious:'👀 Radoznao'}
+  function _rl(routing){const r=RMAP[routing];return r?`<span class="iris-routing-pill ${r.cls}">${r.lbl}</span>`:routing||'—'}
+  function _vl(vt){return VTMAP[vt]||vt||'—'}
+  const leadsFiltered = irisLeadsRouteFilter==='all' ? allIrisLeads : allIrisLeads.filter(l=>l.routing===irisLeadsRouteFilter)
+  const activeLeads = leadsFiltered.filter(l=>l.status!=='resolved')
+  const resolvedLeads = leadsFiltered.filter(l=>l.status==='resolved')
+  const leadsToShow = activeLeads  // default show active only
+  const routingCounts = {}
+  allIrisLeads.forEach(l=>{if(l.routing&&l.status!=='resolved') routingCounts[l.routing]=(routingCounts[l.routing]||0)+1})
+  const rFilterOptions = ['all',...Object.keys(routingCounts)]
+  const irisLeadsSection = `
+    <div class="iris-leads-block">
+      <div class="iris-leads-head">
+        <span style="font-size:16px">🤖</span>
+        <span class="iris-leads-title">IRIS WEBCHAT LEADS</span>
+        <span class="nboard-col-count">${activeLeads.length} aktivan${activeLeads.length!==1?'ih':''}</span>
+        ${resolvedLeads.length>0?`<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">&nbsp;· ${resolvedLeads.length} riješen${resolvedLeads.length!==1?'ih':''}</span>`:''}
+        <button onclick="irisLeadsRouteFilter='all';renderTaskBoard()" style="margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--text3);font-size:10px;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:var(--mono);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">↺ Osvježi</button>
+      </div>
+      ${rFilterOptions.length>1?`
+      <div class="iris-rfilter-row">
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-right:3px">Routing:</span>
+        <button class="irf-pill${irisLeadsRouteFilter==='all'?' active':''}" onclick="irisLeadsRouteFilter='all';renderTaskBoard()">Sve</button>
+        ${Object.entries(routingCounts).map(([r,cnt])=>`<button class="irf-pill${irisLeadsRouteFilter===r?' active':''}" onclick="irisLeadsRouteFilter='${r}';renderTaskBoard()">${RMAP[r]?.lbl||r} <span style="opacity:.6">${cnt}</span></button>`).join('')}
+      </div>`:''}
+      ${leadsToShow.length===0?`<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">${allIrisLeads.length===0?'Nema webchat leadova još — IRIS će ih kreirati kad posjetilac ispuni formu.':'Nema aktivnih leadova za ovaj filter.'}</div>`:`
+      <table class="iris-leads-table">
+        <thead><tr>
+          <th style="width:40px"></th>
+          <th>Lead / Opis</th>
+          <th>Routing</th>
+          <th>Tip posjetioca</th>
+          <th>Kontakt</th>
+          <th>Datum</th>
+          <th style="width:80px"></th>
+        </tr></thead>
+        <tbody>
+          ${leadsToShow.map(l=>`<tr onclick="openIrisLeadDetail('${l.id}')">
+            <td style="text-align:center"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${l.status==='new'?'var(--accent)':'var(--text3)'};margin:auto"></span></td>
+            <td><div style="font-size:12px;font-weight:500;color:var(--text);line-height:1.3">${l.title||'Lead'}</div>${l.description?`<div style="font-size:11px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px">${l.description}</div>`:''}</td>
+            <td>${_rl(l.routing)}</td>
+            <td style="font-size:11px;color:var(--text2)">${_vl(l.visitor_type)}</td>
+            <td style="font-size:11px;color:var(--text2)">${l.contact_name||'<span style="color:var(--text3)">Anoniman</span>'}</td>
+            <td style="font-size:11px;color:var(--text3);font-family:var(--mono)">${(l.created_at||'').slice(0,10)}</td>
+            <td><button onclick="event.stopPropagation();markIrisLeadResolved('${l.id}')" style="background:transparent;border:1px solid var(--border);color:var(--text3);font-size:10px;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:var(--mono);transition:all .15s;white-space:nowrap" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">✓ Handled</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>`
 
   if(taskViewMode==='kanban'){
     // Notion-style board
@@ -1732,7 +1894,8 @@ function renderTaskBoard(){
             <div class="nboard-new" onclick="openNewTaskModal()">＋ Novi</div>
           </div>`).join('')}
       </div>
-      ${irisSection}`
+      ${irisSection}
+      ${irisLeadsSection}`
   } else {
     // Notion table view
     document.getElementById('main-content').innerHTML=`
@@ -1751,7 +1914,8 @@ function renderTaskBoard(){
         ${!filtered.length?`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nema taskova koji odgovaraju filteru</div>`:''}
         <div class="notion-new-row" onclick="openNewTaskModal()">＋ Novi task</div>
       </div>
-      ${irisSection}`
+      ${irisSection}
+      ${irisLeadsSection}`
   }
 }
 
@@ -3697,6 +3861,72 @@ function openTaskDetail(id){
 }
 
 function closeTaskDetail(){document.getElementById('task-detail-overlay').classList.remove('open')}
+
+// ── IRIS WEBCHAT LEAD DETAIL PANEL ────────────────────────────────────────────
+async function openIrisLeadDetail(id){
+  const l = irisLeadsData[id]
+  if(!l){ console.warn('[iris] lead not found:', id); return }
+  const RMAP={borean_capital:{cls:'irt-bc',lbl:'Borean Capital'},medius360:{cls:'irt-m360',lbl:'Medius360'},shape9:{cls:'irt-s9',lbl:'Shape9'},akademija:{cls:'irt-akad',lbl:'AI Akademija'},kvalifikacija:{cls:'irt-kval',lbl:'Kval.'}}
+  const VTMAP={collaborator:'🤝 Saradnik / Biznis partner',job_seeker:'💼 Tražilac posla',fan:'⭐ Fan / Pratilac',skeptic:'🤔 Skeptik',curious:'👀 Radoznali posjetilac'}
+  function rBadge(r){const m=RMAP[r];return m?`<span class="iris-routing-pill ${m.cls}" style="font-size:11px;padding:2px 10px">${m.lbl}</span>`:'<span style="color:var(--text3)">—</span>'}
+  function ntdP(icon,label,valHtml){return`<div class="ntd-prop-row"><div class="ntd-prop-key"><span style="opacity:.5;font-size:12px">${icon}</span> ${label}</div><div class="ntd-prop-val">${valHtml}</div></div>`}
+  const confidence = l.metadata?.routing_confidence||null
+
+  // Fetch recent messages for this contact
+  let messagesHtml = ''
+  if(l.contact_id){
+    const msgs = await sbGet('iris_messages',`contact_id=eq.${l.contact_id}&order=created_at.asc&limit=20&select=role,content,created_at`)
+    if(Array.isArray(msgs)&&msgs.length){
+      messagesHtml = `<div style="margin-top:6px">
+        ${msgs.map(m=>`<div style="margin-bottom:8px">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:2px">${m.role==='user'?'👤 Posjetilac':'🤖 IRIS'} · ${(m.created_at||'').slice(0,16).replace('T',' ')}</div>
+          <div style="font-size:12px;color:${m.role==='user'?'var(--text)':'var(--text2)'};background:${m.role==='user'?'var(--bg3)':'rgba(29,158,117,0.05)'};border:1px solid var(--border);border-radius:5px;padding:8px 10px;line-height:1.5">${(m.content||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        </div>`).join('')}
+      </div>`
+    }
+  }
+
+  document.getElementById('task-detail-body').innerHTML=`
+    <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:6px;font-size:10px;color:var(--accent);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase">
+      🤖 IRIS WEBCHAT LEAD
+      <span style="background:rgba(29,158,117,0.15);color:var(--accent);border:1px solid rgba(29,158,117,0.3);padding:1px 8px;border-radius:10px">${l.status||'new'}</span>
+    </div>
+    <div style="font-size:21px;font-weight:700;color:var(--text);line-height:1.3;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border)">${l.title||'Webchat Lead'}</div>
+
+    <div class="ntd-props">
+      ${ntdP('◎','Routing',rBadge(l.routing))}
+      ${ntdP('◷','Tip posjetioca',`<span style="font-size:12px;color:var(--text2)">${VTMAP[l.visitor_type]||l.visitor_type||'—'}</span>`)}
+      ${confidence?ntdP('⚑','Povjerenje',`<span style="font-size:12px;color:${confidence==='high'?'var(--accent)':confidence==='medium'?'var(--warn)':'var(--text3)'}">${confidence}</span>`):''}
+      ${l.contact_name?ntdP('👤','Kontakt',`<span style="font-size:12px;color:var(--text2)">${l.contact_name}${l.contact_email?` <span style="color:var(--text3)">· ${l.contact_email}</span>`:''}</span>`):''}
+      ${ntdP('📅','Kreirano',`<span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${(l.created_at||'').slice(0,16).replace('T',' ')}</span>`)}
+    </div>
+
+    ${l.description?`<div style="margin-top:14px"><div class="ntd-notes-label">Opis / Kontekst</div><div class="ntd-notes">${l.description}</div></div>`:''}
+
+    ${messagesHtml?`<div style="margin-top:14px"><div class="ntd-notes-label">Razgovor sa IRIS-om (${(messagesHtml.match(/ntd-prop-row/g)||[]).length||''})</div>${messagesHtml}</div>`:''}
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" onclick="closeTaskDetail()">✕ Zatvori</button>
+      ${l.contact_id?`<button class="btn btn-ghost" onclick="closeTaskDetail();renderContactDetail('${l.contact_id}','${(l.contact_name||'').replace(/'/g,'\\\'')}')" style="border-color:var(--info);color:var(--info)">👤 Vidi kontakt</button>`:''}
+      ${l.status!=='resolved'?`<button class="btn btn-primary" onclick="markIrisLeadResolved('${l.id}')">✓ Handled</button>`:`<span style="font-size:12px;color:var(--text3)">✓ Riješeno</span>`}
+    </div>
+  `
+  document.getElementById('task-detail-overlay').classList.add('open')
+}
+
+async function markIrisLeadResolved(id){
+  const ok = await sbPatch('iris_tasks','id=eq.'+id,{status:'resolved'})
+  if(ok){
+    // Update local data
+    if(irisLeadsData[id]) irisLeadsData[id].status='resolved'
+    const idx = allIrisLeads.findIndex(l=>l.id===id)
+    if(idx>=0) allIrisLeads[idx].status='resolved'
+    closeTaskDetail()
+    renderTaskBoard()
+  } else {
+    alert('Greška pri ažuriranju leada')
+  }
+}
 
 async function markTaskDone(id){
   const r=await fetch(BASE+'/api/saas/tasks/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'done'})})
