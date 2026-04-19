@@ -1213,6 +1213,7 @@ async function renderContacts(){
     if(['test','ctxtest'].includes(nm.toLowerCase())) return false
     // Exclude anonymous HubSpot tracking contacts (created by pixel, not identified)
     if(/^website visitor$/i.test(nm.trim())) return false
+    if(['unknown','—',''].includes(nm.toLowerCase())) return false
     if(!nm.trim() && !c.email) return false   // no name AND no email = anonymous
     return nm.length > 0
   })
@@ -1376,13 +1377,14 @@ async function renderContacts(){
     const rowsHtml = slice.map(c=>{
       const nm=c.display_name||'—', ini=initials(nm), col=avatarColor(nm)
       const hsLink=c.hs_id?`<a class="hs-pill-hs" href="https://app-eu1.hubspot.com/contacts/148227401/contact/${c.hs_id}" target="_blank" data-stop="1">H</a>`:''
-      const rowClick=c.id?`data-cid="${c.id}" data-cnm="${nm.replace(/"/g,'&quot;')}"`:''
+      const contactId=c.id||(c.hs_id?'hs:'+c.hs_id:null)
+      const rowClick=contactId?`data-cid="${contactId}" data-cnm="${nm.replace(/"/g,'&quot;')}"`:''
       const irisBadges = (c.routing||c.visitor_type||c.iris_task_count>0) ? `
         <div style="display:flex;align-items:center;gap:3px;margin-top:3px;flex-wrap:wrap">
           ${c.routing ? _routingBadgeHtml(c.routing) : (c.visitor_type ? _visitorTypeBadgeHtml(c.visitor_type) : '')}
           ${c.iris_task_count>0 ? `<span class="irt-task">🤖 ${c.iris_task_count} lead${c.iris_task_count>1?'s':''}</span>` : ''}
         </div>` : ''
-      return `<tr class="${c.id?'hs-clickable':''}" ${rowClick}>
+      return `<tr class="${contactId?'hs-clickable':''}" ${rowClick}>
         <td class="hs-cb-cell" data-stop="1"><input type="checkbox" class="hs-cb"></td>
         <td class="hs-td">
           <div class="hs-name-cell">
@@ -3561,6 +3563,52 @@ async function renderContactDetail(contactId, contactName){
   document.getElementById('page-title').textContent = contactName || 'Contact'
   document.getElementById('topbar-actions').innerHTML=`<button class="hs-det-action" onclick="nav('contacts',document.querySelector('[onclick*=contacts]'))">← Nazad na kontakte</button>`
   document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">⟳</div><div class="empty-text">Učitavanje…</div></div>'
+
+  // Handle HubSpot-only contacts (no Supabase match)
+  if(String(contactId).startsWith('hs:')){
+    const hsId = contactId.slice(3)
+    const hsResp = await fetch(BASE+'/api/saas/contacts?limit=200').then(r=>r.ok?r.json():null).catch(()=>null)
+    const hsC = (hsResp?.contacts||[]).find(c=>String(c.hs_id)===String(hsId)) || {}
+    function fmtISO2(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('bs',{day:'numeric',month:'short',year:'numeric'})}
+    function propRow2(label,val){return val&&val!=='—'?`<div class="hs-prop-row"><div class="hs-prop-label">${label}</div><div class="hs-prop-val">${val}</div></div>`:''}
+    const nm2 = hsC.name||contactName||'—'
+    const ini2 = nm2.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()
+    const avC2 = (()=>{const p=['#e8643c','#c0392b','#8e44ad','#2980b9','#27ae60','#d35400','#16a085'];let h=0;for(let i=0;i<nm2.length;i++)h=(h*31+nm2.charCodeAt(i))&0xffffffff;return p[Math.abs(h)%p.length]})()
+    document.getElementById('main-content').innerHTML=`
+      <div style="display:flex;gap:0;height:calc(100vh - 100px);overflow:hidden">
+        <div style="width:280px;min-width:280px;border-right:1px solid var(--border);overflow-y:auto;padding:18px 16px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div style="width:40px;height:40px;border-radius:50%;background:${avC2};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0">${ini2}</div>
+            <div style="min-width:0">
+              <div style="font-size:14px;font-weight:600;color:var(--text);line-height:1.3">${nm2}</div>
+              ${hsC.email?`<div style="font-size:11px;color:var(--accent);margin-top:1px"><a href="mailto:${hsC.email}" style="color:var(--accent);text-decoration:none">${hsC.email}</a></div>`:''}
+            </div>
+          </div>
+          <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+            <a href="https://app-eu1.hubspot.com/contacts/148227401/contact/${hsId}" target="_blank" class="hs-det-action" style="display:inline-flex;gap:6px;align-items:center;font-size:11px">
+              <span>↗</span> Otvori u HubSpot
+            </a>
+          </div>
+          <div style="margin-bottom:16px">
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">Key information</div>
+            ${propRow2('Kompanija', hsC.company)}
+            ${propRow2('Pozicija', hsC.role)}
+            ${propRow2('Email', hsC.email)}
+            ${propRow2('Telefon', hsC.phone)}
+            <div class="hs-prop-row"><div class="hs-prop-label">HubSpot ID</div><div class="hs-prop-val" style="font-family:var(--mono);font-size:9px;color:var(--text3)">${hsId}</div></div>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:32px 28px">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px;max-width:500px">
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px">Nema IRIS historije</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7">Ovaj kontakt postoji samo u HubSpot-u i još nije razgovarao s IRIS-om. Kada kontakt pošalje poruku putem webchat-a, Telegram-a ili drugog kanala, historija će se pojaviti ovdje.</div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)">💡 HubSpot kontakti postaju IRIS kontakti čim pošalju prvu poruku.</div>
+          </div>
+        </div>
+      </div>`
+    return
+  }
+
 
   function fmtISO(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('bs',{day:'numeric',month:'short',year:'numeric'})}
   function fmtDateTime(iso){if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('bs',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('bs',{hour:'2-digit',minute:'2-digit'})}
