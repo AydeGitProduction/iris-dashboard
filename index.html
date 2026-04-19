@@ -646,7 +646,7 @@ input[type=checkbox].hs-cb{width:13px;height:13px;cursor:pointer;accent-color:va
 .hs-act-body{flex:1;min-width:0}
 .hs-act-title{font-size:12px;color:var(--text);margin-bottom:2px;line-height:1.4;font-weight:500}
 .hs-act-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
-.hs-act-note{font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 10px;margin-top:6px;line-height:1.5;white-space:pre-wrap;max-height:220px;overflow-y:auto;word-break:break-word}
+.hs-act-note{font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 10px;margin-top:6px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
 
 /* ══════════════════════════════════════════════
    GOOGLE CALENDAR TIME GRID (WEEK VIEW)
@@ -3717,7 +3717,7 @@ async function renderContactDetail(contactId, contactName){
                 <div class="hs-act-body">
                   <div class="hs-act-title">${a.title}</div>
                   <div class="hs-act-meta">${fmtDateTime(a.date)}</div>
-                  ${a.note?`<div class="hs-act-note">${(a.note||'').slice(0,200)}</div>`:''}
+                  ${a.note?`<div class="hs-act-note">${(a.note||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:''}
                 </div>
               </div>`).join('')
             : `<div style="text-align:center;padding:28px 0"><div style="font-size:28px;opacity:.2;margin-bottom:8px">👁</div><div style="font-size:12px;color:var(--text3)">No activity on this record.</div></div>`}
@@ -3788,10 +3788,16 @@ async function renderContactDetail(contactId, contactName){
           ${actFeed(activities)}
         </div>`
       } else if(which==='messages'){
-        const msgs=activities.filter(a=>a.type==='chat')
+        const msgs=activities.filter(a=>a.type==='chat').slice().reverse() // oldest first
         cc.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px">
-          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">💬 Poruke (${msgs.length})</div>
-          ${actFeed(msgs)}
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px">💬 Poruke (${msgs.length})</div>
+          ${msgs.length===0?'<div style="text-align:center;padding:28px 0;color:var(--text3);font-size:12px">Nema poruka</div>':msgs.map(m=>{
+            const isUser = m.icon==='💬'
+            return `<div style="display:flex;flex-direction:column;margin-bottom:14px;align-items:${isUser?'flex-end':'flex-start'}">
+              <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:3px;${isUser?'text-align:right':''}">${m.title} · ${fmtDateTime(m.date)}</div>
+              <div style="max-width:88%;background:${isUser?'var(--bg3)':'rgba(29,158,117,0.07)'};border:1px solid ${isUser?'var(--border)':'rgba(29,158,117,0.2)'};border-radius:${isUser?'10px 10px 2px 10px':'10px 10px 10px 2px'};padding:10px 14px;font-size:12px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word">${(m.note||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+            </div>`
+          }).join('')}
         </div>`
       }
       // catchup tab restores default — just reload
